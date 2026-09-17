@@ -1,0 +1,25 @@
+{
+  "name": "laneExtension",
+  "prefix": "lane",
+  "uri": "http://lane",
+  "xml": {
+    "tagAlias": "lowerCase"
+  },
+  "associations": [],
+  "types": [
+    {
+      "name": "lane",
+      "extends": [
+        "bpmn:Lane"
+      ],
+      "properties": [
+        {
+          "name": "userWithoutRole",
+          "isAttr": false,
+          "isMany": true,
+          "type": "String"
+        }        
+      ]
+    }
+  ]
+}

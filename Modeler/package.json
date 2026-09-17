@@ -1,0 +1,63 @@
+{
+  "name": "cep-4-bpm-sec",
+  "version": "0.34.5",
+  "description": "BPMN modeler for the Python simulator",
+  "scripts": {
+    "all": "npm run lint && npm run bundle && npm test",
+    "bundle": "webpack --mode production",
+    "bundle:watch": "webpack --mode development --watch",
+    "start": "webpack serve --mode development",
+    "start:example": "npm start",
+    "dev": "npm start",
+    "lint": "eslint example/src provider lib webpack.config.js",
+    "test": "node test-app/smoke.cjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ajvarela/caise2025"
+  },
+  "contributors": [
+    {
+      "name": "José Luis Cobo Ariza",
+      "url": "https://github.com/JoseLuis17"
+    },
+    {
+      "name": "Joaquín Arregui Díaz",
+      "url": "https://github.com/Joaquin-Arregui"
+    }
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.12.0"
+  },
+  "sideEffects": [
+    "*.css"
+  ],
+  "devDependencies": {
+    "@babel/core": "^7.25.2",
+    "@babel/preset-env": "^7.25.4",
+    "babel-loader": "^9.2.1",
+    "css-loader": "^7.1.2",
+    "eslint": "^8.57.0",
+    "eslint-plugin-bpmn-io": "^1.0.1",
+    "puppeteer": "^23.2.1",
+    "raw-loader": "^4.0.2",
+    "style-loader": "^4.0.0",
+    "webpack": "^5.94.0",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^5.0.4"
+  },
+  "dependencies": {
+    "@bpmn-io/add-exporter": "^0.2.0",
+    "@bpmn-io/properties-panel": "^3.23.0",
+    "bpmn-js": "^17.11.1",
+    "bpmn-js-properties-panel": "^5.25.0",
+    "downloadjs": "^1.4.7",
+    "file-open": "^0.1.1",
+    "inherits-browser": "^0.1.0",
+    "diagram-js": "^14.11.0",
+    "htm": "^3.1.1",
+    "preact": "^10.23.1"
+  },
+  "private": true
+}

@@ -1,0 +1,53 @@
+{
+  "name": "UserExtension",
+  "prefix": "user",
+  "uri": "http://user",
+  "xml": {
+    "tagAlias": "lowerCase"
+  },
+  "associations": [],
+  "types": [
+    {
+      "name": "BewitchedStartEvent",
+      "extends": [
+        "bpmn:ManualTask",
+        "bpmn:UserTask",
+        "bpmn:Task"
+      ],
+      "properties": [
+        {
+          "name": "UserTask",
+          "isAttr": false,
+          "type": "String",
+          "isMany": true
+        },
+        {
+          "name": "NumberOfExecutions",
+          "isAttr": true,
+          "type": "Integer",
+          "isMany": false
+        },
+        {
+          "name": "minimumTime",
+          "isAttr": true,
+          "type": "Integer"
+        },
+        {
+          "name": "maximumTime",
+          "isAttr": true,
+          "type": "Integer"
+        },
+        {
+          "name": "loopParameter",
+          "isAttr": true,
+          "type": "String"
+        },
+        {
+          "name": "AdditionalIntegerParameter",
+          "isAttr": true,
+          "type": "Integer"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+    "name": "collaborationExtension",
+    "prefix": "collab",
+    "uri": "http://collaboration",
+    "xml": {
+      "tagAlias": "lowerCase"
+    },
+    "associations": [],
+    "types": [
+      {
+        "name": "collaboration",
+        "extends": [
+          "bpmn:Collaboration"
+        ],
+        "properties": [
+          {
+            "name": "instance",
+            "isAttr": true,
+            "type": "Integer"
+          }
+        ]
+      }
+    ]
+  }
+  

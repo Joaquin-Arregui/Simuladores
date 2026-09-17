@@ -1,0 +1,118 @@
+# Backend de simulación BPMN
+
+Servicio Python que recibe las reglas exportadas por el Modeler y devuelve el
+registro de simulación en formato XES. Conserva el motor BPMN, usuarios, roles,
+recursos, mensajes y parámetros de simulación.
+
+## Inicio
+
+Con Python 3.10 o superior, desde `Backend`:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe server.py
+```
+
+En Linux/macOS, el ejecutable del entorno es `.venv/bin/python`.
+El servicio escucha en `http://localhost:3000` y permite las peticiones del
+modelador. Las dependencias directas son SimPy, Flask y Flask-CORS.
+
+## API
+
+`GET /simulation-config` devuelve `timeoutSeconds`, el límite de ejecución que
+utiliza también el Modeler.
+
+`POST /simulate` recibe un objeto JSON con `content`: el texto de reglas que
+exporta el Modeler. El cliente envía además `diagramXML`, que se valida para
+detectar elementos y comportamientos BPMN que las reglas no representan. La
+ejecución utiliza las reglas. Los clientes que envíen solo reglas reciben la
+validación de ese formato, sin la comprobación adicional del XML original.
+
+Una simulación correcta devuelve:
+
+```json
+{ "simulation": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>..." }
+```
+
+Los errores devuelven un objeto con el campo `error`:
+
+- **400**: entrada inválida o una función BPMN no soportada, indicando el elemento.
+- **422**: la ejecución queda incompleta, por ejemplo por una unión pendiente o
+  una espera por un mensaje que nunca llega.
+- **504**: se supera el tiempo máximo; el proceso de simulación se detiene.
+- **500**: configuración inválida o fallo interno; los detalles internos quedan
+  en la consola del servidor.
+
+El motor genera y ejecuta un script en una carpeta temporal independiente para
+cada petición, usando el mismo intérprete Python que el servidor. Devuelve el
+XES como texto y elimina sus archivos temporales al terminar, también si falla.
+No sobrescribe los resultados históricos ni depende del directorio de arranque.
+Una tarea sin usuarios elegibles falla con un error en lugar de esperar
+indefinidamente por un recurso que no existe.
+
+Se han retirado chatbot, mapa de calor, Scheduler/CSV y `server2.py`. Ya no hay
+llamadas a servicios de lenguaje o planificación externa ni se necesitan sus
+credenciales. Las reglas antiguas que contienen Scheduler se rechazan.
+
+## Tiempo máximo
+
+El límite predeterminado es de **300 segundos (5 minutos de tiempo real)** por
+ejecución del proceso de simulación. No es tiempo simulado. Para cambiarlo,
+define un entero positivo antes de arrancar el Backend, por ejemplo en PowerShell:
+
+```powershell
+$env:SIMULATION_TIMEOUT_SECONDS = "300"
+.\.venv\Scripts\python.exe server.py
+```
+
+Un valor inválido impide simular y devuelve un error de configuración. El
+Modeler consulta este límite antes de enviar la simulación. Su espera de red
+añade un margen de 15 segundos; una desconexión del navegador no confirma que
+el servidor haya cancelado la ejecución.
+
+## Ejecución y soporte
+
+Las uniones paralelas esperan una llegada por cada flujo de entrada y consumen
+esas llegadas en cada activación, también al repetirse en un ciclo. Las uniones
+inclusivas tienen en cuenta las ramas todavía activas. Los mensajes se consumen
+una vez y se distinguen por origen, destino, ejecución de la tarea e instancia.
+Esperar un inicio por mensaje no detiene el lanzamiento de los demás inicios.
+
+El motor comprueba que no queden tokens ni uniones pendientes antes de devolver
+un XES. Un registro parcial no se presenta como una simulación correcta.
+
+No es un motor de ejecución completo de BPMN 2.0. Las tareas de servicio, script
+y regla de negocio se simulan como actividades con duración y recursos; no
+ejecutan servicios, scripts ni reglas externos. Las bifurcaciones usan los
+porcentajes configurados en el modelador, no evalúan expresiones BPMN.
+
+| Elementos | Alcance |
+| --- | --- |
+| Process / Collaboration | Instancias, frecuencia, usuarios y roles; participantes y carriles en colaboraciones. |
+| Tareas | Duración, recursos, repeticiones y multiinstancia; envío y recepción de mensajes. |
+| Inicios | Sin definición o por mensaje de un emisor del modelo; sin mensajes externos. |
+| Finales | Evento de fin sin definición adicional. |
+| Eventos intermedios | Lanzamiento simple, envío/recepción de mensaje y espera por duración numérica. |
+| Compuertas | Exclusiva, inclusiva y paralela, con uniones y ciclos. |
+| Datos | Disponibilidad de objetos referenciados mediante entradas/salidas de tareas. |
+
+En una bifurcación exclusiva se elige una salida y los porcentajes completos
+deben sumar 100. En una inclusiva se decide cada salida de forma independiente;
+si no se selecciona ninguna, se elige una según sus pesos. Los porcentajes sin
+configurar reparten el resto hasta 100. Una paralela activa todas sus salidas.
+Los usuarios por carril requieren una colaboración; en un proceso simple se
+configuran los usuarios y roles en el proceso y las asignaciones en las tareas.
+
+Los elementos o comportamientos no implementados se rechazan antes de simular,
+incluidos subprocesos, transacciones, llamadas a actividades, eventos de borde,
+compuertas complejas o basadas en eventos y expresiones condicionales. El editor
+permite trabajar con esos diagramas, pero no simularlos como si fueran soportados.
+Los temporizadores usan números de tiempo simulado: no interpretan fechas,
+ciclos ni duraciones ISO 8601. Tampoco se ejecutan expresiones estándar de
+bucles o multiinstancia; se usan los parámetros propios de simulación.
+
+## Pruebas
+
+La nueva suite de pruebas queda pendiente de creación por el usuario. Esta
+corrección no añade ni modifica suites de pruebas.

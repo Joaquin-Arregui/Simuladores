@@ -1,0 +1,51 @@
+{
+  "name": "modelExtension",
+  "prefix": "model",
+  "uri": "http://model",
+  "xml": {
+    "tagAlias": "lowerCase"
+  },
+  "types": [
+    {
+      "name": "CustomProcess",
+      "extends": ["bpmn:Process"],
+      "properties": [
+        {
+          "name": "instance",
+          "isAttr": true,
+          "type": "String"
+        },
+        {
+          "name": "frequency",
+          "isAttr": true,
+          "type": "Integer"
+        },
+        {
+          "name": "userWithoutRole",
+          "isAttr": false,
+          "isMany": true,
+          "type": "String"
+        },
+        {
+          "name": "userWithRole",
+          "isAttr": false,
+          "isMany": true,
+          "type": "KeyValuePair"
+        }
+      ]
+    },
+    {
+      "name": "KeyValuePair",
+      "properties": [
+        {
+          "name": "key",
+          "type": "String"
+        },
+        {
+          "name": "value",
+          "type": "String"
+        }
+      ]
+    }
+  ]
+}

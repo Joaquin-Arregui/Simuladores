@@ -1,0 +1,236 @@
+* { box-sizing: border-box; }
+
+:root { --props-width: 360px; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 12px;
+  color: #212121;
+}
+
+a:link { text-decoration: none; }
+
+.canvas-parent {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+.canvas {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.properties-panel {
+  flex: 0 0 var(--props-width);
+  height: 100%;
+  border-left: 1px solid #ccc;
+  background-color: #f9f9f9;
+  overflow-y: auto;
+}
+
+.bio-properties-panel-container { width: 100%; }
+.bio-properties-panel-entry { margin: 8px 0; }
+.bio-properties-panel-label { font-weight: 600; margin-bottom: 4px; }
+
+.bottom-links {
+  position: absolute;
+  bottom: 24px;
+  left: 24px;
+  z-index: 1;
+  max-width: calc(100% - var(--props-width) - 48px);
+}
+
+.link {
+  display: inline-block;
+  padding: 6px;
+  font-size: 16px;
+  border-radius: 2px;
+  background-color: #EFEFEF;
+  color: #212121;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+}
+
+.link:hover:not(:disabled) { color: #FFFFFF; background-color: #10D070; }
+.link:disabled { opacity: 0.55; cursor: not-allowed; }
+.links .link + .link { margin-left: 20px; }
+
+.simulation-status {
+  margin: 8px 0 0;
+  padding: 6px 8px;
+  border-radius: 4px;
+  background: #fff;
+  border: 1px solid #ccc;
+  line-height: 1.5;
+}
+
+.simulation-status[data-state="running"] { color: #164b76; border-color: #8bb5d7; }
+.simulation-status[data-state="error"] { color: #9e2020; border-color: #dca1a1; }
+.simulation-status[data-state="success"] { color: #17602f; border-color: #8ebe9b; }
+.modal[data-state="error"] h2 { color: #9e2020; }
+
+/* Contenedor principal para la entrada y el botón */
+.user-task-item {
+  position: relative; /* Permite posicionar elementos hijos absolutamente */
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+/* Input que ocupa todo el ancho */
+.user-task-input {
+  width: 100%;
+  padding: 8px 40px 8px 8px; /* Espacio para la "X" a la derecha */
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+/* Botón "X" dentro del input */
+.user-task-button {
+  position: absolute;
+  top: 50%;
+  right: 10px; /* Espaciado desde el borde derecho */
+  transform: translateY(-50%);
+  padding: 4px 8px;
+  background-color: #ff4d4d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.user-task-button:hover {
+  background-color: #cc0000;
+}
+
+/* Estilo para las entradas de clave-valor dentro de userPool */
+.user-pool-container {
+  display: flex;
+  flex-direction: column;
+  margin: 15px auto; /* Centra el contenedor horizontalmente */
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 10px;
+  background-color: #f9f9f9;
+  width: 90%; /* Asegurarse de que el contenedor ocupe el 90% del espacio disponible */
+  box-sizing: border-box;
+}
+
+.user-pool-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+  width: 100%;
+}
+
+.user-pool-item input {
+  width: 48%; /* Ambos inputs ocupan el 48% del ancho disponible */
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  box-sizing: border-box;
+}
+
+/* Aseguramos que el botón Add Role esté en una nueva línea y centrado */
+.add-role-button {
+  margin-top: 10px;
+  padding: 5px 10px;
+  background-color: #007bff;
+  color: white;
+  cursor: pointer;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  width: 180px;
+  display: block; /* Asegura que el botón ocupe una línea entera */
+  margin-left: auto;
+  margin-right: auto; /* Centra el botón horizontalmente */
+}
+
+.add-role-button:hover {
+  background-color: #0056b3;
+}
+
+.remove-role-button {
+  padding: 5px 8px;
+  background-color: red;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.remove-role-button:hover {
+  background-color: darkred;
+}
+
+/* Estilos para el modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7); /* Fondo más oscuro */
+  z-index: 999;
+}
+
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  background-color: #EFEFEF; /* Fondo acorde al tema */
+  color: #212121; /* Color de texto consistente */
+  padding: 30px;
+  border-radius: 8px; /* Bordes más redondeados */
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4); /* Sombra más suave y prominente */
+  max-width: 80vw;  /* Máximo 80% del ancho del viewport */
+  max-height: 80vh; /* Máximo 80% del alto del viewport */
+  width: 80vw;  /* Fijar el ancho al 80% del viewport */
+  height: 80vh; /* Fijar la altura al 80% del viewport */
+  overflow-y: auto; /* Scroll en el modal si el contenido es muy largo */
+}
+
+.modal pre {
+  white-space: pre-wrap; /* Ajuste de texto largo */
+  background-color: #EFEFEF; /* Fondo acorde */
+  padding: 15px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  color: #212121; /* Color del texto */
+  font-size: 14px; /* Tamaño de fuente ligeramente más grande */
+}
+
+.modal button {
+  margin-top: 15px;
+  padding: 10px 20px;
+  background-color: #EFEFEF; /* Fondo acorde */
+  color: #212121; /* Color del texto */
+  cursor: pointer;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: background-color 0.3s ease; /* Transición suave */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Sombra para el botón */
+}
+
+.modal button:hover {
+  background-color: #10D070; /* Cambio de color en hover */
+  color: #FFFFFF;
+}
+

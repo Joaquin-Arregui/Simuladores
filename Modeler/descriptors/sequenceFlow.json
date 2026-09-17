@@ -1,0 +1,24 @@
+{
+  "name": "sequenceFlowExtension",
+  "prefix": "sequenceFlow",
+  "uri": "http://sequenceFlow",
+  "xml": {
+    "tagAlias": "lowerCase"
+  },
+  "associations": [],
+  "types": [
+    {
+      "name": "SequenceFlowWithPercentage",
+      "extends": [
+        "bpmn:SequenceFlow"
+      ],
+      "properties": [
+        {
+          "name": "percentageOfBranches",
+          "isAttr": true,
+          "type": "Integer"
+        }
+      ]
+    }
+  ]
+}
