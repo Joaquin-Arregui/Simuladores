@@ -14,21 +14,21 @@ from simulator.models.gatewayModels import (
 )
 from simulator.models.taskModels import (
     BPMNTask, BPMNUserTask, BPMNSendTask, BPMNReceiveTask, BPMNManualTask,
-    BPMNBusinessRuleTask, BPMNScriptTask, BPMNServiceTask,
+    BPMNBusinessRuleTask, BPMNScriptTask, BPMNServiceTask, BPMNCallActivity,
 )
 from simulator.models.endEventModels import BPMNEndEvent
 from simulator.models.intermediateEventModels import (
     BPMNIntermediateThrowEvent, BPMNMessageIntermediateCatchEvent,
     BPMNMessageIntermediateThrowEvent, BPMNTimerIntermediateCatchEvent,
 )
-from simulator.validation import SUPPORTED_TYPES, validate_references
+from simulator.validation import SUPPORTED_TYPES, add_warning, validate_references
 
 
 TASK_CLASSES = {
     "Task": BPMNTask, "UserTask": BPMNUserTask, "ManualTask": BPMNManualTask,
     "BusinessRuleTask": BPMNBusinessRuleTask, "ScriptTask": BPMNScriptTask,
     "ServiceTask": BPMNServiceTask, "SendTask": BPMNSendTask,
-    "ReceiveTask": BPMNReceiveTask,
+    "ReceiveTask": BPMNReceiveTask, "CallActivity": BPMNCallActivity,
 }
 GATEWAY_CLASSES = {
     "ExclusiveGateway": BPMNExclusiveGateway,
@@ -46,7 +46,7 @@ FIELDS_BY_TYPE = {
     "Process": {"instances", "frequency", "userWithoutRole", "userWithRole"},
     "Collaboration": {"instances"},
     "Participant": {"frequency", "userWithoutRole", "containedElements"},
-    "Lane": {"userWithoutRole", "containedElements"},
+    "Lane": {"userWithoutRole", "containedElements", "parentLane"},
     "SequenceFlow": {"superElement", "subElement", "percentageOfBranches"},
     "MessageFlow": {"superElement", "subElement"},
     "DataInputAssociation": {"superElement", "subElement"},
@@ -92,11 +92,22 @@ def _read_fields(line, line_number):
         key, value = key.strip(), value.strip()
         if not separator or not key or key in fields:
             raise ValueError(f"Línea {line_number}: campo inválido o duplicado: {key!r}.")
+        fields[key] = value
+    return fields
+
+
+def _evaluate(raw_fields, line_number):
+    """Turn raw field text into Python literals; the type keeps its raw form."""
+    values = {}
+    for key, value in raw_fields.items():
+        if key == "type":
+            values[key] = value
+            continue
         try:
-            fields[key] = value if key == "type" else ast.literal_eval(value)
+            values[key] = ast.literal_eval(value)
         except (ValueError, SyntaxError, RecursionError) as exc:
             raise ValueError(f"Línea {line_number}: valor inválido para {key}.") from exc
-    return fields
+    return values
 
 
 def _required(fields, field, element_id, value_type=None):
@@ -114,29 +125,42 @@ def _strings(value, element_id, field):
     return list(dict.fromkeys(item.strip() for item in value if item.strip()))
 
 
-def parse_bpmn_elements(file_content: str):
+def parse_bpmn_elements(file_content: str, warnings=None):
     if not isinstance(file_content, str) or not file_content.strip():
         raise ValueError("Las reglas de simulación están vacías.")
-    elements, seen_ids = {}, set()
+    entries, seen_ids, data_stores = [], set(), set()
     for number, raw_line in enumerate(file_content.splitlines(), 1):
         line = raw_line.strip()
         if not line or line.startswith("#"):
             continue
-        fields = _read_fields(line, number)
-        bpmn_type = _required(fields, "type", f"Línea {number}", str)
-        kind = bpmn_type.removeprefix("bpmn:")
-        element_id = _required(fields, "id_bpmn", f"Línea {number}", str)
+        raw = _read_fields(line, number)
+        bpmn_type = _required(raw, "type", f"Línea {number}", str)
+        identity = _evaluate({"id_bpmn": raw["id_bpmn"]} if "id_bpmn" in raw else {}, number)
+        element_id = _required(identity, "id_bpmn", f"Línea {number}", str)
         if not element_id or element_id in seen_ids:
             raise ValueError(f"Línea {number}: ID vacío o duplicado: {element_id!r}.")
         seen_ids.add(element_id)
+        if bpmn_type == "bpmn:DataStoreReference":
+            data_stores.add(element_id)
+            add_warning(warnings, f"{element_id} (bpmn:DataStoreReference): los almacenes de datos no se simulan; se ignoran junto con sus asociaciones.")
+            continue
+        entries.append((number, raw, bpmn_type, element_id))
+
+    elements = {}
+    for number, raw, bpmn_type, element_id in entries:
+        kind = bpmn_type.removeprefix("bpmn:")
         if kind in {"Association", "TextAnnotation", "Group"}:
             continue
         if bpmn_type != f"bpmn:{kind}" or kind not in SUPPORTED_TYPES:
             raise ValueError(f"{element_id}: el elemento {bpmn_type} no está soportado por el simulador.")
         allowed = TASK_FIELDS if kind in TASK_CLASSES else FIELDS_BY_TYPE.get(kind, {"subTask"})
-        unknown = set(fields) - COMMON_FIELDS - allowed
+        unknown = set(raw) - COMMON_FIELDS - allowed
         if unknown:
-            raise ValueError(f"{element_id}: parámetros no soportados: {', '.join(sorted(unknown))}.")
+            add_warning(warnings, f"{element_id} ({bpmn_type}): se ignoran parámetros desconocidos: {', '.join(sorted(unknown))}.")
+        fields = _evaluate({key: value for key, value in raw.items() if key not in unknown}, number)
+        if kind in {"DataInputAssociation", "DataOutputAssociation"} and \
+                {fields.get("superElement"), fields.get("subElement")} & data_stores:
+            continue
         name = _required(fields, "name", element_id, str)
         args = (name, element_id, bpmn_type)
         get = lambda key, value_type=None: _required(fields, key, element_id, value_type)
@@ -147,8 +171,11 @@ def parse_bpmn_elements(file_content: str):
             element = BPMNCollaboration(*args, get("instances"))
         elif kind in {"Participant", "Lane"}:
             contained = _strings(get("containedElements"), element_id, "containedElements")
+            parent = fields.get("parentLane") or None
+            if parent is not None and not isinstance(parent, str):
+                raise ValueError(f"{element_id}: parentLane debe ser el ID de un carril.")
             element = (BPMNParticipant(*args, get("frequency"), users(), contained)
-                       if kind == "Participant" else BPMNLane(*args, users(), contained))
+                       if kind == "Participant" else BPMNLane(*args, users(), contained, parent))
         elif kind in FLOW_CLASSES:
             endpoints = (get("superElement", str), get("subElement", str))
             element = (BPMNSequenceFlow(*args, *endpoints, fields.get("percentageOfBranches"))
@@ -190,7 +217,7 @@ def parse_bpmn_elements(file_content: str):
             element = event_class(*args, None, get("subTask", str))
         elements[element_id] = element
 
-    validate_references(elements)
+    validate_references(elements, warnings)
     roots = [e.id_bpmn for e in elements.values() if e.bpmn_type in {"bpmn:Process", "bpmn:Collaboration"}]
     if len(roots) != 1:
         raise ValueError("Las reglas deben contener exactamente un Process o Collaboration raíz.")

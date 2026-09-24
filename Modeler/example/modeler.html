@@ -11,7 +11,7 @@
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="SimBPMN" />
   <meta property="og:title" content="BPMN Modeling and Simulation" />
-  <meta property="og:url" content="https://github.com/Joaquin-Arregui/SimBPMN" />
+  <meta property="og:url" content="https://github.com/Joaquin-Arregui/SimulacionOrquestada" />
   <meta property="og:description" content="A Bpmn modeler and simulator with colaboration and multi-instance elements." />
 </head>
 <body>
@@ -32,6 +32,10 @@
   <div class="modal-overlay" style="display: none;">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="simulation-title" tabindex="-1">
       <h2 id="simulation-title">Resultados de la simulación</h2>
+      <div id="simulation-warnings" class="simulation-warnings" hidden>
+        <h3>Avisos</h3>
+        <ul></ul>
+      </div>
       <pre id="simulation-results">Results of the simulation</pre>
       <button id="close-modal">Cerrar</button>
     </div>

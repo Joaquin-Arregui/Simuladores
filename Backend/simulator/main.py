@@ -1,17 +1,24 @@
+from datetime import datetime, timezone
 import json
 import os
 from pathlib import Path
 import subprocess
 import sys
 from tempfile import TemporaryDirectory
+from typing import List, NamedTuple
 import xml.etree.ElementTree as ET
 
 from simulator.parser import parse_bpmn_elements
-from simulator.generateScript import generateScript
+from simulator.generateScript import DEFAULT_START_DATE, generateScript
 from simulator.validation import validate_diagram_xml, validate_simulation
 
 
 DEFAULT_TIMEOUT_SECONDS = 300
+
+
+class SimulationResult(NamedTuple):
+    simulation: str
+    warnings: List[str]
 
 
 class SimulationConfigurationError(RuntimeError):
@@ -45,6 +52,20 @@ def get_simulation_timeout() -> int:
     return seconds
 
 
+def get_simulation_start_date() -> str:
+    """Date and time of simulated second 0 in the XES log (UTC if no offset is given)."""
+    value = os.environ.get("SIMULATION_START_DATE", DEFAULT_START_DATE).strip()
+    try:
+        moment = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError as error:
+        raise SimulationConfigurationError(
+            "SIMULATION_START_DATE debe ser una fecha ISO 8601, por ejemplo 2026-01-01T00:00:00+00:00."
+        ) from error
+    if moment.tzinfo is None:
+        moment = moment.replace(tzinfo=timezone.utc)
+    return moment.isoformat()
+
+
 # Keep diagnostic files inside the same temporary directory as the simulation.
 CHILD_RUNNER = """
 import json
@@ -64,19 +85,21 @@ except Exception as error:
 """
 
 
-def processSimulation(rules: str, *, diagram_xml=None, timeout_seconds=None) -> str:
-    """Validate and run BPMN rules; return XES only when execution completes."""
+def processSimulation(rules: str, *, diagram_xml=None, timeout_seconds=None) -> SimulationResult:
+    """Validate and run BPMN rules; return the XES and any warnings when execution completes."""
     if not isinstance(rules, str) or not rules.strip():
         raise ValueError("Faltan las reglas de simulación en content.")
     if timeout_seconds is None:
         timeout_seconds = get_simulation_timeout()
     if isinstance(timeout_seconds, bool) or not isinstance(timeout_seconds, int) or timeout_seconds <= 0:
         raise SimulationConfigurationError("El límite de ejecución debe ser un entero positivo.")
+    start_date = get_simulation_start_date()
+    warnings = []
     if diagram_xml is not None:
-        validate_diagram_xml(diagram_xml)
-    elements, process, starts, message_starts = parse_bpmn_elements(rules)
-    validate_simulation(elements, process, starts, message_starts)
-    script, _ = generateScript(elements, process, starts, message_starts)
+        validate_diagram_xml(diagram_xml, warnings)
+    elements, process, starts, message_starts = parse_bpmn_elements(rules, warnings)
+    validate_simulation(elements, process, starts, message_starts, warnings)
+    script, _ = generateScript(elements, process, starts, message_starts, start_date=start_date)
 
     with TemporaryDirectory(prefix="simbpmn-") as directory:
         workdir = Path(directory)
@@ -119,4 +142,4 @@ def processSimulation(rules: str, *, diagram_xml=None, timeout_seconds=None) -> 
             raise SimulationInternalError("El simulador generó un registro XES no válido.") from error
         if document.tag != "{http://www.xes-standard.org/}log":
             raise SimulationInternalError("El resultado no es un registro XES.")
-        return result
+        return SimulationResult(result, warnings)

@@ -8,7 +8,7 @@ import xml.etree.ElementTree as ET
 
 TASK_TYPES = frozenset({
     "Task", "UserTask", "ManualTask", "ServiceTask", "ScriptTask",
-    "BusinessRuleTask", "SendTask", "ReceiveTask",
+    "BusinessRuleTask", "SendTask", "ReceiveTask", "CallActivity",
 })
 GATEWAY_TYPES = frozenset({"ExclusiveGateway", "InclusiveGateway", "ParallelGateway"})
 START_TYPES = frozenset({"StartEvent", "MessageStartEvent"})
@@ -27,6 +27,12 @@ METADATA_KEYS = frozenset({
     "lanes", "users", "generatedData", "requiredData", "defaultData", "dataInfo",
     "participants", "elementsContainer", "startsParticipant", "gatewayConnections",
 })
+
+
+def add_warning(warnings, message):
+    """Collect a non-blocking notice once, keeping the order in which it appears."""
+    if warnings is not None and message not in warnings:
+        warnings.append(message)
 
 
 def _kind(element):
@@ -48,7 +54,57 @@ def _number(element, field, minimum=0, integer=False, maximum=None):
     return value
 
 
-def validate_references(elements):
+def lane_chain(elements, node_id):
+    """Lanes that contain a node, innermost first.
+
+    bpmn-js lists a node in its lane and in every lane that contains that lane.
+    The exported parentLane gives the hierarchy; older rules fall back to the
+    size of each lane. Returns None when the lanes are not nested.
+    """
+    containing = [elements[lane_id] for lane_id in elements.get("lanes", [])
+                  if node_id in elements[lane_id].contained_elements]
+    if len(containing) <= 1:
+        return containing
+    ids = {lane.id_bpmn for lane in containing}
+    parents = {lane.parent_lane for lane in containing if lane.parent_lane in ids}
+    leaves = [lane for lane in containing if lane.id_bpmn not in parents]
+    if parents and len(leaves) == 1:
+        chain, current = [], leaves[0]
+        while current is not None and current not in chain:
+            chain.append(current)
+            current = elements[current.parent_lane] if current.parent_lane in ids else None
+        if len(chain) == len(containing):
+            return chain
+    ordered = sorted(containing, key=lambda lane: len(set(lane.contained_elements)))
+    for inner, outer in zip(ordered, ordered[1:]):
+        if not set(inner.contained_elements) <= set(outer.contained_elements):
+            return None
+    return ordered
+
+
+def task_base_users(elements, node_id, is_process):
+    """Users a node may use before applying its own assignment.
+
+    The innermost lane with users wins, so a nested lane without users inherits
+    from the lane that contains it. In a Process, None means that the process
+    users apply. In a collaboration, a node outside lanes uses its participant.
+    """
+    chain = lane_chain(elements, node_id) or []
+    for lane in chain:
+        if lane.users:
+            return list(lane.users)
+    if is_process:
+        return None
+    if chain:
+        return []
+    for _, participant_id in elements.get("participants", []):
+        participant = elements[participant_id]
+        if node_id in participant.contained_elements:
+            return list(participant.users)
+    return []
+
+
+def validate_references(elements, warnings=None):
     """Check references before the parser derives message and container maps."""
     nodes = {key: value for key, value in elements.items() if hasattr(value, "bpmn_type")}
     senders, receivers = set(), set()
@@ -71,11 +127,20 @@ def validate_references(elements):
                 if _kind(source) not in NODE_TYPES or _kind(target) not in NODE_TYPES:
                     _fail(element, "el flujo de secuencia debe conectar dos nodos ejecutables.")
             elif kind == "MessageFlow":
-                if _kind(source) not in SEND_TYPES or _kind(target) not in RECEIVE_TYPES:
-                    _fail(element, "los mensajes deben conectar SendTask/MessageIntermediateThrowEvent con ReceiveTask/MessageIntermediateCatchEvent/MessageStartEvent.")
-                if source.id_bpmn in senders or target.id_bpmn in receivers:
-                    _fail(element, "solo se admite un flujo de mensaje por emisor y por receptor.")
+                if _kind(source) == "Participant":
+                    _fail(element, f"el mensaje sale del pool {source.id_bpmn}, que no se simula; conéctalo desde una tarea o evento de envío.")
+                if _kind(source) not in SEND_TYPES:
+                    _fail(element, "los mensajes deben salir de una SendTask o de un MessageIntermediateThrowEvent.")
+                if source.id_bpmn in senders:
+                    _fail(element, "solo se admite un flujo de mensaje por emisor.")
                 senders.add(source.id_bpmn)
+                if _kind(target) == "Participant":
+                    add_warning(warnings, f"{element.id_bpmn} (bpmn:MessageFlow): el mensaje de {source.id_bpmn} al pool {target.id_bpmn} se envía, pero nadie lo recibe en la simulación.")
+                    continue
+                if _kind(target) not in RECEIVE_TYPES:
+                    _fail(element, "los mensajes deben llegar a una ReceiveTask, un MessageIntermediateCatchEvent o un MessageStartEvent.")
+                if target.id_bpmn in receivers:
+                    _fail(element, "solo se admite un flujo de mensaje por receptor.")
                 receivers.add(target.id_bpmn)
             elif kind == "DataInputAssociation":
                 if _kind(source) != "DataObjectReference" or _kind(target) not in TASK_TYPES:
@@ -86,6 +151,9 @@ def validate_references(elements):
             for child in element.contained_elements:
                 if child not in nodes:
                     _fail(element, f"containedElements incluye un elemento inexistente: {child}.")
+            parent = getattr(element, "parent_lane", None)
+            if parent is not None and (parent not in nodes or _kind(nodes[parent]) != "Lane"):
+                _fail(element, f"parentLane hace referencia a un carril inexistente: {parent}.")
 
 
 def _reachable(seeds, adjacency):
@@ -98,9 +166,9 @@ def _reachable(seeds, adjacency):
     return found
 
 
-def validate_simulation(elements, process, starts, message_starts):
+def validate_simulation(elements, process, starts, message_starts, warnings=None):
     """Reject invalid rules before generating or executing Python code."""
-    validate_references(elements)
+    validate_references(elements, warnings)
     model = {key: value for key, value in elements.items() if hasattr(value, "bpmn_type")}
     roots = [element for element in model.values() if _kind(element) in {"Process", "Collaboration"}]
     if len(roots) != 1 or roots[0].id_bpmn != process:
@@ -149,10 +217,15 @@ def validate_simulation(elements, process, starts, message_starts):
             assigned = [flow.percentageOfBranches for flow in flows if flow.percentageOfBranches is not None]
             missing = len(flows) - len(assigned)
             total = sum(assigned)
-            if (kind == "ExclusiveGateway" or missing) and total > 100 + 1e-8:
-                _fail(element, "la suma de porcentajes de las ramas supera el 100 %.")
-            if not missing and (total <= 0 or (kind == "ExclusiveGateway" and not math.isclose(total, 100, abs_tol=1e-8))):
-                _fail(element, "los porcentajes deben sumar 100 % en una compuerta exclusiva y tener alguna rama positiva en una inclusiva.")
+            remainder = max(100 - total, 0) if missing else 0
+            label = f"{element.id_bpmn} ({element.bpmn_type})"
+            if total + remainder <= 0:
+                _fail(element, "ninguna rama tiene un porcentaje positivo, así que no se puede elegir ninguna.")
+            if missing and total >= 100 - 1e-8:
+                detail = " y se reparten en proporción" if kind == "ExclusiveGateway" and total > 100 + 1e-8 else ""
+                add_warning(warnings, f"{label}: los porcentajes asignados suman {total:g} %{detail}; las ramas sin porcentaje nunca se eligen.")
+            elif not missing and kind == "ExclusiveGateway" and not math.isclose(total, 100, abs_tol=1e-8):
+                add_warning(warnings, f"{label}: los porcentajes suman {total:g} % y se reparten en proporción.")
         if kind in SEND_TYPES and not getattr(element, "messageDestiny", None):
             _fail(element, "falta un flujo de mensaje hacia un receptor compatible.")
         if kind in RECEIVE_TYPES and not getattr(element, "messageOrigin", None):
@@ -170,41 +243,43 @@ def validate_simulation(elements, process, starts, message_starts):
 
     participants = [element for element in model.values() if _kind(element) == "Participant"]
     lanes = [element for element in model.values() if _kind(element) == "Lane"]
-    if _kind(root) == "Process":
+    for lane in lanes:
+        for child in lane.contained_elements:
+            if child not in nodes:
+                _fail(lane, f"el carril contiene un elemento que no es un nodo: {child}.")
+            if lane_chain(elements, child) is None:
+                _fail(lane, f"el nodo {child} pertenece a varios carriles que no están anidados.")
+    is_process = _kind(root) == "Process"
+    if is_process:
         _number(root, "frequency")
         if participants:
             _fail(root, "los participantes necesitan una raíz Collaboration.")
-        for lane in lanes:
-            if lane.users:
-                _fail(lane, "en un Process simple los recursos se asignan en el proceso y en sus tareas; usa una Collaboration para asignar usuarios por carril.")
         if not isinstance(root.userWithRole, dict):
             _fail(root, "userWithRole debe ser un diccionario de roles y listas de usuarios.")
         for role, users in root.userWithRole.items():
             if not isinstance(role, str) or not role.strip() or not isinstance(users, list) or any(not isinstance(user, str) or not user.strip() for user in users):
                 _fail(root, "cada rol debe tener un nombre y una lista válida de usuarios.")
-        pool = set(root.userWithoutRole) | {user for users in root.userWithRole.values() for user in users}
+        process_users = set(root.userWithoutRole) | {user for users in root.userWithRole.values() for user in users}
+        known_users = process_users | {user for lane in lanes for user in lane.users}
     else:
-        if not participants:
-            _fail(root, "una colaboración necesita participantes con procesos visibles.")
-        ownership, lane_ownership = {}, {}
+        ownership, simulated = {}, 0
         for participant in participants:
-            _number(participant, "frequency")
             contained_nodes = set(participant.contained_elements) & set(nodes)
-            if not contained_nodes or not (contained_nodes & set(starts + message_starts)):
+            if not contained_nodes:
+                add_warning(warnings, f"{participant.id_bpmn} (bpmn:Participant): el pool no tiene un proceso que simular y se ignora.")
+                continue
+            simulated += 1
+            _number(participant, "frequency")
+            if not (contained_nodes & set(starts + message_starts)):
                 _fail(participant, "necesita un proceso visible con al menos un evento de inicio.")
             for child in contained_nodes:
                 if child in ownership:
                     _fail(participant, f"el nodo {child} pertenece a varios participantes.")
                 ownership[child] = participant.id_bpmn
+        if not simulated:
+            _fail(root, "una colaboración necesita al menos un participante con un proceso que simular.")
         for lane in lanes:
-            owners = set()
-            for child in lane.contained_elements:
-                if child not in nodes:
-                    _fail(lane, f"el carril contiene un elemento que no es un nodo: {child}.")
-                if child in lane_ownership:
-                    _fail(lane, f"el nodo {child} pertenece a varios carriles.")
-                lane_ownership[child] = lane.id_bpmn
-                owners.add(ownership.get(child))
+            owners = {ownership.get(child) for child in lane.contained_elements}
             if len(owners) > 1:
                 _fail(lane, "un carril no puede contener nodos de varios participantes.")
         for node in nodes:
@@ -214,7 +289,6 @@ def validate_simulation(elements, process, starts, message_starts):
             for target in targets:
                 if ownership[source] != ownership[target]:
                     _fail(nodes[source], f"el flujo de secuencia hacia {target} cruza participantes; utiliza mensajes.")
-        pool = {user for element in participants + lanes for user in element.users}
 
     for element in nodes.values():
         if _kind(element) not in TASK_TYPES:
@@ -240,18 +314,27 @@ def validate_simulation(elements, process, starts, message_starts):
             if element.multiInstanceType is not None:
                 _fail(element, "configura un bucle o multiinstancia, pero no ambos a la vez.")
         assignment = element.userTask
-        if _kind(root) == "Process":
-            eligible = set(pool) if assignment is None else set()
-            for item in assignment or []:
-                if item in root.userWithRole:
-                    eligible.update(root.userWithRole[item])
-                elif item in pool:
-                    eligible.add(item)
-                else:
-                    _fail(element, f"el usuario o rol {item!r} no está definido en el proceso.")
+        base = task_base_users(elements, element.id_bpmn, is_process)
+        if is_process:
+            roles = root.userWithRole
+            if assignment is None:
+                eligible = set(base) if base is not None else set(process_users)
+            else:
+                eligible = set()
+                for item in assignment:
+                    if item in roles:
+                        eligible.update(roles[item])
+                    elif item in known_users:
+                        eligible.add(item)
+                    else:
+                        _fail(element, f"el usuario o rol {item!r} no está definido en el proceso ni en sus carriles.")
+                if base is not None:
+                    outside = sorted(item for item in assignment if item not in roles and item not in base)
+                    if outside:
+                        _fail(element, f"usuarios ajenos a su carril: {', '.join(outside)}.")
+                    eligible &= set(base)
         else:
-            container = elements["elementsContainer"].get(element.id_bpmn)
-            available = set(elements["users"].get(container, []))
+            available = set(base or [])
             eligible = available if assignment is None else available & set(assignment)
             unknown = set(assignment or []) - available
             if unknown:
@@ -262,15 +345,16 @@ def validate_simulation(elements, process, starts, message_starts):
 
 BPMN_NAMESPACE = "http://www.omg.org/spec/BPMN/20100524/MODEL"
 XML_NODE_TYPES = {
-    "task", "userTask", "manualTask", "serviceTask", "scriptTask", "businessRuleTask",
+    "task", "userTask", "manualTask", "serviceTask", "scriptTask", "businessRuleTask", "callActivity",
     "sendTask", "receiveTask", "startEvent", "endEvent", "intermediateCatchEvent",
     "intermediateThrowEvent", "exclusiveGateway", "inclusiveGateway", "parallelGateway",
 }
 XML_ALLOWED = XML_NODE_TYPES | {
     "definitions", "documentation", "extensionElements", "import", "process", "collaboration",
-    "participant", "laneSet", "lane", "flowNodeRef", "sequenceFlow", "messageFlow",
+    "participant", "laneSet", "lane", "childLaneSet", "flowNodeRef", "sequenceFlow", "messageFlow",
     "incoming", "outgoing", "message", "messageEventDefinition", "timerEventDefinition",
-    "timeDuration", "dataObject", "dataObjectReference", "dataInput", "dataOutput",
+    "timeDuration", "dataObject", "dataObjectReference", "dataStore", "dataStoreReference",
+    "dataInput", "dataOutput",
     "dataInputAssociation", "dataOutputAssociation", "sourceRef", "targetRef", "ioSpecification",
     "inputSet", "outputSet", "dataInputRefs", "dataOutputRefs", "property", "itemDefinition",
     "textAnnotation", "text", "association", "group", "category", "categoryValue",
@@ -278,8 +362,12 @@ XML_ALLOWED = XML_NODE_TYPES | {
 }
 
 
-def validate_diagram_xml(xml):
-    """Inspect semantics the text exporter could otherwise silently discard."""
+def validate_diagram_xml(xml, warnings=None):
+    """Inspect semantics the text exporter could otherwise silently discard.
+
+    What the simulator replaces with its own parameters is reported in warnings;
+    what would change the execution is rejected.
+    """
     if not isinstance(xml, str) or not xml.strip():
         raise ValueError("diagramXML debe contener un diagrama BPMN válido.")
     if re.search(r"<!\s*(?:DOCTYPE|ENTITY)\b", xml, re.IGNORECASE):
@@ -293,7 +381,7 @@ def validate_diagram_xml(xml):
         raise ValueError("El XML debe tener una raíz bpmn:definitions con el espacio de nombres BPMN 2.0.")
     known_ids = set()
 
-    def check(element, owner):
+    def check(element, owner, parent_kind=None):
         if not isinstance(element.tag, str) or not element.tag.startswith(prefix):
             return
         kind = element.tag[len(prefix):]
@@ -304,15 +392,20 @@ def validate_diagram_xml(xml):
             known_ids.add(element_id)
         owner = element_id or owner
         label = f"{owner or 'Diagrama'} (bpmn:{kind})"
+        if kind == "conditionExpression" and parent_kind == "sequenceFlow":
+            add_warning(warnings, f"{owner} (bpmn:sequenceFlow): la condición no se evalúa; se usan los porcentajes de las ramas.")
+            return
         if kind not in XML_ALLOWED:
             raise ValueError(f"{label}: este elemento o expresión BPMN no está soportado por el simulador.")
+        if kind == "dataStoreReference":
+            add_warning(warnings, f"{label}: los almacenes de datos no se simulan y se ignoran.")
         if kind == "extensionElements":
             return
         if kind in XML_NODE_TYPES:
             if element.get("isForCompensation") in {"true", "1"}:
                 raise ValueError(f"{label}: las tareas de compensación no están soportadas.")
             if element.get("default"):
-                raise ValueError(f"{label}: las salidas por defecto no se evalúan; configura porcentajes de ramas.")
+                add_warning(warnings, f"{label}: el flujo por defecto se ignora; se usan los porcentajes de las ramas.")
             if element.get("instantiate") in {"true", "1"}:
                 raise ValueError(f"{label}: no se admite crear instancias desde una tarea de recepción; utiliza un inicio por mensaje.")
             definitions = [child.tag[len(prefix):] for child in element if child.tag.startswith(prefix) and child.tag.endswith("EventDefinition")]
@@ -330,14 +423,14 @@ def validate_diagram_xml(xml):
             if len(durations) != 1 or not re.fullmatch(r"\d+(?:\.\d+)?", (durations[0].text or "").strip()):
                 raise ValueError(f"{label}: usa una duración numérica no negativa; no se admiten fechas, ciclos ni duraciones ISO 8601.")
         if kind == "dataObject" and element.get("isCollection") in {"true", "1"}:
-            raise ValueError(f"{label}: no se admiten colecciones de objetos de datos.")
+            add_warning(warnings, f"{label}: la colección se trata como un único objeto de datos.")
         if kind == "standardLoopCharacteristics":
             if element.get("testBefore") in {"true", "1"} or element.get("loopMaximum"):
-                raise ValueError(f"{label}: testBefore y loopMaximum no se evalúan; configura los parámetros de bucle del simulador.")
+                add_warning(warnings, f"{label}: testBefore y loopMaximum no se evalúan; se usan los parámetros de bucle del simulador.")
         if kind == "multiInstanceLoopCharacteristics" and element.get("behavior", "All") != "All":
             raise ValueError(f"{label}: solo se admite multiinstancia con espera de todas las ejecuciones (All).")
         for child in element:
-            check(child, owner)
+            check(child, owner, kind)
 
     try:
         check(root, root.get("id"))
@@ -353,8 +446,11 @@ def validate_diagram_xml(xml):
         for participant in collaborations[0]:
             if participant.tag == prefix + "participant":
                 reference = participant.get("processRef")
-                if not reference or reference not in process_ids:
-                    raise ValueError(f"{participant.get('id', 'Participant')}: los participantes deben tener un proceso visible; no se admiten pools vacíos.")
+                if not reference:
+                    add_warning(warnings, f"{participant.get('id', 'Participant')} (bpmn:Participant): el pool no tiene un proceso que simular y se ignora.")
+                    continue
+                if reference not in process_ids:
+                    raise ValueError(f"{participant.get('id', 'Participant')}: el participante hace referencia a un proceso inexistente: {reference}.")
                 if reference in referenced:
                     raise ValueError(f"{participant.get('id', 'Participant')}: varios participantes no pueden compartir el mismo proceso.")
                 referenced.add(reference)

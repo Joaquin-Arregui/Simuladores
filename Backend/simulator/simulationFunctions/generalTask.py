@@ -4,23 +4,13 @@ def generalTask(elements, element, script):
 def {function_name(element.id_bpmn)}(env, name):
     def executeTask(env, TaskName, name, execution):
         start_standBy = env.now
-        possibleUsers = {element.userTask}
-        if possibleUsers is None:
-            possibleUsers = userPool
-        possibleUsers = resolve_possible_users(possibleUsers, TaskName)
-        available_users = [user for user in possibleUsers if user_resources[user].count < user_resources[user].capacity]
-        while not available_users:
-            yield env.timeout(1)
-            available_users = [user for user in possibleUsers if user_resources[user].count < user_resources[user].capacity]
-        if available_users:
-            userTask = min(available_users, key=lambda u: user_assignments[u])
-            user_assignments[userTask] += 1
-            request = user_resources[userTask].request()
-            yield request
-            try:
-                time = resolve_task_time({element.id_bpmn!r}, {element.maximumTime}, {element.minimumTime}, userTask)
-                if env.now > start_standBy: 
-                    simulationResults[name].append(
+        possibleUsers = resolve_possible_users({element.userTask}, TaskName)
+        # Users are handed out in order of arrival (see UserQueue in runtime.py).
+        userTask = yield user_queue.acquire(possibleUsers)
+        try:
+            time = resolve_task_time({element.id_bpmn!r}, {element.maximumTime}, {element.minimumTime}, userTask)
+            if env.now > start_standBy: 
+                simulationResults[name].append(
 f'''
         <event>
             <string key="bpmn:type" value="StandBy"/>
@@ -31,7 +21,7 @@ f'''
             <date key="time:duration" value="{{xml_value(env.now-start_standBy)}}"/>
             <int key="bpmn:instance" value="{{xml_value(name.split()[-1])}}"/>
         </event>''')
-                simulationResults[name].append(
+            simulationResults[name].append(
 f'''
         <event>
             <string key="bpmn:type" value="{xml_template(element.bpmn_type)}"/>
@@ -44,9 +34,9 @@ f'''
             <date key="time:timestamp" value="{{xml_value(env.now)}}"/>
             <int key="bpmn:instance" value="{{xml_value(name.split()[-1])}}"/>
         </event>''')
-                yield env.timeout(time)
-            finally:
-                user_resources[userTask].release(request)
+            yield env.timeout(time)
+        finally:
+            user_queue.release(userTask)
     TaskName = {element.id_bpmn!r}
     if TaskName in requiredData.keys():
         dataObjects = requiredData[TaskName]

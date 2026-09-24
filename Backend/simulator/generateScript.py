@@ -4,6 +4,9 @@ from pathlib import Path
 from xml.etree import ElementTree as ET
 
 from simulator.simulationFunctions.generateFunction import generateFunction
+from simulator.validation import TASK_TYPES, task_base_users
+
+DEFAULT_START_DATE = '2026-01-01T00:00:00+00:00'
 
 
 def _metadata(element, elements):
@@ -33,7 +36,7 @@ def _metadata(element, elements):
     return ET.tostring(root, encoding='unicode')
 
 
-def generateScript(elements, process, starts, messageStarts):
+def generateScript(elements, process, starts, messageStarts, start_date=DEFAULT_START_DATE):
     element = elements[process]
     is_process = element.bpmn_type == 'bpmn:Process'
     flows = {item.id_bpmn: (item.superElement, item.subElement)
@@ -54,13 +57,28 @@ def generateScript(elements, process, starts, messageStarts):
             'frequency': element.frequency if is_process else
                 elements[elements['startsParticipant'][node]].frequency,
         }
+    # Lane users are resolved here, so the runtime only looks up each task.
+    task_users = {}
+    for item in elements.values():
+        if getattr(item, 'bpmn_type', '').removeprefix('bpmn:') in TASK_TYPES:
+            base = task_base_users(elements, item.id_bpmn, is_process)
+            if base is not None:
+                task_users[item.id_bpmn] = base
+    if is_process:
+        process_users = list(dict.fromkeys(
+            element.userWithoutRole + [user for users in element.userWithRole.values() for user in users]))
+        user_pool = list(dict.fromkeys(process_users + [user for users in task_users.values() for user in users]))
+    else:
+        process_users = []
+        user_pool = list(dict.fromkeys(user for users in elements['users'].values() for user in users))
     config = {
         'nInstances': element.instances,
         'rolePool': element.userWithRole if is_process else {},
-        'userWithoutRole': element.userWithoutRole if is_process else [],
-        'usersPerLane': {} if is_process else elements['users'],
-        'elementsContainer': elements.get('elementsContainer', {}),
+        'processUsers': process_users,
+        'userPool': user_pool,
+        'taskUsers': task_users,
         'isProcess': is_process,
+        'simulationStartDate': start_date,
         'generatedData': elements['generatedData'], 'requiredData': elements['requiredData'],
         'dataInfo': elements['dataInfo'], 'defaultData': elements['defaultData'],
         'sequenceFlows': flows, 'outgoingFlows': outgoing, 'incomingFlows': incoming,

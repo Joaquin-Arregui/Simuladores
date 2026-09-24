@@ -161,6 +161,8 @@ document.addEventListener('DOMContentLoaded', function() {
   const modalOverlay = document.querySelector('.modal-overlay');
   const modal = document.querySelector('.modal');
   const closeModalButton = document.getElementById('close-modal');
+  const warningsBox = document.getElementById('simulation-warnings');
+  const warningsList = warningsBox.querySelector('ul');
   let simulationRunning = false;
   let lastSimulation = null;
   let modalReturnFocus = null;
@@ -170,12 +172,18 @@ document.addEventListener('DOMContentLoaded', function() {
     simulationStatus.dataset.state = state;
   }
 
-  function showSimulationMessage(title, message, state) {
+  function showSimulationMessage(title, message, state, warnings = []) {
     if (modalOverlay.style.display === 'none') {
       modalReturnFocus = document.activeElement === document.body ? simulateButton : document.activeElement;
     }
     document.getElementById('simulation-title').textContent = title;
     document.getElementById('simulation-results').textContent = message;
+    warningsList.replaceChildren(...warnings.map(warning => {
+      const item = document.createElement('li');
+      item.textContent = warning;
+      return item;
+    }));
+    warningsBox.hidden = warnings.length === 0;
     modal.dataset.state = state;
     modalOverlay.style.display = 'block';
     closeModalButton.focus();
@@ -254,12 +262,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
       // The Backend validates the original BPMN XML before executing it, so
       // unsupported elements remain editable without silently changing semantics.
-      const body = {
-        content,
-        diagramXML,
-        filename: 'esperTasks.txt',
-        diagramfilename: 'diagram.bpmn'
-      };
+      const body = { content, diagramXML };
       const controller = new AbortController();
 
       // Allow the server watchdog to stop Python and return its own error first.
@@ -291,10 +294,18 @@ document.addEventListener('DOMContentLoaded', function() {
         throw new Error('El Backend devolvió una respuesta sin resultados válidos.');
       }
 
-      lastSimulation = data.simulation;
+      const warnings = Array.isArray(data.warnings)
+        ? data.warnings.filter(warning => typeof warning === 'string')
+        : [];
+      lastSimulation = { xes: data.simulation, warnings };
       lastSimulationButton.disabled = false;
-      setSimulationStatus('Simulación completada. Los resultados están disponibles en «Última simulación».', 'success');
-      showSimulationMessage('Resultados de la simulación', lastSimulation, 'success');
+      if (warnings.length) {
+        const count = warnings.length === 1 ? '1 aviso' : `${warnings.length} avisos`;
+        setSimulationStatus(`Simulación completada con ${count}. Puedes revisarlos en «Última simulación».`, 'warning');
+      } else {
+        setSimulationStatus('Simulación completada. Los resultados están disponibles en «Última simulación».', 'success');
+      }
+      showSimulationMessage('Resultados de la simulación', lastSimulation.xes, 'success', warnings);
     } catch (err) {
       const preserved = lastSimulation !== null ? ' Se conserva la última simulación completada.' : '';
       setSimulationStatus(`No se pudo completar la simulación.${preserved}`, 'error');
@@ -310,7 +321,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   lastSimulationButton.addEventListener('click', () => {
     if (lastSimulation !== null) {
-      showSimulationMessage('Última simulación completada', lastSimulation, 'success');
+      showSimulationMessage('Última simulación completada', lastSimulation.xes, 'success', lastSimulation.warnings);
     }
   });
 

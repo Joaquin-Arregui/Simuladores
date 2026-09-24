@@ -76,7 +76,19 @@ a:link { text-decoration: none; }
 .simulation-status[data-state="running"] { color: #164b76; border-color: #8bb5d7; }
 .simulation-status[data-state="error"] { color: #9e2020; border-color: #dca1a1; }
 .simulation-status[data-state="success"] { color: #17602f; border-color: #8ebe9b; }
+.simulation-status[data-state="warning"] { color: #7a4d00; border-color: #e0bd72; }
 .modal[data-state="error"] h2 { color: #9e2020; }
+
+.simulation-warnings {
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border: 1px solid #e0bd72;
+  border-radius: 4px;
+  background: #fff8e6;
+  color: #5c3b00;
+}
+.simulation-warnings h3 { margin: 0 0 4px; font-size: 14px; }
+.simulation-warnings ul { margin: 0; padding-left: 18px; }
 
 /* Contenedor principal para la entrada y el botón */
 .user-task-item {

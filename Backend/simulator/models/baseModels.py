@@ -27,10 +27,11 @@ class BPMNParticipant(BPMNElement):
         self.contained_elements = contained_elements
 
 class BPMNLane(BPMNElement):
-    def __init__(self, name: str, id_bpmn: str, bpmn_type: str, users: List[str], contained_elements: List[str]):
+    def __init__(self, name: str, id_bpmn: str, bpmn_type: str, users: List[str], contained_elements: List[str], parent_lane: str = None):
         super().__init__(name, id_bpmn, bpmn_type)
         self.users = users
         self.contained_elements = contained_elements
+        self.parent_lane = parent_lane
 
 class BPMNSequenceFlow(BPMNElement):
     def __init__(self, name: str, id_bpmn: str, bpmn_type: str, superElement: BPMNElement, subElement: BPMNElement, percentageOfBranches: float = None):

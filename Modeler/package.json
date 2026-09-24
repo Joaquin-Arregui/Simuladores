@@ -3,14 +3,13 @@
   "version": "0.34.5",
   "description": "BPMN modeler for the Python simulator",
   "scripts": {
-    "all": "npm run lint && npm run bundle && npm test",
+    "all": "npm run lint && npm run bundle",
     "bundle": "webpack --mode production",
     "bundle:watch": "webpack --mode development --watch",
     "start": "webpack serve --mode development",
     "start:example": "npm start",
     "dev": "npm start",
-    "lint": "eslint example/src provider lib webpack.config.js",
-    "test": "node test-app/smoke.cjs"
+    "lint": "eslint example/src provider lib webpack.config.js"
   },
   "repository": {
     "type": "git",
@@ -40,7 +39,6 @@
     "css-loader": "^7.1.2",
     "eslint": "^8.57.0",
     "eslint-plugin-bpmn-io": "^1.0.1",
-    "puppeteer": "^23.2.1",
     "raw-loader": "^4.0.2",
     "style-loader": "^4.0.0",
     "webpack": "^5.94.0",

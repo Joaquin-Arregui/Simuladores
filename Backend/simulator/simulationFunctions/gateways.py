@@ -9,7 +9,7 @@ def getPercentOfBranches(elements, gateway):
             else:
                 possibleElements[element.id_bpmn] = element.percentageOfBranches / 100
     total_assigned_percent = sum([v for v in possibleElements.values() if v is not None])
-    remaining_percent = 1 - total_assigned_percent
+    remaining_percent = max(1 - total_assigned_percent, 0)
     if none_elements:
         equal_percent = remaining_percent / len(none_elements)
         for sub_element in none_elements:

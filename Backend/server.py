@@ -37,7 +37,7 @@ def startSimulation():
         return jsonify({"error": "diagramXML debe contener un documento BPMN válido."}), 400
 
     try:
-        simulation = processSimulation(rules.strip(), diagram_xml=diagram_xml)
+        result = processSimulation(rules.strip(), diagram_xml=diagram_xml)
     except ValueError as error:
         return jsonify({"error": str(error)}), 400
     except SimulationTimeoutError as error:
@@ -54,7 +54,7 @@ def startSimulation():
         app.logger.exception("Unexpected simulation error.")
         return jsonify({"error": "Error interno del simulador. Consulta la consola del Backend."}), 500
 
-    return jsonify({"simulation": simulation})
+    return jsonify({"simulation": result.simulation, "warnings": result.warnings})
 
 if __name__ == '__main__':
     app.run(port=3000, debug=False)

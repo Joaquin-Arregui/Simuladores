@@ -12,7 +12,8 @@
       "extends": [
         "bpmn:ManualTask",
         "bpmn:UserTask",
-        "bpmn:Task"
+        "bpmn:Task",
+        "bpmn:CallActivity"
       ],
       "properties": [
         {

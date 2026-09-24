@@ -248,7 +248,9 @@ function getAllRelevantTasks(bpmnModeler) {
     const userTasks = arr(bo.UserTask).filter((s) => typeof s === 'string' && s.trim());
     const numberOfExecutions = bo.NumberOfExecutions ?? 1;
     const minimumTime = bo.minimumTime ?? 0;
-    const maximumTime = bo.maximumTime ?? 0;
+
+    // Sin tiempo máximo, la tarea dura exactamente el tiempo mínimo.
+    const maximumTime = bo.maximumTime ?? minimumTime;
     const loopParameter = (bo.loopParameter ?? undefined);
     const loopCharacteristics = bo.loopCharacteristics ?? undefined;
     const multiInstance = bo.loopCharacteristics?.isSequential;
@@ -259,6 +261,7 @@ function getAllRelevantTasks(bpmnModeler) {
     let userWithoutRole = [];
     let frequency = 0;
     let containedElements = ids(bo.flowNodeRef);
+    let parentLane = '';
 
     if (isCollab) {
       if (bo.instance !== undefined) instance = bo.instance;
@@ -287,6 +290,10 @@ function getAllRelevantTasks(bpmnModeler) {
     } else if (isLane) {
       userWithoutRole = arr(bo.userWithoutRole).map((r) => String(r).trim()).filter(Boolean);
       containedElements = ids(bo.flowNodeRef);
+
+      // Un subcarril cuelga de un childLaneSet cuyo padre es otro carril.
+      const laneSetParent = bo.$parent?.$parent;
+      parentLane = laneSetParent?.$type === 'bpmn:Lane' ? laneSetParent.id : '';
 
     } else if (isProcess) {
       if (bo.instance !== undefined) instance = bo.instance;
@@ -353,7 +360,8 @@ function getAllRelevantTasks(bpmnModeler) {
       loopCharacteristics,
       multiInstance,
       AdditionalIntegerParameter,
-      containedElements
+      containedElements,
+      parentLane
     };
   });
 }
@@ -375,7 +383,6 @@ function exportToEsper(bpmnModeler) {
         content += `id_bpmn="${safe(element.id_bpmn) || 'Unknown'}", `;
 
         if (element.time) {
-          console.log(element);
           content += `time=${element.time}, `;
         }
 
@@ -438,7 +445,8 @@ function exportToEsper(bpmnModeler) {
             ? element.containedElements.map(el => `"${safe(el)}"`).join(', ')
             : '""';
 
-          content += `userWithoutRole=[${userWithoutRole}], containedElements=[${containedElements}]]\n`;
+          const parentLane = element.parentLane ? `, parentLane="${safe(element.parentLane)}"` : '';
+          content += `userWithoutRole=[${userWithoutRole}], containedElements=[${containedElements}]${parentLane}]\n`;
 
         } else if (element.type === 'bpmn:Process') {
           content += `instances=${element.Instances}, `;

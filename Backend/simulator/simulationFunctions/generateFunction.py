@@ -13,6 +13,7 @@ GENERAL_TASKS = {
     "BPMNBusinessRuleTask",
     "BPMNScriptTask",
     "BPMNServiceTask",
+    "BPMNCallActivity",
 }
 
 SPECIFIC_HANDLERS = {
