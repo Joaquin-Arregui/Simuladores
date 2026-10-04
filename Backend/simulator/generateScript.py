@@ -36,7 +36,7 @@ def _metadata(element, elements):
     return ET.tostring(root, encoding='unicode')
 
 
-def generateScript(elements, process, starts, messageStarts, start_date=DEFAULT_START_DATE):
+def generateScript(elements, process, starts, messageStarts, start_date=DEFAULT_START_DATE, *, seed):
     element = elements[process]
     is_process = element.bpmn_type == 'bpmn:Process'
     flows = {item.id_bpmn: (item.superElement, item.subElement)
@@ -79,6 +79,7 @@ def generateScript(elements, process, starts, messageStarts, start_date=DEFAULT_
         'taskUsers': task_users,
         'isProcess': is_process,
         'simulationStartDate': start_date,
+        'simulationSeed': seed,
         'generatedData': elements['generatedData'], 'requiredData': elements['requiredData'],
         'dataInfo': elements['dataInfo'], 'defaultData': elements['defaultData'],
         'sequenceFlows': flows, 'outgoingFlows': outgoing, 'incomingFlows': incoming,

@@ -299,6 +299,9 @@ def _run_simulation():
     global env, simulationResults, user_queue, user_assignments, user_task_count
     global messages, message_waiters, data, data_changed, active_tokens, pending_joins
     global reachability, completed, startDate
+    # Every draw (durations, gateways, loops) comes from this generator, so the
+    # seed alone fixes the run.
+    random.seed(simulationSeed)
     env = simpy.Environment()
     startDate = datetime.fromisoformat(simulationStartDate)
     simulationResults = {f'Instance {i + 1}': [] for i in range(nInstances)}
@@ -325,7 +328,8 @@ def _run_simulation():
              '  <extension name="Concept" prefix="concept" uri="http://www.xes-standard.org/concept.xesext"/>',
              '  <extension name="Time" prefix="time" uri="http://www.xes-standard.org/time.xesext"/>',
              '  <classifier name="Activity (by BPMN ID)" keys="bpmn:id" scope="event"/>',
-             '  ' + ET.tostring(metadata, encoding='unicode')]
+             '  ' + ET.tostring(metadata, encoding='unicode'),
+             f'  <int key="simulation:seed" value="{simulationSeed}"/>']
     for name, events in simulationResults.items():
         trace = ET.Element('trace')
         ET.SubElement(trace, 'string', key='concept:name', value=name)

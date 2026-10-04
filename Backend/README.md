@@ -29,10 +29,12 @@ detectar elementos y comportamientos BPMN que las reglas no representan. La
 ejecución utiliza las reglas. Los clientes que envíen solo reglas reciben la
 validación de ese formato, sin la comprobación adicional del XML original.
 
-Una simulación correcta devuelve el XES y los avisos:
+El campo opcional `seed` fija la semilla de la simulación; ver [Semilla](#semilla).
+
+Una simulación correcta devuelve el XES, los avisos y la semilla usada:
 
 ```json
-{ "simulation": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>...", "warnings": [] }
+{ "simulation": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>...", "warnings": [], "seed": 2841937403 }
 ```
 
 `warnings` enumera lo que el simulador ha ignorado para poder ejecutar el modelo,
@@ -75,6 +77,27 @@ Un valor inválido impide simular y devuelve un error de configuración. El
 Modeler consulta este límite antes de enviar la simulación. Su espera de red
 añade un margen de 15 segundos; una desconexión del navegador no confirma que
 el servidor haya cancelado la ejecución.
+
+## Semilla
+
+Toda la aleatoriedad de una simulación sale de una sola semilla: la duración de
+cada tarea, la rama de cada compuerta y las repeticiones de los bucles. Con las
+mismas reglas, la misma semilla y la misma fecha de inicio
+(`SIMULATION_START_DATE`), dos ejecuciones dan exactamente el mismo XES.
+
+La semilla llega en el campo opcional `seed` de `POST /simulate`: un entero entre
+0 y 9007199254740991 (el mayor que JavaScript conserva exacto), como número o
+como texto. Si falta o llega vacío, el motor genera una entre 0 y 4294967295. En
+los dos casos la respuesta la devuelve en `seed` y el XES la guarda como atributo
+del log:
+
+```xml
+<int key="simulation:seed" value="2841937403"/>
+```
+
+Para repetir una simulación basta con volver a enviar esa semilla. El proceso de
+simulación se lanza además con `PYTHONHASHSEED=0`, así que tampoco el orden
+interno de los conjuntos de Python cambia de una ejecución a otra.
 
 ## Ejecución y soporte
 

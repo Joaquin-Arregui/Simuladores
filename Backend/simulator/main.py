@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 import json
 import os
 from pathlib import Path
+import secrets
 import subprocess
 import sys
 from tempfile import TemporaryDirectory
@@ -14,11 +15,14 @@ from simulator.validation import validate_diagram_xml, validate_simulation
 
 
 DEFAULT_TIMEOUT_SECONDS = 300
+# Largest seed that stays exact in JavaScript (Number.MAX_SAFE_INTEGER) and in an XES int.
+MAX_SEED = 2**53 - 1
 
 
 class SimulationResult(NamedTuple):
     simulation: str
     warnings: List[str]
+    seed: int
 
 
 class SimulationConfigurationError(RuntimeError):
@@ -66,6 +70,24 @@ def get_simulation_start_date() -> str:
     return moment.isoformat()
 
 
+def resolve_seed(value=None) -> int:
+    """Seed for every random draw of a run: the given one or, if empty, a new one.
+
+    Accepts a non-negative integer or its decimal text. Negative values are
+    rejected because random.seed() ignores the sign, so -7 would repeat 7.
+    """
+    if value is None or (isinstance(value, str) and not value.strip()):
+        # Short enough to read off the log and type back in.
+        return secrets.randbelow(2**32)
+    if isinstance(value, str) and value.strip().isascii() and value.strip().isdigit():
+        value = int(value.strip())
+    if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value <= MAX_SEED:
+        raise ValueError(
+            f"seed debe ser un entero entre 0 y {MAX_SEED}; si se deja vacío, el motor genera una semilla."
+        )
+    return value
+
+
 # Keep diagnostic files inside the same temporary directory as the simulation.
 CHILD_RUNNER = """
 import json
@@ -85,8 +107,12 @@ except Exception as error:
 """
 
 
-def processSimulation(rules: str, *, diagram_xml=None, timeout_seconds=None) -> SimulationResult:
-    """Validate and run BPMN rules; return the XES and any warnings when execution completes."""
+def processSimulation(rules: str, *, diagram_xml=None, timeout_seconds=None, seed=None) -> SimulationResult:
+    """Validate and run BPMN rules; return the XES, any warnings and the seed used.
+
+    The same rules, seed and start date always produce the same XES. Without a
+    seed, one is generated; either way the log records it.
+    """
     if not isinstance(rules, str) or not rules.strip():
         raise ValueError("Faltan las reglas de simulación en content.")
     if timeout_seconds is None:
@@ -94,12 +120,14 @@ def processSimulation(rules: str, *, diagram_xml=None, timeout_seconds=None) -> 
     if isinstance(timeout_seconds, bool) or not isinstance(timeout_seconds, int) or timeout_seconds <= 0:
         raise SimulationConfigurationError("El límite de ejecución debe ser un entero positivo.")
     start_date = get_simulation_start_date()
+    seed = resolve_seed(seed)
     warnings = []
     if diagram_xml is not None:
         validate_diagram_xml(diagram_xml, warnings)
     elements, process, starts, message_starts = parse_bpmn_elements(rules, warnings)
     validate_simulation(elements, process, starts, message_starts, warnings)
-    script, _ = generateScript(elements, process, starts, message_starts, start_date=start_date)
+    script, _ = generateScript(elements, process, starts, message_starts,
+                               start_date=start_date, seed=seed)
 
     with TemporaryDirectory(prefix="simbpmn-") as directory:
         workdir = Path(directory)
@@ -115,6 +143,8 @@ def processSimulation(rules: str, *, diagram_xml=None, timeout_seconds=None) -> 
                 encoding="utf-8",
                 errors="replace",
                 timeout=timeout_seconds,
+                # Fixed string hashing: set iteration order cannot vary between runs.
+                env={**os.environ, "PYTHONHASHSEED": "0"},
             )
         except subprocess.TimeoutExpired as error:
             raise SimulationTimeoutError(
@@ -142,4 +172,4 @@ def processSimulation(rules: str, *, diagram_xml=None, timeout_seconds=None) -> 
             raise SimulationInternalError("El simulador generó un registro XES no válido.") from error
         if document.tag != "{http://www.xes-standard.org/}log":
             raise SimulationInternalError("El resultado no es un registro XES.")
-        return SimulationResult(result, warnings)
+        return SimulationResult(result, warnings, seed)
