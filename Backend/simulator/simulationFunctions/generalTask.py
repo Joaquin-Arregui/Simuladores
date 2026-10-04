@@ -1,7 +1,7 @@
 def generalTask(elements, element, script):
     from simulator.simulationFunctions.generateFunction import generateFunction, function_name, xml_template
     functionStr = f"""
-def {function_name(element.id_bpmn)}(env, caso):
+def {function_name(element.id_bpmn)}(env, caso, contexto):
     def executeTask(env, TaskName, caso, execution):
         start_standBy = env.now
         possibleUsers = resolve_possible_users({element.userTask}, TaskName)

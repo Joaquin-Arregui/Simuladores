@@ -4,7 +4,8 @@ from pathlib import Path
 from xml.etree import ElementTree as ET
 
 from simulator.simulationFunctions.generateFunction import generateFunction
-from simulator.validation import TASK_TYPES, resolve_participant_instances, task_base_users
+from simulator.validation import (TASK_TYPES, resolve_participant_instances,
+                                  resolve_reply_contexts, task_base_users)
 
 DEFAULT_START_DATE = '2026-01-01T00:00:00+00:00'
 
@@ -139,6 +140,9 @@ def generateScript(elements, process, starts, messageStarts, start_date=DEFAULT_
         node_id = getattr(item, 'id_bpmn', None)
         if node_id is not None:
             element_participant.setdefault(node_id, participants[0] if is_process else process)
+    # A que recepcion responde cada envio, para que dos conversaciones del mismo
+    # caso no compartan la anotacion del remitente.
+    reply_contexts = resolve_reply_contexts(elements, element_participant)
     # Cuantas instancias simula cada pool. Sin marcadores todos heredan el
     # numero de la colaboracion, que es como se comportaba hasta la tarea 2.1.
     instancias = resolve_participant_instances(elements, process)
@@ -175,6 +179,7 @@ def generateScript(elements, process, starts, messageStarts, start_date=DEFAULT_
         'sequenceFlows': flows, 'outgoingFlows': outgoing, 'incomingFlows': incoming,
         'joinTypes': joins, 'startEvents': start_events,
         'destinosExternos': external_targets,
+        'recepcionDeRespuesta': reply_contexts,
         'endEvents': [item.id_bpmn for item in elements.values()
                       if type(item).__name__ == 'BPMNEndEvent'],
         'logMetadata': _metadata(element, elements),

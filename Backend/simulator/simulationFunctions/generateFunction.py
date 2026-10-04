@@ -42,7 +42,11 @@ def xml_template(value):
 def generateFunction(elements, element_id, script=''):
     # Functions precede their successors. An existing definition closes a cycle
     # or shared path without recursing forever or emitting duplicate functions.
-    if f'def {function_name(element_id)}(env, caso):' in script:
+    # Se busca el nombre y el parentesis, nunca la firma: la firma ya cambio una
+    # vez —la 2.5 anadio el contexto del token— y entonces esta comprobacion dejo
+    # de reconocer nada, de modo que un ciclo de flujos hacia recursion infinita
+    # hasta el RecursionError. El nombre viene de function_name, que es unico.
+    if f'def {function_name(element_id)}(' in script:
         return script
     element = elements[element_id]
     element_type = type(element).__name__

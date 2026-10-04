@@ -1,7 +1,7 @@
 def intermediateThrowEvent(elements, element, script):
     from simulator.simulationFunctions.generateFunction import generateFunction, function_name, xml_template
     functionStr = f"""
-def {function_name(element.id_bpmn)}(env, caso):
+def {function_name(element.id_bpmn)}(env, caso, contexto):
     simulationResults[caso].append(
 f'''
         <event>
@@ -20,10 +20,10 @@ f'''
 def messageIntermediateCatchEvent(elements, element, script):
     from simulator.simulationFunctions.generateFunction import generateFunction, function_name, xml_template
     functionStr = f"""
-def {function_name(element.id_bpmn)}(env, caso):
+def {function_name(element.id_bpmn)}(env, caso, contexto):
     TaskName = {element.id_bpmn!r}
     start_standby_message = env.now
-    remitente = yield env.process(wait_for_message(env, {element.messageOrigin!r}, TaskName, 1, caso))
+    remitente = yield env.process(wait_for_message(env, {element.messageOrigin!r}, TaskName, 1, caso, contexto))
     end_standby_message = env.now
     duration_standby_message = end_standby_message - start_standby_message
     if duration_standby_message > 0:
@@ -57,11 +57,11 @@ f'''
 def messageIntermediateThrowEvent(elements, element, script):
     from simulator.simulationFunctions.generateFunction import generateFunction, function_name, xml_template
     functionStr = f"""
-def {function_name(element.id_bpmn)}(env, caso):
+def {function_name(element.id_bpmn)}(env, caso, contexto):
     TaskName = {element.id_bpmn!r}
     # Igual que en el envio por tarea: el sobre sale primero para poder anotar a
     # que caso va, y no consume tiempo.
-    destino = publish_message(TaskName, {element.messageDestiny!r}, 1, caso)
+    destino = publish_message(TaskName, {element.messageDestiny!r}, 1, caso, contexto)
     simulationResults[caso].append(
 f'''
         <event>
@@ -82,7 +82,7 @@ f'''
 def timerIntermediateCatchEvent(elements, element, script):
     from simulator.simulationFunctions.generateFunction import generateFunction, function_name, xml_template
     functionStr = f"""
-def {function_name(element.id_bpmn)}(env, caso):
+def {function_name(element.id_bpmn)}(env, caso, contexto):
     # Se registra al terminar la espera: el fin es el real, no el inicio mas la
     # duracion nominal, que es lo que el contrato de la 1.6 prohibe deducir.
     start_timer = env.now
@@ -107,7 +107,7 @@ f'''
 def endEvent(elements, element, script):
     from simulator.simulationFunctions.generateFunction import function_name, xml_template
     functionStr = f"""
-def {function_name(element.id_bpmn)}(env, caso):
+def {function_name(element.id_bpmn)}(env, caso, contexto):
     simulationResults[caso].append(
 f'''
         <event>

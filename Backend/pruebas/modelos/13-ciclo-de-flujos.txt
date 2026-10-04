@@ -1,0 +1,21 @@
+# Modelo de referencia 13 - un ciclo de FLUJOS DE SECUENCIA.
+# Ningun otro modelo lo tenia: el "bucle" del 03 es un loopParameter, o sea una
+# tarea que se repite sobre si misma, y no vuelve atras por un flujo. Aqui
+# Decidir devuelve el token a Trabajar por f3 o lo cierra por f4, asi que el
+# generador tiene que reconocer que la funcion de Trabajar ya esta escrita y
+# cortar la recursion. Mientras esa comprobacion estuvo atada a la firma de las
+# funciones generadas, no reconocia ninguna y la generacion se iba al
+# RecursionError: un 500, sin que ningun modelo del banco lo viera.
+# Que mirar en el XES: cada pasada por Trabajar y por Decidir tiene su propia
+# ocurrencia, y cada paso por el gateway deja escrita la rama elegida. El unico
+# usuario del proceso ademas hace que las dos instancias se esperen, asi que el
+# ciclo y la cola se cruzan en el mismo registro.
+Element: [type=bpmn:Process, id_bpmn='Proceso', name='Reintento', instances=2, frequency=30, userWithoutRole=['Ana'], userWithRole={}]
+Element: [type=bpmn:StartEvent, id_bpmn='Ini', name='Entra el expediente', subTask='Trabajar']
+Element: [type=bpmn:Task, id_bpmn='Trabajar', name='Trabajar el expediente', userTask='Ana', numberOfExecutions=1, minimumTime=10, maximumTime=20, subTask='Decidir']
+Element: [type=bpmn:ExclusiveGateway, id_bpmn='Decidir', name='Vale o se repite', subTask='Trabajar,Fin']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin', name='Expediente cerrado', subTask='']
+Element: [type=bpmn:SequenceFlow, id_bpmn='f1', name='', superElement='Ini', subElement='Trabajar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='f2', name='', superElement='Trabajar', subElement='Decidir']
+Element: [type=bpmn:SequenceFlow, id_bpmn='f3', name='', superElement='Decidir', subElement='Trabajar', percentageOfBranches=40]
+Element: [type=bpmn:SequenceFlow, id_bpmn='f4', name='', superElement='Decidir', subElement='Fin', percentageOfBranches=60]

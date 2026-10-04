@@ -1,10 +1,10 @@
 def receiveTask(elements, element, script):
     from simulator.simulationFunctions.generateFunction import generateFunction, function_name, xml_template
     functionStr = f"""
-def {function_name(element.id_bpmn)}(env, caso):
+def {function_name(element.id_bpmn)}(env, caso, contexto):
     def executeTask(env, TaskName, caso, execution):
         start_standby_message = env.now
-        remitente = yield env.process(wait_for_message(env, {element.messageOrigin!r}, TaskName, execution, caso))
+        remitente = yield env.process(wait_for_message(env, {element.messageOrigin!r}, TaskName, execution, caso, contexto))
         end_standby_message = env.now
         duration_standby_message = end_standby_message - start_standby_message
         if duration_standby_message > 0:

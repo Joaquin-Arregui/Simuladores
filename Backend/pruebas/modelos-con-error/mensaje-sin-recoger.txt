@@ -1,0 +1,23 @@
+# Tres solicitudes y una sola recepcion: el orquestador declara que recoge una
+# vez, asi que dos sobres se quedan en el buzon. D6 dice que todo mensaje que se
+# envia se recibe, de modo que esto es un modelo mal planteado y el motor lo
+# denuncia nombrando el emisor, el receptor y el caso destino.
+# Antes de la 2.5 este modelo era el de "sin destino": con la clave por indice
+# terminaba BIEN perdiendo dos solicitudes, y con la clave por caso destino
+# fallaba por no tener a quien escribir. Ahora el N a 1 ya sabe a donde va, y lo
+# que queda al descubierto es la perdida: la recepcion tendria que ser
+# multiinstancia, que es la 3.2.
+Element: [type=bpmn:Collaboration, id_bpmn='Colaboracion', name='Sin destino', instances=1]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Orquestador', name='Orquestador', frequency=0, userWithoutRole=['Ana'], instances=1, participantMultiplicity='true', orchestrationRole='orchestrator', containedElements=['Ini_O', 'Recoger', 'Fin_O', 'o1', 'o2']]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Orquestado', name='Orquestado', frequency=25, userWithoutRole=['Beto'], instances=3, participantMultiplicity='true', orchestrationRole='orchestrated', containedElements=['Ini_R', 'Solicitar', 'Fin_R', 'r1', 'r2']]
+Element: [type=bpmn:StartEvent, id_bpmn='Ini_O', name='Arranca la convocatoria', subTask='Recoger']
+Element: [type=bpmn:ReceiveTask, id_bpmn='Recoger', name='Recoger una solicitud', userTask='Ana', numberOfExecutions=1, minimumTime=5, maximumTime=10, subTask='Fin_O']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_O', name='Fin del orquestador', subTask='']
+Element: [type=bpmn:StartEvent, id_bpmn='Ini_R', name='Arranca el solicitante', subTask='Solicitar']
+Element: [type=bpmn:SendTask, id_bpmn='Solicitar', name='Enviar la solicitud', userTask='Beto', numberOfExecutions=1, minimumTime=10, maximumTime=20, subTask='Fin_R']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_R', name='Fin del solicitante', subTask='']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o1', name='', superElement='Ini_O', subElement='Recoger']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o2', name='', superElement='Recoger', subElement='Fin_O']
+Element: [type=bpmn:SequenceFlow, id_bpmn='r1', name='', superElement='Ini_R', subElement='Solicitar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='r2', name='', superElement='Solicitar', subElement='Fin_R']
+Element: [type=bpmn:MessageFlow, id_bpmn='Solicitud', name='Solicitud', superElement='Solicitar', subElement='Recoger']

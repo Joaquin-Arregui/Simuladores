@@ -160,37 +160,98 @@ def liberar_usuario(taskName, user):
     cola_de(taskName).release(user)
 
 
-def destino_de(origin, target, caso):
-    """El caso al que va un mensaje, que es la clave con la que se guarda.
+def nuevo_contexto(padres):
+    """Identidad del token que se crea, con los contextos de los que viene.
 
-    Una respuesta vuelve al caso que escribio: el sobre trae el remitente y la
-    recepcion lo anota, asi que basta consultarlo. De eso vive la clave por caso
-    destino el dia que los indices de los dos pools no coincidan, que es a donde
-    llevan las convocatorias sucesivas: el indice de un orquestado no se
-    reutiliza, asi que deja de parecerse al del orquestador.
+    Cada token estrena contexto, y eso es lo que distingue dos activaciones de
+    la MISMA recepcion: las dos numeran sus ejecuciones desde 1, asi que sin
+    esto comparten anotacion y una respuesta vuelve a quien no escribio. El ID
+    de la recepcion no basta, porque es el mismo en las dos.
 
-    En el primer mensaje de una conversacion no hay a quien responder, y el
-    destino se busca por indice entre los casos del pool de enfrente: es el
-    emparejamiento 1:1 que D2 conserva en una colaboracion sin marcadores. Lo
-    que cambia respecto de antes es que el indice ya no es la clave, solo la
-    forma de encontrarse. El encaminamiento 1 a N y N a 1 es la tarea 2.5.
+    Los padres hacen que una respuesta siga encontrando la anotacion de una
+    recepcion anterior de su camino, aunque entre las dos haya habido un corte o
+    una union: _anotacion sube por ellos. Una union tiene varios padres, los de
+    los tokens que ha juntado, porque la respuesta puede estar respondiendo a
+    algo recogido en cualquiera de sus ramas.
     """
-    participante = elementParticipant[target]
-    anotado = correspondientes.get((caso, participante))
-    if anotado is not None:
-        return anotado
-    for otro in casos_de(participante):
-        if otro.indice == caso.indice:
-            return otro
+    global contador_contextos
+    contador_contextos += 1
+    contextos_padres[contador_contextos] = tuple(padres)
+    return contador_contextos
+
+
+def _anotacion(caso, recepcion, execution, contexto):
+    """El remitente que anoto esa recepcion para este token, subiendo por los
+    contextos de los que viene hasta encontrarlo."""
+    vistos, frontera = {contexto}, [contexto]
+    while frontera:
+        siguiente = []
+        for ctx in frontera:
+            anotado = correspondientes.get((caso, ctx, recepcion, execution))
+            if anotado is not None:
+                return anotado
+            for padre in contextos_padres.get(ctx, ()):
+                if padre not in vistos:
+                    vistos.add(padre)
+                    siguiente.append(padre)
+        frontera = siguiente
     return None
 
 
-def publish_message(origin, target, execution, caso):
-    """Deja el sobre en el buzon del caso destino y devuelve ese caso.
+def destino_de(origin, target, caso, execution, contexto):
+    """El caso al que va un sobre, o None si ninguna regla le asigna uno.
 
-    El sobre no lleva nada mas que el remitente: con el gateway de porcentajes
-    el veredicto del orquestador no decide la rama del orquestado, asi que no
-    viaja resultado, ni motivo, ni etapa, ni caracter.
+    Un sobre tiene un solo destinatario. Cuatro reglas, y el orden importa:
+
+    1. Si este envio responde a una recepcion y esa recepcion anoto un remitente
+       en ESTA ejecucion, la respuesta vuelve a quien escribio. La anotacion es
+       por recepcion y por ejecucion: por ejecucion porque con N a 1 una sola
+       anotacion mandaria todas las respuestas al ultimo remitente recogido, y
+       por recepcion y por token porque cada activacion de una tarea numera sus
+       ejecuciones desde 1, asi que dos recepciones del mismo caso, o dos
+       activaciones de la misma, se pisarian el contexto. A que recepcion
+       responde cada envio lo resuelve resolve_reply_contexts sobre el dibujo.
+    2. Si el pool de enfrente tiene un solo caso, ese es el destino. Es el N a 1:
+       los N orquestados escriben al unico orquestador.
+    3. Si los dos pools tienen el mismo numero de casos, se emparejan por
+       indice. Es el 1:1 que D2 conserva en una colaboracion sin marcadores, y va
+       antes que la regla siguiente para que N contra N no se cruce.
+    4. Si quien envia es un pool de un solo caso, el envio es multiinstancia y
+       cada ejecucion escribe a UN caso: el que ocupa esa posicion en el pool de
+       enfrente. Es el 1 a N, y el caso destino no tiene que haber arrancado,
+       por eso la tabla de casos se construye entera antes de lanzar nada (2.2).
+       Hasta la 3.2 el numero de ejecuciones se escribe a mano; si pasa del
+       numero de casos de enfrente, esa ejecucion se queda sin destino y se
+       denuncia, y si se queda corto lo denuncian los casos que nadie atiende.
+
+    Sin regla aplicable no hay destino y publish_message lo dice: entre 3 casos
+    y 5 no hay emparejamiento que el motor pueda adivinar.
+    """
+    recepcion = recepcionDeRespuesta.get(origin)
+    if recepcion is not None:
+        anotado = _anotacion(caso, recepcion, execution, contexto)
+        if anotado is not None:
+            return anotado
+    participante = elementParticipant[target]
+    enfrente, propios = casos_de(participante), casos_de(caso.participante)
+    if len(enfrente) == 1:
+        return enfrente[0]
+    if len(enfrente) == len(propios):
+        return next((otro for otro in enfrente if otro.indice == caso.indice), None)
+    if len(propios) == 1 and 1 <= execution <= len(enfrente):
+        return enfrente[execution - 1]
+    return None
+
+
+def publish_message(origin, target, execution, caso, contexto):
+    """Deja el sobre en el buzon de su caso destino y devuelve ese caso.
+
+    El sobre lleva el remitente y nada mas: con el gateway de porcentajes el
+    veredicto del orquestador no decide la rama del orquestado, asi que no viaja
+    resultado, ni motivo, ni etapa, ni caracter. Tampoco lleva numero de
+    ejecucion, porque la ejecucion es de quien abre el sobre y no del sobre: por
+    eso N sobres comparten el buzon de un mismo caso y el lote se acumula ahi
+    hasta que alguien lo recoge.
     """
     if target in destinosExternos:
         # El MessageFlow apunta al pool, no a un receptor: el mensaje sale de la
@@ -198,13 +259,16 @@ def publish_message(origin, target, execution, caso):
         # emisor sigue su camino, que es lo que hacia antes de la clave por caso
         # destino. No es lo mismo que un receptor sin caso al que dirigirse.
         return None
-    destino = destino_de(origin, target, caso)
+    destino = destino_de(origin, target, caso, execution, contexto)
     if destino is None:
         raise SimulationError(
             f'El mensaje de {origin} a {target} no tiene caso destino: lo envia '
-            f'{caso} y el pool {elementParticipant[target]} no tiene ningun caso '
-            f'al que dirigirlo.')
-    key = (origin, target, execution, destino)
+            f'{caso} en su ejecucion {execution}, y el pool '
+            f'{elementParticipant[target]} tiene '
+            f'{len(casos_de(elementParticipant[target]))} casos frente a los '
+            f'{len(casos_de(caso.participante))} del suyo, asi que ninguna regla '
+            f'de encaminamiento le asigna un destino.')
+    key = (origin, target, destino)
     if message_waiters[key]:
         message_waiters[key].popleft().succeed(caso)
     else:
@@ -212,20 +276,20 @@ def publish_message(origin, target, execution, caso):
     return destino
 
 
-def wait_for_message(env, origin, target, execution, caso):
+def wait_for_message(env, origin, target, execution, caso, contexto):
     """Espera un sobre dirigido a este caso y devuelve el caso remitente."""
-    key = (origin, target, execution, caso)
+    key = (origin, target, caso)
     if messages[key]:
         remitente = messages[key].popleft()
     else:
         event = env.event()
         message_waiters[key].append(event)
         remitente = yield event
-    # Anotado para que la respuesta sepa volver sin depender del indice. Hay una
-    # anotacion por pool, que es cuanto necesita una conversacion de dos: la
-    # recepcion multiinstancia, donde un caso recibe de varios a la vez, es la
-    # tarea 2.5.
-    correspondientes[(caso, remitente.participante)] = remitente
+    # Una anotacion por sobre recogido: de ESTE token, de ESTA recepcion y de la
+    # ejecucion que lo recoge. La respuesta de esa misma ejecucion vuelve a ESE
+    # remitente, y ni otra recepcion del caso ni otra activacion de esta le pisan
+    # el contexto.
+    correspondientes[(caso, contexto, target, execution)] = remitente
     return remitente
 
 
@@ -291,16 +355,17 @@ def _join_ready(node, caso, counts):
                    for live in live_nodes)
 
 
-def _register(node, caso, incoming_flow=None):
+def _register(node, caso, incoming_flow=None, contexto=None):
     if node in joinTypes:
         if incoming_flow not in incomingFlows[node]:
             raise SimulationError(f'Entrada desconocida en la unión {node} ({caso}).')
         pending_joins[caso].setdefault(node, Counter())[incoming_flow] += 1
-        # Cuando llego el token, para poder medir despues lo que espero aqui.
-        join_waits[caso].setdefault(node, {}).setdefault(incoming_flow, deque()).append(env.now)
+        # Cuando llego el token y de donde viene: lo primero para medir despues
+        # lo que espera aqui, lo segundo para que la union herede su contexto.
+        join_waits[caso].setdefault(node, {}).setdefault(incoming_flow, deque()).append((env.now, contexto))
     else:
         active_tokens[caso][node] += 1
-        env.process(_run_node(node, caso))
+        env.process(_run_node(node, caso, nuevo_contexto([contexto] if contexto is not None else [])))
 
 
 def _release_token(caso, node):
@@ -319,9 +384,9 @@ def _registra_espera_union(caso, node, edge):
     cuando de verdad hubo espera; el ultimo token en llegar no espera nada.
     """
     llegadas = join_waits[caso].get(node, {}).get(edge)
-    inicio = llegadas.popleft() if llegadas else env.now
+    inicio, contexto = llegadas.popleft() if llegadas else (env.now, None)
     if env.now <= inicio:
-        return
+        return contexto
     _append_event(caso, [('string', 'bpmn:type', 'StandByJoin'),
                          ('string', 'bpmn:id', node),
                          ('string', 'bpmn:incomingFlow', edge),
@@ -329,6 +394,7 @@ def _registra_espera_union(caso, node, edge):
                          ('date', 'time:endTime', env.now),
                          ('date', 'time:duration', env.now - inicio),
                          ('int', 'bpmn:instance', caso.indice)])
+    return contexto
 
 
 def _flush_joins(caso):
@@ -340,18 +406,21 @@ def _flush_joins(caso):
         changed = False
         for node, counts in list(joins.items()):
             if _join_ready(node, caso, counts):
+                heredados = []
                 for edge in incomingFlows[node]:
                     if counts[edge]:
                         counts[edge] -= 1
-                        _registra_espera_union(caso, node, edge)
+                        contexto = _registra_espera_union(caso, node, edge)
+                        if contexto is not None:
+                            heredados.append(contexto)
                 if not any(counts.values()):
                     del joins[node]
                 active_tokens[caso][node] += 1
-                env.process(_run_node(node, caso))
+                env.process(_run_node(node, caso, nuevo_contexto(heredados)))
                 changed = True
 
 
-def _route(node, caso, result):
+def _route(node, caso, result, contexto):
     selected = result if isinstance(result, list) else [result]
     edges = []
     for target in selected:
@@ -366,27 +435,27 @@ def _route(node, caso, result):
         raise SimulationError(f'El elemento {node} no tiene una salida ejecutable ({caso}).')
     # Register a complete split atomically, including tokens at join inputs.
     for edge in edges:
-        _register(sequenceFlows[edge][1], caso, edge)
+        _register(sequenceFlows[edge][1], caso, edge, contexto)
 
 
-def _run_node(node, caso):
+def _run_node(node, caso, contexto):
     function_name = 'node_' + node.encode('utf-8').hex()
-    result = yield env.process(globals()[function_name](env, caso))
+    result = yield env.process(globals()[function_name](env, caso, contexto))
     _release_token(caso, node)
-    _route(node, caso, result)
+    _route(node, caso, result, contexto)
     if node in endEvents:
         completed[caso] += 1
     _flush_joins(caso)
 
 
-def _start_event(node, caso, delay):
+def _start_event(node, caso, delay, contexto):
     item = startEvents[node]
     yield env.timeout(delay)
     casosArrancados.add(caso)
     remitente = None
     if item['origin'] is not None:
         start_wait = env.now
-        remitente = yield env.process(wait_for_message(env, item['origin'], node, 1, caso))
+        remitente = yield env.process(wait_for_message(env, item['origin'], node, 1, caso, contexto))
         if env.now > start_wait:
             _append_event(caso, [('string', 'bpmn:type', 'StandByMessage'),
                                 ('string', 'bpmn:id', node),
@@ -402,7 +471,7 @@ def _start_event(node, caso, delay):
         values.append(('string', 'bpmn:messageSender', remitente))
     _append_event(caso, values)
     _release_token(caso, node)
-    _route(node, caso, item['next'])
+    _route(node, caso, item['next'], contexto)
     _flush_joins(caso)
 
 
@@ -413,12 +482,21 @@ def _assert_complete():
               for node, count in tokens.items() if count]
     sin_arrancar = [str(caso) for caso in simulationResults if caso not in casosArrancados]
     missing = [str(caso) for caso in simulationResults if not completed[caso]]
-    if pending or active or missing or sin_arrancar:
+    # Sobres que nadie ha abierto. D6 dice que todo mensaje que se envia se
+    # recibe, asi que uno sin recoger es un modelo mal planteado, y callarlo
+    # seria peor que pararse: la simulacion terminaria con buena cara habiendo
+    # perdido mensajes. Con la difusion de la 2.5 hay muchos mas sobres en
+    # juego, y antes no habia quien lo mirara.
+    sin_recoger = ['%s -> %s (%s)' % (origin, target, destino)
+                   for (origin, target, destino), cola in messages.items() if cola]
+    if pending or active or missing or sin_arrancar or sin_recoger:
         details = []
         if pending:
             details.append('uniones pendientes: ' + ', '.join(pending[:10]))
         if active:
             details.append('elementos esperando mensaje o datos: ' + ', '.join(active[:10]))
+        if sin_recoger:
+            details.append('mensajes enviados que nadie ha recogido: ' + ', '.join(sin_recoger[:10]))
         if sin_arrancar:
             details.append('casos preparados que nunca arrancaron: ' + ', '.join(sin_arrancar[:10]))
         if missing:
@@ -486,6 +564,7 @@ def _finalize_item(item):
 def _run_simulation():
     global env, simulationResults, colasPorParticipante
     global messages, message_waiters, correspondientes
+    global contextos_padres, contador_contextos
     global data, data_changed, active_tokens, pending_joins
     global reachability, completed, startDate, join_waits
     global casosPorParticipante, casosArrancados
@@ -513,7 +592,8 @@ def _run_simulation():
                             for participante in participantesOrden}
     # Un buzon por caso destino, y dentro de cada sobre su remitente.
     messages, message_waiters = defaultdict(deque), defaultdict(deque)
-    correspondientes = {}
+    # Cada token estrena contexto; los padres son los contextos de los que viene.
+    correspondientes, contextos_padres, contador_contextos = {}, {}, 0
     data = {(item, caso) for item in defaultData for caso in simulationResults}
     data_changed = {}
     active_tokens, pending_joins = defaultdict(Counter), defaultdict(dict)
@@ -526,7 +606,8 @@ def _run_simulation():
                 continue
             caso = caso_de(node, indice)
             active_tokens[caso][node] += 1
-            env.process(_start_event(node, caso, (indice - 1) * item['frequency']))
+            env.process(_start_event(node, caso, (indice - 1) * item['frequency'],
+                                     nuevo_contexto([])))
     env.run()
     _assert_complete()
     metadata = ET.fromstring(logMetadata)

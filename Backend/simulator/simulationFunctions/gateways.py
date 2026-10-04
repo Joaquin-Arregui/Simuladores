@@ -20,7 +20,7 @@ def exclusiveGateway(elements, element, script):
     from simulator.simulationFunctions.generateFunction import generateFunction, function_name, xml_template
     possibleElements, percents = getPercentOfBranches(elements, element.id_bpmn)
     functionStr = f"""
-def {function_name(element.id_bpmn)}(env, caso):
+def {function_name(element.id_bpmn)}(env, caso, contexto):
     selectedElement = random.choices({possibleElements}, {percents})[0]
     simulationResults[caso].append(
 f'''
@@ -47,7 +47,7 @@ def parallelGateway(elements, element, script):
                         if type(item).__name__ == 'BPMNSequenceFlow' and
                         item.superElement == element.id_bpmn]
     functionStr = f"""
-def {function_name(element.id_bpmn)}(env, caso):
+def {function_name(element.id_bpmn)}(env, caso, contexto):
     strSelectedElements = ", ".join(sequenceFlows[edge][1] for edge in {possibleElements})
     simulationResults[caso].append(
 f'''
@@ -72,7 +72,7 @@ def inclusiveGateway(elements, element, script):
     from simulator.simulationFunctions.generateFunction import generateFunction, function_name, xml_template
     possibleElements, percents = getPercentOfBranches(elements, element.id_bpmn)
     functionStr = f"""
-def {function_name(element.id_bpmn)}(env, caso):
+def {function_name(element.id_bpmn)}(env, caso, contexto):
     elements = {possibleElements}
     percents = {percents}
     selectedElements = [element for element, percent in zip(elements, percents) if random.random() < percent]

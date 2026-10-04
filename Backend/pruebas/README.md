@@ -34,9 +34,16 @@ mientras el comportamiento no deba cambiar, su XES no debe cambiar.
 | `con-avisos/pool-vacio` | Un pool sin proceso que simular | Que un aviso se convierta en una simulación bloqueada |
 | `con-avisos/parametro-desconocido` | Un parámetro que el simulador no conoce | Que un modelo de una versión más nueva del Modeler deje de cargarse |
 | `con-avisos/instances-sin-marcador` | Un pool con número de instancias pero sin marcador | Que se simule un número distinto del dibujado, en silencio |
+| `10-convocatoria-1-a-n` | Un orquestador y cuatro orquestados: un envio multiinstancia que escribe a un caso por ejecucion, cuatro solicitudes al caso unico y cuatro respuestas | Que una ejecucion escriba al caso equivocado, que las solicitudes se pisen, o que una respuesta vuelva a otro solicitante |
+| `11-dos-conversaciones` | Dos ventanillas en paralelo hablando con el mismo pool, con las solicitudes llegando en orden distinto | Que el contexto de una recepcion pise el de la otra y una ventanilla responda a quien no le escribio |
+| `12-dos-activaciones` | Dos tokens paralelos activando la misma ReceiveTask, con la respuesta retrasada | Que dos activaciones de una recepcion compartan contexto y una respuesta vuelva a quien no escribio |
+| `13-ciclo-de-flujos` | Un ciclo real de flujos de secuencia, con un gateway que reintenta o cierra | Que el generador no reconozca una funcion ya escrita y se vaya a la recursion infinita |
 | `con-avisos/envio-a-pool-externo` | Un mensaje dirigido al pool y no a un receptor | Que un envio que sale de la simulacion acabe en un error interno en vez de en un aviso |
 | `con-avisos/mismo-usuario-en-dos-pools` | El mismo nombre declarado en dos pools | Que dos pools vuelvan a competir por el mismo recurso |
-| `con-error/sin-destino` | Tres orquestados escribiendo a un orquestador de un caso | Que un mensaje sin caso destino se pierda en silencio en vez de denunciarse |
+| `con-error/sin-destino` | Tres agencias escribiendo a cinco oficinas: ni 1 a N, ni N a 1, ni mismo numero | Que el motor se invente un emparejamiento en vez de decir que no hay ninguno |
+| `con-error/respuesta-ambigua` | Dos recepciones del mismo pool unidas antes de una sola respuesta | Que el motor elija por su cuenta a cual de las dos responde |
+| `con-error/respuesta-ambigua-desigual` | Lo mismo, con las dos recepciones a distinta distancia de la respuesta | Que la busqueda corte en la primera distancia y elija una rama en silencio |
+| `con-error/mensaje-sin-recoger` | Tres solicitudes y una sola recepcion declarada | Que dos mensajes enviados se queden sin recoger y la simulacion termine con buena cara |
 | `con-error/usuario-ajeno-al-carril` | Una tarea asignada a alguien de otro carril | Que un modelo imposible se simule a medias en vez de rechazarse con un 400 |
 
 ## Por qué existe `modelos-con-avisos/`
@@ -59,6 +66,10 @@ entera: el modelo ya no está en `modelos/` —no termina— ni en
 `modelos-con-avisos/` —no avisa, falla—, así que sin esta categoría ninguna
 prueba lo mira. El caso que la motivó: un mensaje sin caso destino se perdía en
 silencio y la simulación terminaba con buena cara.
+
+El otro caso que la categoría ya ha pagado: al llegar el encaminamiento N a 1,
+el modelo de «sin destino» dejó de fallar —porque ahora sí sabe a dónde ir— y la
+regresión lo dijo en el acto en vez de dejar el modelo ahí como adorno.
 
 Se congelan el **tipo** y el **mensaje**, y solo de los errores previstos: el
 `ValueError` de validación, que la API traduce a 400, y el

@@ -1,0 +1,1 @@
+ValueError: Responder (bpmn:SendTask): responde a varias recepciones a la vez (Recoger_A, Recoger_B); el motor no puede saber a cual, separa las conversaciones en ramas distintas.

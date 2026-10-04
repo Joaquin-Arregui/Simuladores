@@ -104,6 +104,64 @@ def task_base_users(elements, node_id, is_process):
     return []
 
 
+def resolve_reply_contexts(elements, element_participant):
+    """Para cada envio, la recepcion a la que responde.
+
+    El remitente de un sobre se anota en la recepcion que lo recoge, y la
+    respuesta tiene que leer la anotacion de SU recepcion: dos recepciones del
+    mismo caso numeran sus ejecuciones desde 1, asi que compartir contexto hace
+    que una sobrescriba el de la otra y que una respuesta vuelva a quien no
+    escribio. Ese cruce no bloquea nada, solo deja el registro mal.
+
+    Que recepcion le toca a un envio no lo dice BPMN, y aqui no se inventa
+    vocabulario: se deduce del dibujo. Es la recepcion mas cercana aguas arriba
+    por flujos de secuencia cuyo mensaje venga del mismo pool al que este envio
+    escribe. Si no hay ninguna, el envio abre la conversacion y su destino sale
+    de las cardinalidades.
+
+    Se recorre CADA camino hasta su primera recepcion, y se juntan todas las que
+    aparezcan: cortar en la primera distancia con candidatos dejaba fuera la
+    recepcion de otra rama solo por tener un paso intermedio mas, y el motor
+    elegia en silencio. Si sale mas de una, el modelo es ambiguo y se rechaza.
+    """
+    nodes = {key: value for key, value in elements.items() if hasattr(value, "bpmn_type")}
+    incoming = defaultdict(list)
+    for element in nodes.values():
+        if _kind(element) == "SequenceFlow":
+            incoming[element.subElement].append(element.superElement)
+    contextos = {}
+    for element_id, element in nodes.items():
+        if _kind(element) not in SEND_TYPES:
+            continue
+        destino = getattr(element, "messageDestiny", None)
+        if destino is None:
+            continue
+        pool = element_participant.get(destino)
+        frontera, vistos, candidatos = [element_id], {element_id}, []
+        while frontera:
+            siguiente = []
+            for node in frontera:
+                for previo in incoming[node]:
+                    if previo in vistos:
+                        continue
+                    vistos.add(previo)
+                    origen = getattr(nodes[previo], "messageOrigin", None)
+                    if (_kind(nodes[previo]) in RECEIVE_TYPES and origen is not None
+                            and element_participant.get(origen) == pool):
+                        # Camino agotado: lo que haya mas arriba ya responde a esta.
+                        candidatos.append(previo)
+                    else:
+                        siguiente.append(previo)
+            frontera = siguiente
+        if len(candidatos) > 1:
+            _fail(element, "responde a varias recepciones a la vez (%s); el motor no puede "
+                           "saber a cual, separa las conversaciones en ramas distintas."
+                  % ", ".join(sorted(candidatos)))
+        if candidatos:
+            contextos[element_id] = candidatos[0]
+    return contextos
+
+
 def validate_references(elements, warnings=None):
     """Check references before the parser derives message and container maps."""
     nodes = {key: value for key, value in elements.items() if hasattr(value, "bpmn_type")}

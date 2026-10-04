@@ -1,7 +1,7 @@
 def sendTask(elements, element, script):
     from simulator.simulationFunctions.generateFunction import generateFunction, function_name, xml_template
     functionStr = f"""
-def {function_name(element.id_bpmn)}(env, caso):
+def {function_name(element.id_bpmn)}(env, caso, contexto):
     def executeTask(env, TaskName, caso, execution):
         start_standBy = env.now
         possibleUsers = resolve_possible_users({element.userTask}, TaskName)
@@ -27,7 +27,7 @@ f'''
             yield env.timeout(time)
             # El sobre sale antes de registrar el envio, para poder anotar a que
             # caso va. No consume tiempo, asi que el instante no cambia.
-            destino = publish_message(TaskName, {element.messageDestiny!r}, execution, caso)
+            destino = publish_message(TaskName, {element.messageDestiny!r}, execution, caso, contexto)
             simulationResults[caso].append(
 f'''
         <event>

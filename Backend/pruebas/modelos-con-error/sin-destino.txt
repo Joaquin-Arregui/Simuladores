@@ -1,20 +1,19 @@
-# Un mensaje que no tiene a quien ir: tres orquestados escriben a un
-# orquestador de un solo caso. El encaminamiento N a 1 es la tarea 2.5; hasta
-# entonces el motor tiene que decirlo, nombrando origen y destino.
-# Lo que congela este modelo es justo eso. Con la clave por indice de antes de
-# la 2.4 el modelo terminaba BIEN y perdia dos de las tres solicitudes sin
-# avisar: un resultado falso con buena cara, que es peor que un error.
+# Un mensaje que no tiene a quien ir: 3 agencias escribiendo a 5 oficinas.
+# No hay regla que aplicar. No es N a 1, porque enfrente hay 5; no es 1 a N,
+# porque quien envia tampoco es uno solo; y no hay emparejamiento por indice,
+# porque los numeros no coinciden. El motor lo dice en vez de elegir por su
+# cuenta, nombrando origen, destino y las dos cardinalidades.
 Element: [type=bpmn:Collaboration, id_bpmn='Colaboracion', name='Sin destino', instances=1]
-Element: [type=bpmn:Participant, id_bpmn='Pool_Orquestador', name='Orquestador', frequency=0, userWithoutRole=['Ana'], instances=1, participantMultiplicity='true', orchestrationRole='orchestrator', containedElements=['Ini_O', 'Recoger', 'Fin_O', 'o1', 'o2']]
-Element: [type=bpmn:Participant, id_bpmn='Pool_Orquestado', name='Orquestado', frequency=25, userWithoutRole=['Beto'], instances=3, participantMultiplicity='true', orchestrationRole='orchestrated', containedElements=['Ini_R', 'Solicitar', 'Fin_R', 'r1', 'r2']]
-Element: [type=bpmn:StartEvent, id_bpmn='Ini_O', name='Arranca la convocatoria', subTask='Recoger']
-Element: [type=bpmn:ReceiveTask, id_bpmn='Recoger', name='Recoger una solicitud', userTask='Ana', numberOfExecutions=1, minimumTime=5, maximumTime=10, subTask='Fin_O']
-Element: [type=bpmn:EndEvent, id_bpmn='Fin_O', name='Fin del orquestador', subTask='']
-Element: [type=bpmn:StartEvent, id_bpmn='Ini_R', name='Arranca el solicitante', subTask='Solicitar']
-Element: [type=bpmn:SendTask, id_bpmn='Solicitar', name='Enviar la solicitud', userTask='Beto', numberOfExecutions=1, minimumTime=10, maximumTime=20, subTask='Fin_R']
-Element: [type=bpmn:EndEvent, id_bpmn='Fin_R', name='Fin del solicitante', subTask='']
-Element: [type=bpmn:SequenceFlow, id_bpmn='o1', name='', superElement='Ini_O', subElement='Recoger']
-Element: [type=bpmn:SequenceFlow, id_bpmn='o2', name='', superElement='Recoger', subElement='Fin_O']
-Element: [type=bpmn:SequenceFlow, id_bpmn='r1', name='', superElement='Ini_R', subElement='Solicitar']
-Element: [type=bpmn:SequenceFlow, id_bpmn='r2', name='', superElement='Solicitar', subElement='Fin_R']
-Element: [type=bpmn:MessageFlow, id_bpmn='Solicitud', name='Solicitud', superElement='Solicitar', subElement='Recoger']
+Element: [type=bpmn:Participant, id_bpmn='Pool_Agencia', name='Agencia', frequency=20, userWithoutRole=['Ana'], instances=3, participantMultiplicity='true', containedElements=['Ini_A', 'Remitir', 'Fin_A', 'a1', 'a2']]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Oficina', name='Oficina', frequency=30, userWithoutRole=['Beto'], instances=5, participantMultiplicity='true', containedElements=['Ini_F', 'Recibir', 'Fin_F', 'f1', 'f2']]
+Element: [type=bpmn:StartEvent, id_bpmn='Ini_A', name='Arranca la agencia', subTask='Remitir']
+Element: [type=bpmn:SendTask, id_bpmn='Remitir', name='Remitir el expediente', userTask='Ana', numberOfExecutions=1, minimumTime=10, maximumTime=20, subTask='Fin_A']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_A', name='Fin de la agencia', subTask='']
+Element: [type=bpmn:StartEvent, id_bpmn='Ini_F', name='Arranca la oficina', subTask='Recibir']
+Element: [type=bpmn:ReceiveTask, id_bpmn='Recibir', name='Recibir el expediente', userTask='Beto', numberOfExecutions=1, minimumTime=5, maximumTime=10, subTask='Fin_F']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_F', name='Fin de la oficina', subTask='']
+Element: [type=bpmn:SequenceFlow, id_bpmn='a1', name='', superElement='Ini_A', subElement='Remitir']
+Element: [type=bpmn:SequenceFlow, id_bpmn='a2', name='', superElement='Remitir', subElement='Fin_A']
+Element: [type=bpmn:SequenceFlow, id_bpmn='f1', name='', superElement='Ini_F', subElement='Recibir']
+Element: [type=bpmn:SequenceFlow, id_bpmn='f2', name='', superElement='Recibir', subElement='Fin_F']
+Element: [type=bpmn:MessageFlow, id_bpmn='Expediente', name='Expediente', superElement='Remitir', subElement='Recibir']

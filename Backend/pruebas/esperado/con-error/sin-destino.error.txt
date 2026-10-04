@@ -1,1 +1,1 @@
-SimulationExecutionError: El mensaje de Solicitar a Recoger no tiene caso destino: lo envia Pool_Orquestado - 2 y el pool Pool_Orquestador no tiene ningun caso al que dirigirlo.
+SimulationExecutionError: El mensaje de Remitir a Recibir no tiene caso destino: lo envia Pool_Agencia - 1 en su ejecucion 1, y el pool Pool_Oficina tiene 5 casos frente a los 3 del suyo, asi que ninguna regla de encaminamiento le asigna un destino.
