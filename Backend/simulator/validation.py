@@ -316,6 +316,16 @@ def validate_simulation(elements, process, starts, message_starts, warnings=None
         orchestrators = [p for p in participants if getattr(p, "role", None) == "orchestrator"]
         if len(orchestrators) > 1:
             _fail(orchestrators[1], "solo puede haber un pool orquestador en la colaboración.")
+        # Dos pools pueden declarar el mismo nombre: desde la tarea 2.3 son
+        # personas distintas, cada una en la cola de su pool. Se avisa porque
+        # tambien puede ser un descuido al dibujar.
+        por_nombre = {}
+        for participant in participants:
+            for usuario in participant.users:
+                por_nombre.setdefault(usuario, []).append(participant.id_bpmn)
+        for usuario, pools in sorted(por_nombre.items()):
+            if len(pools) > 1:
+                add_warning(warnings, f"{usuario}: el mismo nombre de usuario está en varios pools ({', '.join(pools)}); cada pool tiene el suyo y no comparten recurso.")
         ownership, simulated = {}, 0
         for participant in participants:
             contained_nodes = set(participant.contained_elements) & set(nodes)

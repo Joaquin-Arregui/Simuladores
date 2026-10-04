@@ -91,27 +91,38 @@ def resolve_possible_users(possibleUsers, taskName):
 
 
 class UserQueue:
-    """Hand out users in order of arrival.
+    """Reparte los usuarios de UN pool por orden de llegada.
 
-    A request takes a free eligible user at once, preferring the one with fewer
-    assignments. Otherwise it waits, and each released user goes to the oldest
-    waiting request that can use it.
+    Hay una cola por participante: dos pools que declaran el mismo nombre tienen
+    cada uno a su persona y no se la quitan. Una peticion toma al momento un
+    usuario libre y elegible, prefiriendo al que menos ha trabajado; si no hay,
+    espera, y cada usuario liberado va a la peticion mas antigua que pueda
+    usarlo.
+
+    Con recursos infinitos se concede siempre al instante y sin ocupar a nadie:
+    el pool orquestado se simula asi porque su contencion no es lo que se quiere
+    medir, y entonces no puede registrar ni una espera.
     """
 
-    def __init__(self, users):
+    def __init__(self, users, infinite=False):
+        self.users = list(users)
         self.free = set(users)
         self.waiting = deque()
+        self.infinite = infinite
+        self.assignments = dict.fromkeys(users, 0)
 
     def acquire(self, eligible):
         request = env.event()
-        candidates = [user for user in eligible if user in self.free]
+        candidates = [user for user in eligible if self.infinite or user in self.free]
         if candidates:
-            self._assign(request, min(candidates, key=lambda user: user_assignments[user]))
+            self._assign(request, min(candidates, key=lambda user: self.assignments.get(user, 0)))
         else:
             self.waiting.append((request, eligible))
         return request
 
     def release(self, user):
+        if self.infinite:
+            return
         self.free.add(user)
         for index, (request, eligible) in enumerate(self.waiting):
             if user in eligible:
@@ -120,9 +131,23 @@ class UserQueue:
                 return
 
     def _assign(self, request, user):
-        self.free.discard(user)
-        user_assignments[user] += 1
+        if not self.infinite:
+            self.free.discard(user)
+        self.assignments[user] = self.assignments.get(user, 0) + 1
         request.succeed(user)
+
+
+def cola_de(taskName):
+    """La cola del pool al que pertenece esa tarea."""
+    return colasPorParticipante[elementParticipant[taskName]]
+
+
+def adquirir_usuario(taskName, possibleUsers):
+    return cola_de(taskName).acquire(possibleUsers)
+
+
+def liberar_usuario(taskName, user):
+    cola_de(taskName).release(user)
 
 
 def publish_message(origin, target, execution, caso):
@@ -398,7 +423,7 @@ def _finalize_item(item):
 
 
 def _run_simulation():
-    global env, simulationResults, user_queue, user_assignments
+    global env, simulationResults, colasPorParticipante
     global messages, message_waiters, data, data_changed, active_tokens, pending_joins
     global reachability, completed, startDate, join_waits
     global casosPorParticipante, casosArrancados
@@ -421,8 +446,9 @@ def _run_simulation():
                          for indice in range(1, maximo + 1)
                          for participante in participantesOrden
                          if indice <= instanciasPorParticipante[participante]}
-    user_assignments = dict.fromkeys(userPool, 0)
-    user_queue = UserQueue(userPool)
+    colasPorParticipante = {participante: UserQueue(usuariosPorParticipante[participante],
+                                                    recursosInfinitos.get(participante, False))
+                            for participante in participantesOrden}
     messages, message_waiters = Counter(), defaultdict(deque)
     data = {(item, caso) for item in defaultData for caso in simulationResults}
     data_changed = {}

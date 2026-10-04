@@ -46,7 +46,8 @@ FIELDS_BY_TYPE = {
     "Process": {"instances", "frequency", "userWithoutRole", "userWithRole"},
     "Collaboration": {"instances"},
     "Participant": {"frequency", "userWithoutRole", "containedElements",
-                    "instances", "participantMultiplicity", "orchestrationRole"},
+                    "instances", "participantMultiplicity", "orchestrationRole",
+                    "infiniteResources"},
     "Lane": {"userWithoutRole", "containedElements", "parentLane"},
     "SequenceFlow": {"superElement", "subElement", "percentageOfBranches"},
     "MessageFlow": {"superElement", "subElement"},
@@ -192,8 +193,12 @@ def parse_bpmn_elements(file_content: str, warnings=None):
                 rol = (rol or "").strip() or None
                 if rol is not None and rol not in {"orchestrator", "orchestrated"}:
                     raise ValueError(f"{element_id}: orchestrationRole debe ser 'orchestrator' u 'orchestrated'.")
+                infinitos = fields.get("infiniteResources")
+                if infinitos not in (None, "true", "false"):
+                    raise ValueError(f"{element_id}: infiniteResources debe ser 'true' o 'false'.")
                 element = BPMNParticipant(*args, get("frequency"), users(), contained,
-                                          fields.get("instances"), marcador == "true", rol)
+                                          fields.get("instances"), marcador == "true", rol,
+                                          infinitos == "true")
         elif kind in FLOW_CLASSES:
             endpoints = (get("superElement", str), get("subElement", str))
             element = (BPMNSequenceFlow(*args, *endpoints, fields.get("percentageOfBranches"))

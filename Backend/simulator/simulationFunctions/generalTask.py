@@ -6,7 +6,7 @@ def {function_name(element.id_bpmn)}(env, caso):
         start_standBy = env.now
         possibleUsers = resolve_possible_users({element.userTask}, TaskName)
         # Users are handed out in order of arrival (see UserQueue in runtime.py).
-        userTask = yield user_queue.acquire(possibleUsers)
+        userTask = yield adquirir_usuario(TaskName, possibleUsers)
         try:
             time = resolve_task_time({element.maximumTime}, {element.minimumTime})
             if env.now > start_standBy: 
@@ -41,7 +41,7 @@ f'''
             <int key="bpmn:instance" value="{{xml_value(caso.indice)}}"/>
         </event>''')
         finally:
-            user_queue.release(userTask)
+            liberar_usuario(TaskName, userTask)
     TaskName = {element.id_bpmn!r}
     if TaskName in requiredData.keys():
         dataObjects = requiredData[TaskName]

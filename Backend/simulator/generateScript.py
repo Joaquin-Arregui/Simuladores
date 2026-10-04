@@ -48,6 +48,26 @@ def _assign_participant(elements, ids, participant, mapping, seen):
         mapping[child] = participant
 
 
+def _lane_participant(elements, lane_id, element_participant, pools):
+    """A que pool pertenece un carril, deducido de los nodos que contiene.
+
+    El Modeler exporta los nodos del pool, pero no los IDs de sus carriles, asi
+    que el carril no llega nunca por `containedElements` y se quedaba colgando
+    de la colaboracion: la cola del pool perdia a sus usuarios. Los nodos si
+    estan, y validate_simulation ya obliga a que sean de un solo participante.
+
+    Los subcarriles se resuelven igual, cada uno por sus propios nodos: bpmn-js
+    lista cada nodo en su carril y en todos los que lo contienen, asi que la
+    cadena entera apunta al mismo pool y los usuarios heredados de un carril
+    padre entran tambien en la cola. Por eso bastan los nodos propios: un carril
+    sin nodos no puede cederle usuarios a ninguna tarea ni por herencia, porque
+    task_base_users solo recorre los carriles que contienen el nodo.
+    """
+    owners = {element_participant.get(child) for child in elements[lane_id].contained_elements}
+    owners &= pools
+    return owners.pop() if len(owners) == 1 else None
+
+
 def generateScript(elements, process, starts, messageStarts, start_date=DEFAULT_START_DATE, *, seed):
     element = elements[process]
     is_process = element.bpmn_type == 'bpmn:Process'
@@ -99,6 +119,14 @@ def generateScript(elements, process, starts, messageStarts, start_date=DEFAULT_
         contained = getattr(elements.get(participant_id), 'contained_elements', None)
         if contained:
             _assign_participant(elements, contained, participant_id, element_participant, set())
+    # Los carriles, despues de sus nodos y antes del valor por defecto: si se
+    # dejan al valor por defecto acaban en la colaboracion y sus usuarios no
+    # llegan a la cola de su pool.
+    pools = set(participants)
+    for lane_id in elements['lanes']:
+        owner = _lane_participant(elements, lane_id, element_participant, pools)
+        if owner is not None:
+            element_participant[lane_id] = owner
     for item in elements.values():
         node_id = getattr(item, 'id_bpmn', None)
         if node_id is not None:
@@ -106,14 +134,30 @@ def generateScript(elements, process, starts, messageStarts, start_date=DEFAULT_
     # Cuantas instancias simula cada pool. Sin marcadores todos heredan el
     # numero de la colaboracion, que es como se comportaba hasta la tarea 2.1.
     instancias = resolve_participant_instances(elements, process)
+    # La plantilla de cada pool y su casilla de recursos infinitos. Las colas
+    # son por pool desde la tarea 2.3: dos pools que declaran el mismo nombre
+    # tienen cada uno su persona.
+    if is_process:
+        pool_users = {process: user_pool}
+        infinite_pools = {process: False}
+    else:
+        pool_users, infinite_pools = {}, {}
+        for participant_id in participants:
+            propios = list(elements[participant_id].users)
+            for lane_id in elements['lanes']:
+                if element_participant.get(lane_id) == participant_id:
+                    propios.extend(elements[lane_id].users)
+            pool_users[participant_id] = list(dict.fromkeys(propios))
+            infinite_pools[participant_id] = bool(getattr(elements[participant_id], 'infinite_resources', False))
     config = {
         'nInstances': element.instances,
+        'usuariosPorParticipante': pool_users,
+        'recursosInfinitos': infinite_pools,
         'participantesOrden': participants,
         'instanciasPorParticipante': {p: instancias[p] for p in participants},
         'elementParticipant': element_participant,
         'rolePool': element.userWithRole if is_process else {},
         'processUsers': process_users,
-        'userPool': user_pool,
         'taskUsers': task_users,
         'isProcess': is_process,
         'simulationStartDate': start_date,

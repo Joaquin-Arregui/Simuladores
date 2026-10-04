@@ -1,0 +1,17 @@
+# Dos pools que declaran el mismo nombre de usuario.
+# Desde la tarea 2.3 son dos personas distintas, cada una en la cola de su pool:
+# las dos tareas corren a la vez en vez de hacer cola. Se avisa porque tambien
+# puede ser un descuido al dibujar, y porque antes de la 2.3 habrian competido.
+Element: [type=bpmn:Collaboration, id_bpmn='Colaboracion', name='Mismo nombre en dos pools', instances=1]
+Element: [type=bpmn:Participant, id_bpmn='Pool_A', name='Oficina A', frequency=0, userWithoutRole=['Ana'], instances=1, participantMultiplicity='true', containedElements=['Ini_A', 'Tarea_A', 'Fin_A', 'a1', 'a2']]
+Element: [type=bpmn:Participant, id_bpmn='Pool_B', name='Oficina B', frequency=0, userWithoutRole=['Ana'], instances=1, participantMultiplicity='true', containedElements=['Ini_B', 'Tarea_B', 'Fin_B', 'b1', 'b2']]
+Element: [type=bpmn:StartEvent, id_bpmn='Ini_A', name='Inicio', subTask='Tarea_A']
+Element: [type=bpmn:Task, id_bpmn='Tarea_A', name='Trabajar en A', userTask='Ana', numberOfExecutions=1, minimumTime=30, maximumTime=30, subTask='Fin_A']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_A', name='Fin', subTask='']
+Element: [type=bpmn:StartEvent, id_bpmn='Ini_B', name='Inicio', subTask='Tarea_B']
+Element: [type=bpmn:Task, id_bpmn='Tarea_B', name='Trabajar en B', userTask='Ana', numberOfExecutions=1, minimumTime=30, maximumTime=30, subTask='Fin_B']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_B', name='Fin', subTask='']
+Element: [type=bpmn:SequenceFlow, id_bpmn='a1', name='', superElement='Ini_A', subElement='Tarea_A']
+Element: [type=bpmn:SequenceFlow, id_bpmn='a2', name='', superElement='Tarea_A', subElement='Fin_A']
+Element: [type=bpmn:SequenceFlow, id_bpmn='b1', name='', superElement='Ini_B', subElement='Tarea_B']
+Element: [type=bpmn:SequenceFlow, id_bpmn='b2', name='', superElement='Tarea_B', subElement='Fin_B']

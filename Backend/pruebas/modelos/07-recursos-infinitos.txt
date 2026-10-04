@@ -1,0 +1,19 @@
+# Modelo de referencia 7 - la casilla de recursos infinitos, con su contraste.
+# Los dos pools tienen UN solo usuario y TRES casos que arrancan a la vez.
+# El pool finito solo puede atender uno cada vez: los otros dos esperan.
+# El pool infinito atiende a los tres a la vez y no registra ni una espera.
+# Es el contraste lo que hace util el modelo: si la casilla dejara de hacer
+# efecto, aparecerian esperas en el pool infinito y se veria al momento.
+Element: [type=bpmn:Collaboration, id_bpmn='Colaboracion', name='Recursos infinitos', instances=1]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Finito', name='Oficina con una persona', frequency=0, userWithoutRole=['Ana'], instances=3, participantMultiplicity='true', containedElements=['Ini_F', 'Atender_F', 'Fin_F', 'f1', 'f2']]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Infinito', name='Solicitantes', frequency=0, userWithoutRole=['Beto'], instances=3, participantMultiplicity='true', infiniteResources='true', orchestrationRole='orchestrated', containedElements=['Ini_I', 'Atender_I', 'Fin_I', 'i1', 'i2']]
+Element: [type=bpmn:StartEvent, id_bpmn='Ini_F', name='Inicio', subTask='Atender_F']
+Element: [type=bpmn:Task, id_bpmn='Atender_F', name='Atender con una persona', userTask='Ana', numberOfExecutions=1, minimumTime=30, maximumTime=30, subTask='Fin_F']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_F', name='Fin', subTask='']
+Element: [type=bpmn:StartEvent, id_bpmn='Ini_I', name='Inicio', subTask='Atender_I']
+Element: [type=bpmn:Task, id_bpmn='Atender_I', name='Rellenar la solicitud', userTask='Beto', numberOfExecutions=1, minimumTime=30, maximumTime=30, subTask='Fin_I']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_I', name='Fin', subTask='']
+Element: [type=bpmn:SequenceFlow, id_bpmn='f1', name='', superElement='Ini_F', subElement='Atender_F']
+Element: [type=bpmn:SequenceFlow, id_bpmn='f2', name='', superElement='Atender_F', subElement='Fin_F']
+Element: [type=bpmn:SequenceFlow, id_bpmn='i1', name='', superElement='Ini_I', subElement='Atender_I']
+Element: [type=bpmn:SequenceFlow, id_bpmn='i2', name='', superElement='Atender_I', subElement='Fin_I']

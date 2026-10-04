@@ -25,9 +25,12 @@ mientras el comportamiento no deba cambiar, su XES no debe cambiar.
 | `04-datos-y-mensajes` | Objetos de datos y evento de inicio por mensaje | Que cada caso espere **su** dato, y que un pool arranque al recibir |
 | `05-multiplicidad-por-pool` | Orquestador con 1 instancia y orquestado con 3 | Que cada pool use su propio número y no el de la colaboración |
 | `06-mensaje-antes-de-arrancar` | Un mensaje dirigido a un caso que aún no ha arrancado | Que un mensaje se pierda porque su destinatario todavía no existía |
+| `07-recursos-infinitos` | Un pool finito y otro infinito, los dos con un usuario y tres casos | Que la casilla de recursos infinitos deje de hacer efecto |
+| `08-carriles-y-subcarriles` | Un pool sin usuarios propios: un carril con los suyos, un subcarril con otro y un subcarril que los hereda | Que la cola del pool se quede sin los usuarios de sus carriles |
 | `con-avisos/pool-vacio` | Un pool sin proceso que simular | Que un aviso se convierta en una simulación bloqueada |
 | `con-avisos/parametro-desconocido` | Un parámetro que el simulador no conoce | Que un modelo de una versión más nueva del Modeler deje de cargarse |
 | `con-avisos/instances-sin-marcador` | Un pool con número de instancias pero sin marcador | Que se simule un número distinto del dibujado, en silencio |
+| `con-avisos/mismo-usuario-en-dos-pools` | El mismo nombre declarado en dos pools | Que dos pools vuelvan a competir por el mismo recurso |
 
 ## Por qué existe `modelos-con-avisos/`
 

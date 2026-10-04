@@ -1,0 +1,1 @@
+Ana: el mismo nombre de usuario está en varios pools (Pool_A, Pool_B); cada pool tiene el suyo y no comparten recurso.
