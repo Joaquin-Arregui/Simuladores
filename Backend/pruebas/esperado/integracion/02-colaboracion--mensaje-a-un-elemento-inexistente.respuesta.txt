@@ -1,0 +1,1 @@
+HTTP 400: Mensaje_Respuesta (bpmn:MessageFlow): targetRef hace referencia a un elemento que no existe en el diagrama: Esperar_Respuesta_Antigua.

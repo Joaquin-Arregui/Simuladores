@@ -511,7 +511,8 @@ def validate_diagram_xml(xml, warnings=None):
     """Inspect semantics the text exporter could otherwise silently discard.
 
     What the simulator replaces with its own parameters is reported in warnings;
-    what would change the execution is rejected.
+    what would change the execution is rejected. Devuelve la raiz ya analizada,
+    para que validate_diagram_correspondence no vuelva a leer el XML.
     """
     if not isinstance(xml, str) or not xml.strip():
         raise ValueError("diagramXML debe contener un diagrama BPMN válido.")
@@ -601,3 +602,147 @@ def validate_diagram_xml(xml, warnings=None):
                 referenced.add(reference)
         if process_ids != referenced:
             raise ValueError("El XML contiene procesos que no pertenecen a la colaboración visible.")
+    return root
+
+
+# Los tipos que se cruzan entre reglas y diagrama. Las asociaciones de datos se
+# quedan fuera: en el XML cuelgan de la tarea con referencias a su
+# ioSpecification y el exportador las aplana, asi que no hay un ID que cruzar.
+CORRESPONDENCE_KINDS = NODE_TYPES | {"SequenceFlow", "MessageFlow", "Participant", "Lane",
+                                     "DataObjectReference"}
+
+
+def _xml_kind(element, prefix):
+    """El tipo que el exportador del Modeler escribe en las reglas para un
+    elemento del XML: el de bpmn-js, salvo en los eventos, que lo enriquece con
+    su definicion (un startEvent con mensaje es un MessageStartEvent)."""
+    tag = element.tag[len(prefix):]
+    definiciones = {child.tag[len(prefix):] for child in element
+                    if isinstance(child.tag, str) and child.tag.startswith(prefix)
+                    and child.tag.endswith("EventDefinition")}
+    if tag == "startEvent" and "messageEventDefinition" in definiciones:
+        return "MessageStartEvent"
+    if tag == "intermediateCatchEvent":
+        if "messageEventDefinition" in definiciones:
+            return "MessageIntermediateCatchEvent"
+        if "timerEventDefinition" in definiciones:
+            return "TimerIntermediateCatchEvent"
+    if tag == "intermediateThrowEvent" and "messageEventDefinition" in definiciones:
+        return "MessageIntermediateThrowEvent"
+    return tag[:1].upper() + tag[1:]
+
+
+def validate_diagram_correspondence(elements, root, process):
+    """Que las reglas describan el mismo modelo que el diagrama.
+
+    El Modeler manda las dos cosas, pero el motor simula las reglas. Si el
+    exportador descarta o cambia algo, o si reglas y diagrama vienen de
+    versiones distintas, se simularia un modelo que nadie ha dibujado y la
+    simulacion terminaria bien. Aqui se cruzan, en este orden: las referencias
+    dentro del propio XML, la raiz, cada elemento por ID, tipo y extremos, y el
+    pool de cada nodo.
+
+    Lo que NO se cruza: las asociaciones de datos (ver CORRESPONDENCE_KINDS) y
+    que nodos contiene cada carril, que el exportador deduce de la geometria
+    con tolerancia y daria falsos positivos contra flowNodeRef.
+    """
+    prefix = "{" + BPMN_NAMESPACE + "}"
+    con_id = {element.get("id") for element in root.iter()
+              if isinstance(element.tag, str) and element.get("id")}
+
+    # 1. Referencias rotas dentro del diagrama: un flujo o un carril que
+    #    apunta a algo que no existe.
+    en_xml = {}
+    for element in root.iter():
+        if not isinstance(element.tag, str) or not element.tag.startswith(prefix):
+            continue
+        element_id = element.get("id")
+        kind = _xml_kind(element, prefix)
+        if element_id and kind in CORRESPONDENCE_KINDS:
+            en_xml[element_id] = (kind, element)
+        if kind in ("SequenceFlow", "MessageFlow"):
+            for campo in ("sourceRef", "targetRef"):
+                referencia = element.get(campo)
+                if referencia not in con_id:
+                    raise ValueError(f"{element_id} (bpmn:{kind}): {campo} hace referencia a un "
+                                     f"elemento que no existe en el diagrama: {referencia}.")
+        if kind == "Lane":
+            for nodo in element.findall(prefix + "flowNodeRef"):
+                referencia = (nodo.text or "").strip()
+                if referencia not in con_id:
+                    raise ValueError(f"{element_id} (bpmn:Lane): flowNodeRef hace referencia a un "
+                                     f"elemento que no existe en el diagrama: {referencia}.")
+
+    # 2. La raiz: colaboracion contra colaboracion, proceso contra proceso.
+    raiz = elements[process]
+    colaboraciones = [element for element in root if element.tag == prefix + "collaboration"]
+    procesos = [element for element in root if element.tag == prefix + "process"]
+    if _kind(raiz) == "Collaboration":
+        if not colaboraciones or colaboraciones[0].get("id") != process:
+            raise ValueError(f"{process} (bpmn:Collaboration): las reglas son de esta colaboración "
+                             "y el diagrama no la contiene.")
+    elif colaboraciones or len(procesos) != 1 or procesos[0].get("id") != process:
+        raise ValueError(f"{process} (bpmn:Process): las reglas son de este proceso y el diagrama "
+                         "no es ese proceso.")
+
+    # 3. Elemento a elemento, en el orden del diagrama.
+    en_reglas = {key: value for key, value in elements.items()
+                 if hasattr(value, "bpmn_type") and _kind(value) in CORRESPONDENCE_KINDS}
+    for element_id, (kind, element) in en_xml.items():
+        regla = en_reglas.get(element_id)
+        if regla is None:
+            raise ValueError(f"{element_id} (bpmn:{kind}): está en el diagrama pero no en las "
+                             "reglas; se simularía un modelo distinto del dibujado.")
+        if _kind(regla) != kind:
+            raise ValueError(f"{element_id}: en el diagrama es bpmn:{kind} y en las reglas "
+                             f"{regla.bpmn_type}.")
+        if kind in ("SequenceFlow", "MessageFlow"):
+            dibujado = (element.get("sourceRef"), element.get("targetRef"))
+            simulado = (regla.superElement, regla.subElement)
+            if dibujado != simulado:
+                raise ValueError(f"{element_id} (bpmn:{kind}): en el diagrama va de {dibujado[0]} "
+                                 f"a {dibujado[1]} y en las reglas de {simulado[0]} a {simulado[1]}.")
+        # Los dos marcadores estandar que cambian la simulacion. El del pool
+        # decide cuantos casos hay; el de la tarea, si sus ejecuciones van en
+        # paralelo o en serie. Si el dibujo y las reglas no coinciden, se
+        # simularia otra cardinalidad que la dibujada.
+        if kind == "Participant":
+            dibujado = element.find(prefix + "participantMultiplicity") is not None
+            simulado = bool(getattr(regla, "multiplicity", False))
+            if dibujado != simulado:
+                raise ValueError(f"{element_id} (bpmn:Participant): "
+                                 + ("el diagrama tiene el marcador de multiplicidad y las reglas no."
+                                    if dibujado else
+                                    "las reglas tienen el marcador de multiplicidad y el diagrama no."))
+        if kind in TASK_TYPES:
+            marcador = element.find(prefix + "multiInstanceLoopCharacteristics")
+            dibujado = None if marcador is None else marcador.get("isSequential") in {"true", "1"}
+            simulado = getattr(regla, "multiInstanceType", None)
+            if dibujado != simulado:
+                estado = {None: "no hay multiinstancia", False: "la multiinstancia es paralela",
+                          True: "la multiinstancia es secuencial"}
+                raise ValueError(f"{element_id} ({regla.bpmn_type}): en el diagrama {estado[dibujado]} "
+                                 f"y en las reglas {estado[simulado]}.")
+    for element_id, regla in en_reglas.items():
+        if element_id not in en_xml:
+            raise ValueError(f"{element_id} ({regla.bpmn_type}): está en las reglas pero no en el diagrama.")
+
+    # 4. El pool de cada nodo. En el XML es estructural -el proceso al que
+    #    apunta cada participante-, y en las reglas decide en que casos corre el
+    #    nodo: un nodo en otro pool mezclaria casos de dos participantes.
+    if colaboraciones:
+        pool_de_proceso = {participante.get("processRef"): participante.get("id")
+                           for participante in colaboraciones[0].findall(prefix + "participant")
+                           if participante.get("processRef")}
+        pool_en_reglas = {}
+        for _, participant_id in elements.get("participants", []):
+            for hijo in elements[participant_id].contained_elements:
+                pool_en_reglas.setdefault(hijo, participant_id)
+        for proceso in procesos:
+            pool = pool_de_proceso.get(proceso.get("id"))
+            for element in proceso.iter():
+                element_id = element.get("id") if isinstance(element.tag, str) else None
+                if element_id in en_xml and en_xml[element_id][0] in NODE_TYPES:
+                    if pool_en_reglas.get(element_id) != pool:
+                        raise ValueError(f"{element_id}: en el diagrama está en el pool {pool} y en "
+                                         f"las reglas en {pool_en_reglas.get(element_id)}.")

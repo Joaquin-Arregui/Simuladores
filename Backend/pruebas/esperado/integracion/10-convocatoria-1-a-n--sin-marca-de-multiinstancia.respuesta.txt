@@ -1,0 +1,1 @@
+HTTP 400: Recoger (bpmn:ReceiveTask): en el diagrama no hay multiinstancia y en las reglas la multiinstancia es paralela.

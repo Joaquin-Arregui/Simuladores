@@ -48,6 +48,25 @@ ERRORES_PREVISTOS = ("ValueError", "SimulationExecutionError")
 from simulator.main import processSimulation  # noqa: E402
 
 
+def faltan_grupos(*grupos):
+    """Los grupos de casos que no estan o estan vacios, para no dar verde sin probar.
+
+    Sin esta comprobacion, perder una carpeta entera -los modelos y sus
+    referencias, en un merge por ejemplo- hace que el glob devuelva una lista
+    vacia y la regresion salga en verde con menos modelos sin decir nada.
+    """
+    problemas = []
+    for carpeta, patron in grupos:
+        if not carpeta.is_dir():
+            problemas.append("no existe la carpeta %s" % carpeta)
+        elif not any(carpeta.glob(patron)):
+            problemas.append("la carpeta %s no tiene ningun caso (%s)" % (carpeta, patron))
+    return problemas
+
+
+GRUPOS_DEL_BANCO = ((MODELOS, "*.txt"), (MODELOS_CON_AVISOS, "*.txt"), (MODELOS_CON_ERROR, "*.txt"))
+
+
 def modelos():
     """[(ruta, admite_avisos)] en orden estable, limpios primero."""
     encontrados = [(ruta, False) for ruta in sorted(MODELOS.glob("*.txt"))]

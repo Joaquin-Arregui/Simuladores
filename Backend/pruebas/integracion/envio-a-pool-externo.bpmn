@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:collab="http://collaboration" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:participantWithoutLane="http://participantWithoutLane" xmlns:user="http://user" id="Definitions_envio_a_pool_externo" targetNamespace="http://bpmn.io/schema/bpmn" exporter="my-bpmn-exporter" exporterVersion="1.0.0">
+  <bpmn:collaboration id="Colaboracion" collab:instance="2">
+    <bpmn:participant id="Pool_Interno" name="Oficina" processRef="Process_Pool_Interno" participantWithoutLane:frequency="20">
+      <participantWithoutLane:userWithoutRole>Ana</participantWithoutLane:userWithoutRole>
+    </bpmn:participant>
+    <bpmn:participant id="Pool_Externo" name="Organismo externo" participantWithoutLane:frequency="0" />
+    <bpmn:messageFlow id="Comunicacion" name="Comunicacion" sourceRef="Comunicar" targetRef="Pool_Externo" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_Pool_Interno" isExecutable="false">
+    <bpmn:startEvent id="Ini" name="Inicio">
+      <bpmn:outgoing>f1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:task id="Tramitar" name="Tramitar la solicitud" user:NumberOfExecutions="1" user:minimumTime="20" user:maximumTime="30">
+      <user:UserTask>Ana</user:UserTask>
+      <bpmn:incoming>f1</bpmn:incoming>
+      <bpmn:outgoing>f2</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sendTask id="Comunicar" name="Comunicar al organismo" user:NumberOfExecutions="1" user:minimumTime="5" user:maximumTime="10">
+      <user:UserTask>Ana</user:UserTask>
+      <bpmn:incoming>f2</bpmn:incoming>
+      <bpmn:outgoing>f3</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:endEvent id="Fin" name="Fin">
+      <bpmn:incoming>f3</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="f1" sourceRef="Ini" targetRef="Tramitar" />
+    <bpmn:sequenceFlow id="f2" sourceRef="Tramitar" targetRef="Comunicar" />
+    <bpmn:sequenceFlow id="f3" sourceRef="Comunicar" targetRef="Fin" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Colaboracion">
+      <bpmndi:BPMNShape id="Pool_Interno_di" bpmnElement="Pool_Interno" isHorizontal="true">
+        <dc:Bounds x="160" y="80" width="800" height="150" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Pool_Externo_di" bpmnElement="Pool_Externo" isHorizontal="true">
+        <dc:Bounds x="160" y="290" width="800" height="100" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Ini_di" bpmnElement="Ini">
+        <dc:Bounds x="272" y="122" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Tramitar_di" bpmnElement="Tramitar">
+        <dc:Bounds x="410" y="100" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Comunicar_di" bpmnElement="Comunicar">
+        <dc:Bounds x="580" y="100" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Fin_di" bpmnElement="Fin">
+        <dc:Bounds x="782" y="122" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="f1_di" bpmnElement="f1">
+        <di:waypoint x="290" y="140" />
+        <di:waypoint x="460" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f2_di" bpmnElement="f2">
+        <di:waypoint x="460" y="140" />
+        <di:waypoint x="630" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="f3_di" bpmnElement="f3">
+        <di:waypoint x="630" y="140" />
+        <di:waypoint x="800" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Comunicacion_di" bpmnElement="Comunicacion">
+        <di:waypoint x="630" y="140" />
+        <di:waypoint x="560" y="340" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

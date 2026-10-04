@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:model="http://model" xmlns:user="http://user" id="Definitions_01_simple" targetNamespace="http://bpmn.io/schema/bpmn" exporter="my-bpmn-exporter" exporterVersion="1.0.0">
+  <bpmn:process id="Proceso_simple" isExecutable="false" name="Proceso simple" model:instance="2" model:frequency="30">
+    <model:userWithoutRole>Ana</model:userWithoutRole>
+    <model:userWithoutRole>Luis</model:userWithoutRole>
+    <bpmn:startEvent id="Inicio" name="Inicio">
+      <bpmn:outgoing>Flujo_1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:task id="Preparar" name="Preparar la solicitud" user:NumberOfExecutions="1" user:minimumTime="30" user:maximumTime="60">
+      <user:UserTask>Ana</user:UserTask>
+      <bpmn:incoming>Flujo_1</bpmn:incoming>
+      <bpmn:outgoing>Flujo_2</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Revisar" name="Revisar la solicitud" user:NumberOfExecutions="1" user:minimumTime="20" user:maximumTime="40">
+      <user:UserTask>Luis</user:UserTask>
+      <bpmn:incoming>Flujo_2</bpmn:incoming>
+      <bpmn:outgoing>Flujo_3</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:endEvent id="Fin" name="Fin">
+      <bpmn:incoming>Flujo_3</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flujo_1" sourceRef="Inicio" targetRef="Preparar" name="Inicio a Preparar" />
+    <bpmn:sequenceFlow id="Flujo_2" sourceRef="Preparar" targetRef="Revisar" name="Preparar a Revisar" />
+    <bpmn:sequenceFlow id="Flujo_3" sourceRef="Revisar" targetRef="Fin" name="Revisar a Fin" />
+    <bpmn:task id="Tarea_Nueva" name="Tarea dibujada despues" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Proceso_simple">
+      <bpmndi:BPMNShape id="Inicio_di" bpmnElement="Inicio">
+        <dc:Bounds x="272" y="122" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Preparar_di" bpmnElement="Preparar">
+        <dc:Bounds x="410" y="100" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Revisar_di" bpmnElement="Revisar">
+        <dc:Bounds x="580" y="100" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Fin_di" bpmnElement="Fin">
+        <dc:Bounds x="782" y="122" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flujo_1_di" bpmnElement="Flujo_1">
+        <di:waypoint x="290" y="140" />
+        <di:waypoint x="460" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flujo_2_di" bpmnElement="Flujo_2">
+        <di:waypoint x="460" y="140" />
+        <di:waypoint x="630" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flujo_3_di" bpmnElement="Flujo_3">
+        <di:waypoint x="630" y="140" />
+        <di:waypoint x="800" y="140" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

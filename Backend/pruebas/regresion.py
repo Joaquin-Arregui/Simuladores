@@ -195,11 +195,14 @@ def main():
         print("No se pudo leer la correspondencia: %s" % error)
         return 1
 
+    problemas = banco.faltan_grupos(*banco.GRUPOS_DEL_BANCO)
+    if problemas:
+        for problema in problemas:
+            print("Falta un grupo del banco: %s." % problema)
+        print("No se compara nada: un banco incompleto no puede dar verde.")
+        return 1
     modelos = banco.modelos()
     con_error = banco.modelos_con_error()
-    if not modelos and not con_error:
-        print("No hay modelos que comparar.")
-        return 1
 
     fallos = 0
     for ruta, admite_avisos in modelos:

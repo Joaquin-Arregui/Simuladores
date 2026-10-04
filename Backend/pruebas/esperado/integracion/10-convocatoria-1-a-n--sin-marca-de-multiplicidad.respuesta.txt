@@ -1,0 +1,1 @@
+HTTP 400: Pool_Orquestado (bpmn:Participant): las reglas tienen el marcador de multiplicidad y el diagrama no.

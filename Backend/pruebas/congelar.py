@@ -68,8 +68,11 @@ def ejecuta_los_de_error():
 
 
 def main():
-    if not banco.MODELOS.is_dir():
-        print("No existe la carpeta de modelos: %s" % banco.MODELOS)
+    problemas = banco.faltan_grupos(*banco.GRUPOS_DEL_BANCO)
+    if problemas:
+        for problema in problemas:
+            print("Falta un grupo del banco: %s." % problema)
+        print("No se congela nada: un banco incompleto no puede dar referencias.")
         return 1
 
     resultados, problemas = ejecuta_todos()

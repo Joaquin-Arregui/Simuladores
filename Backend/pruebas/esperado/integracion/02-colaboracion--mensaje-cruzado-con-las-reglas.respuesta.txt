@@ -1,0 +1,1 @@
+HTTP 400: Mensaje_Respuesta (bpmn:MessageFlow): en el diagrama va de Enviar_Respuesta a Recibir_Peticion y en las reglas de Enviar_Respuesta a Esperar_Respuesta.

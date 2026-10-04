@@ -1,0 +1,1 @@
+HTTP 400: Tarea_Nueva (bpmn:Task): está en el diagrama pero no en las reglas; se simularía un modelo distinto del dibujado.

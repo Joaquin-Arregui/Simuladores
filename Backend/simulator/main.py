@@ -11,7 +11,8 @@ import xml.etree.ElementTree as ET
 
 from simulator.parser import parse_bpmn_elements
 from simulator.generateScript import DEFAULT_START_DATE, generateScript
-from simulator.validation import validate_diagram_xml, validate_simulation
+from simulator.validation import (validate_diagram_correspondence, validate_diagram_xml,
+                                  validate_simulation)
 
 
 DEFAULT_TIMEOUT_SECONDS = 300
@@ -122,10 +123,14 @@ def processSimulation(rules: str, *, diagram_xml=None, timeout_seconds=None, see
     start_date = get_simulation_start_date()
     seed = resolve_seed(seed)
     warnings = []
+    diagram_root = None
     if diagram_xml is not None:
-        validate_diagram_xml(diagram_xml, warnings)
+        diagram_root = validate_diagram_xml(diagram_xml, warnings)
     elements, process, starts, message_starts = parse_bpmn_elements(rules, warnings)
     validate_simulation(elements, process, starts, message_starts, warnings)
+    # Con las dos cosas validadas por separado, que cuenten el mismo modelo.
+    if diagram_root is not None:
+        validate_diagram_correspondence(elements, diagram_root, process)
     script, _ = generateScript(elements, process, starts, message_starts,
                                start_date=start_date, seed=seed)
 

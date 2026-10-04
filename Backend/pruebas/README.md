@@ -17,6 +17,11 @@ mientras el comportamiento no deba cambiar, su XES no debe cambiar.
   se ejecutan. Si cada uno los descubriera por su cuenta, acabarían discrepando.
 - `congelar.py` — reejecuta los modelos y reescribe `esperado/`.
 - `regresion.py` — reejecuta los modelos y **compara** con `esperado/`.
+- `integracion/` y `integracion-con-error/` — diagramas BPMN reales de varios
+  modelos de referencia, para el banco de integración (ver más abajo).
+- `integracion.py` — manda reglas y diagrama por la API y compara.
+- `bpmn_desde_reglas.py` — genera el diagrama de un modelo; `valida_bpmn.mjs`
+  lo comprueba con bpmn-moddle.
 
 ## Los modelos
 
@@ -126,6 +131,64 @@ que aparece o desaparece es un fallo.
 
 También avisa de una referencia huérfana —un fichero congelado cuyo modelo ya no
 existe— para que `esperado/` no acumule restos.
+
+## El banco de integración
+
+```
+python3 pruebas/integracion.py
+python3 pruebas/integracion.py --congela
+node pruebas/valida_bpmn.mjs
+```
+
+El resto del banco ejecuta las reglas directamente. Este manda lo mismo que el
+Modeler —`content` **y** `diagramXML`— por `POST /simulate`, con el cliente de
+pruebas de Flask: pasa por `server.py` entero, JSON y códigos HTTP incluidos,
+sin abrir ningún puerto.
+
+- `integracion/<modelo>.bpmn` tiene que responder **200 con el mismo XES** que
+  ejecutando directamente las reglas de `<modelo>`, y con los mismos avisos.
+  Aquí no hay nada congelado: la referencia es la ejecución directa.
+- `integracion-con-error/<modelo>--<variante>.bpmn` es un diagrama roto, o uno
+  que no cuenta lo mismo que las reglas de `<modelo>`. Tiene que fallar con un
+  400 o un 422 y el mensaje congelado en `esperado/integracion/`. Un 200 o un
+  500 no se congelan nunca.
+
+Por qué hace falta: el motor simula las **reglas**, no el diagrama. Si el
+exportador del Modeler descarta o cambia algo, o si reglas y diagrama vienen de
+versiones distintas, la API simulaba otro modelo y respondía 200. Sin el cruce
+de `validate_diagram_correspondence`, los cinco diagramas de correlación rota de
+`integracion-con-error/` daban **200**.
+
+Los diagramas están **generados** con `bpmn_desde_reglas.py` y congelados como
+ficheros, no dibujados: el Modeler aún no sabe escribir los atributos del hito 2
+(`instances`, `orchestrationRole`, `infiniteResources`), que son el hito 5. Lo
+que sí llevan es lo que el Modeler escribiría hoy: la estructura BPMN, los
+atributos de sus descriptores y los dos marcadores estándar,
+`participantMultiplicity` y `multiInstanceLoopCharacteristics`. Que el XML es
+BPMN de verdad no lo dice el Backend sino `valida_bpmn.mjs`, con bpmn-moddle
+—la librería con la que bpmn-js abre un diagrama— y los descriptores del
+Modeler; necesita `npm install` hecho en `Modeler/`. Se abren en el Modeler.
+
+`valida_bpmn.mjs` comprueba además que **abrir y guardar no cambia nada**, que
+es lo que pasa cada vez que alguien abre un diagrama en el Modeler y lo vuelve a
+guardar. Ahí es donde se vio que las listas de usuarios estaban mal escritas: en
+los descriptores `UserTask` y `userWithoutRole` son listas de elementos hijos, y
+escritas como un atributo con comas bpmn-moddle las abre como una cadena y las
+guarda letra a letra —Ana se convertía en A, n y a—. El generador escribe ahora
+un elemento por usuario en tareas, procesos, pools y carriles.
+
+Si cambia un modelo que tiene diagrama, se regenera con
+`python3 pruebas/bpmn_desde_reglas.py pruebas/modelos/<modelo>.txt` y se vuelve
+a pasar `valida_bpmn.mjs`.
+
+## Un banco vacío no es un banco en verde
+
+Los tres comandos se niegan a comparar o congelar si falta un grupo de casos o
+está vacío: `modelos/`, `modelos-con-avisos/` y `modelos-con-error/` en el banco
+del motor, `integracion/` e `integracion-con-error/` en el de integración, y la
+carpeta de diagramas en `valida_bpmn.mjs`. Sin esa comprobación, perder una
+carpeta entera —modelos y referencias a la vez, en un merge— daba verde con
+menos casos, o con ninguno, sin decir nada.
 
 ## Reproducibilidad
 

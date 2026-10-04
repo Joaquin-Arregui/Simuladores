@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:collab="http://collaboration" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:participantWithoutLane="http://participantWithoutLane" xmlns:user="http://user" id="Definitions_12_dos_activaciones" targetNamespace="http://bpmn.io/schema/bpmn" exporter="my-bpmn-exporter" exporterVersion="1.0.0">
+  <bpmn:collaboration id="Colaboracion" collab:instance="1">
+    <bpmn:participant id="Pool_Orquestador" name="Orquestador" processRef="Process_Pool_Orquestador" participantWithoutLane:frequency="0">
+      <participantWithoutLane:userWithoutRole>Ana</participantWithoutLane:userWithoutRole>
+      <bpmn:participantMultiplicity />
+    </bpmn:participant>
+    <bpmn:participant id="Pool_Orquestado" name="Orquestado" processRef="Process_Pool_Orquestado" participantWithoutLane:frequency="10">
+      <participantWithoutLane:userWithoutRole>Beto</participantWithoutLane:userWithoutRole>
+      <bpmn:participantMultiplicity />
+    </bpmn:participant>
+    <bpmn:messageFlow id="Convocatoria" name="Convocatoria" sourceRef="Convocar" targetRef="Esperar_Convocatoria" />
+    <bpmn:messageFlow id="Solicitud" name="Solicitud" sourceRef="Solicitar" targetRef="Recoger" />
+    <bpmn:messageFlow id="Resultado" name="Resultado" sourceRef="Responder" targetRef="Esperar_Resultado" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_Pool_Orquestador" isExecutable="false">
+    <bpmn:startEvent id="Ini_O" name="Abre la convocatoria">
+      <bpmn:outgoing>o1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sendTask id="Convocar" name="Publicar la convocatoria" user:NumberOfExecutions="2" user:minimumTime="1" user:maximumTime="1">
+      <user:UserTask>Ana</user:UserTask>
+      <bpmn:incoming>o1</bpmn:incoming>
+      <bpmn:outgoing>o2</bpmn:outgoing>
+      <bpmn:multiInstanceLoopCharacteristics />
+    </bpmn:sendTask>
+    <bpmn:parallelGateway id="Bifurca_O" name="Dos turnos de ventanilla">
+      <bpmn:incoming>o2</bpmn:incoming>
+      <bpmn:outgoing>o3</bpmn:outgoing>
+      <bpmn:outgoing>o4</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:task id="Ruta_A" name="Abrir el turno de la manana" user:NumberOfExecutions="1" user:minimumTime="1" user:maximumTime="1">
+      <user:UserTask>Ana</user:UserTask>
+      <bpmn:incoming>o3</bpmn:incoming>
+      <bpmn:outgoing>o5</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Ruta_B" name="Abrir el turno de la tarde" user:NumberOfExecutions="1" user:minimumTime="6" user:maximumTime="6">
+      <user:UserTask>Ana</user:UserTask>
+      <bpmn:incoming>o4</bpmn:incoming>
+      <bpmn:outgoing>o6</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:receiveTask id="Recoger" name="Recoger una solicitud" user:NumberOfExecutions="1" user:minimumTime="1" user:maximumTime="1">
+      <user:UserTask>Ana</user:UserTask>
+      <bpmn:incoming>o5</bpmn:incoming>
+      <bpmn:incoming>o6</bpmn:incoming>
+      <bpmn:outgoing>o7</bpmn:outgoing>
+    </bpmn:receiveTask>
+    <bpmn:task id="Valorar" name="Valorar la solicitud" user:NumberOfExecutions="1" user:minimumTime="20" user:maximumTime="20">
+      <user:UserTask>Ana</user:UserTask>
+      <bpmn:incoming>o7</bpmn:incoming>
+      <bpmn:outgoing>o9</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sendTask id="Responder" name="Responder a la solicitud" user:NumberOfExecutions="1" user:minimumTime="1" user:maximumTime="1">
+      <user:UserTask>Ana</user:UserTask>
+      <bpmn:incoming>o9</bpmn:incoming>
+      <bpmn:outgoing>o8</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:endEvent id="Fin_O" name="Cierra el turno">
+      <bpmn:incoming>o8</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="o1" sourceRef="Ini_O" targetRef="Convocar" />
+    <bpmn:sequenceFlow id="o2" sourceRef="Convocar" targetRef="Bifurca_O" />
+    <bpmn:sequenceFlow id="o3" sourceRef="Bifurca_O" targetRef="Ruta_A" />
+    <bpmn:sequenceFlow id="o4" sourceRef="Bifurca_O" targetRef="Ruta_B" />
+    <bpmn:sequenceFlow id="o5" sourceRef="Ruta_A" targetRef="Recoger" />
+    <bpmn:sequenceFlow id="o6" sourceRef="Ruta_B" targetRef="Recoger" />
+    <bpmn:sequenceFlow id="o7" sourceRef="Recoger" targetRef="Valorar" />
+    <bpmn:sequenceFlow id="o9" sourceRef="Valorar" targetRef="Responder" />
+    <bpmn:sequenceFlow id="o8" sourceRef="Responder" targetRef="Fin_O" />
+  </bpmn:process>
+  <bpmn:process id="Process_Pool_Orquestado" isExecutable="false">
+    <bpmn:startEvent id="Ini_R" name="Entra el solicitante">
+      <bpmn:outgoing>r1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:receiveTask id="Esperar_Convocatoria" name="Esperar la convocatoria" user:NumberOfExecutions="1" user:minimumTime="1" user:maximumTime="1">
+      <user:UserTask>Beto</user:UserTask>
+      <bpmn:incoming>r1</bpmn:incoming>
+      <bpmn:outgoing>r2</bpmn:outgoing>
+    </bpmn:receiveTask>
+    <bpmn:sendTask id="Solicitar" name="Enviar la solicitud" user:NumberOfExecutions="1" user:minimumTime="1" user:maximumTime="1">
+      <user:UserTask>Beto</user:UserTask>
+      <bpmn:incoming>r2</bpmn:incoming>
+      <bpmn:outgoing>r3</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:receiveTask id="Esperar_Resultado" name="Esperar el resultado" user:NumberOfExecutions="1" user:minimumTime="1" user:maximumTime="1">
+      <user:UserTask>Beto</user:UserTask>
+      <bpmn:incoming>r3</bpmn:incoming>
+      <bpmn:outgoing>r4</bpmn:outgoing>
+    </bpmn:receiveTask>
+    <bpmn:endEvent id="Fin_R" name="Fin del solicitante">
+      <bpmn:incoming>r4</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="r1" sourceRef="Ini_R" targetRef="Esperar_Convocatoria" />
+    <bpmn:sequenceFlow id="r2" sourceRef="Esperar_Convocatoria" targetRef="Solicitar" />
+    <bpmn:sequenceFlow id="r3" sourceRef="Solicitar" targetRef="Esperar_Resultado" />
+    <bpmn:sequenceFlow id="r4" sourceRef="Esperar_Resultado" targetRef="Fin_R" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Colaboracion">
+      <bpmndi:BPMNShape id="Pool_Orquestador_di" bpmnElement="Pool_Orquestador" isHorizontal="true">
+        <dc:Bounds x="160" y="80" width="1480" height="280" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Pool_Orquestado_di" bpmnElement="Pool_Orquestado" isHorizontal="true">
+        <dc:Bounds x="160" y="420" width="1480" height="150" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Ini_O_di" bpmnElement="Ini_O">
+        <dc:Bounds x="272" y="122" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Convocar_di" bpmnElement="Convocar">
+        <dc:Bounds x="410" y="100" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Bifurca_O_di" bpmnElement="Bifurca_O">
+        <dc:Bounds x="605" y="115" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Ruta_A_di" bpmnElement="Ruta_A">
+        <dc:Bounds x="750" y="100" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Ruta_B_di" bpmnElement="Ruta_B">
+        <dc:Bounds x="750" y="230" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Recoger_di" bpmnElement="Recoger">
+        <dc:Bounds x="920" y="100" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Valorar_di" bpmnElement="Valorar">
+        <dc:Bounds x="1090" y="100" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Responder_di" bpmnElement="Responder">
+        <dc:Bounds x="1260" y="100" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Fin_O_di" bpmnElement="Fin_O">
+        <dc:Bounds x="1462" y="122" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Ini_R_di" bpmnElement="Ini_R">
+        <dc:Bounds x="272" y="462" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Esperar_Convocatoria_di" bpmnElement="Esperar_Convocatoria">
+        <dc:Bounds x="410" y="440" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Solicitar_di" bpmnElement="Solicitar">
+        <dc:Bounds x="580" y="440" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Esperar_Resultado_di" bpmnElement="Esperar_Resultado">
+        <dc:Bounds x="750" y="440" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Fin_R_di" bpmnElement="Fin_R">
+        <dc:Bounds x="952" y="462" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="o1_di" bpmnElement="o1">
+        <di:waypoint x="290" y="140" />
+        <di:waypoint x="460" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="o2_di" bpmnElement="o2">
+        <di:waypoint x="460" y="140" />
+        <di:waypoint x="630" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="o3_di" bpmnElement="o3">
+        <di:waypoint x="630" y="140" />
+        <di:waypoint x="800" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="o4_di" bpmnElement="o4">
+        <di:waypoint x="630" y="140" />
+        <di:waypoint x="800" y="270" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="o5_di" bpmnElement="o5">
+        <di:waypoint x="800" y="140" />
+        <di:waypoint x="970" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="o6_di" bpmnElement="o6">
+        <di:waypoint x="800" y="270" />
+        <di:waypoint x="970" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="o7_di" bpmnElement="o7">
+        <di:waypoint x="970" y="140" />
+        <di:waypoint x="1140" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="o9_di" bpmnElement="o9">
+        <di:waypoint x="1140" y="140" />
+        <di:waypoint x="1310" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="o8_di" bpmnElement="o8">
+        <di:waypoint x="1310" y="140" />
+        <di:waypoint x="1480" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="r1_di" bpmnElement="r1">
+        <di:waypoint x="290" y="480" />
+        <di:waypoint x="460" y="480" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="r2_di" bpmnElement="r2">
+        <di:waypoint x="460" y="480" />
+        <di:waypoint x="630" y="480" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="r3_di" bpmnElement="r3">
+        <di:waypoint x="630" y="480" />
+        <di:waypoint x="800" y="480" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="r4_di" bpmnElement="r4">
+        <di:waypoint x="800" y="480" />
+        <di:waypoint x="970" y="480" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Convocatoria_di" bpmnElement="Convocatoria">
+        <di:waypoint x="460" y="140" />
+        <di:waypoint x="460" y="480" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Solicitud_di" bpmnElement="Solicitud">
+        <di:waypoint x="630" y="480" />
+        <di:waypoint x="970" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Resultado_di" bpmnElement="Resultado">
+        <di:waypoint x="1310" y="140" />
+        <di:waypoint x="800" y="480" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
