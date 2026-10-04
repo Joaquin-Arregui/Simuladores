@@ -1,8 +1,8 @@
 def sendTask(elements, element, script):
     from simulator.simulationFunctions.generateFunction import generateFunction, function_name, xml_template
     functionStr = f"""
-def {function_name(element.id_bpmn)}(env, name):
-    def executeTask(env, TaskName, name, execution):
+def {function_name(element.id_bpmn)}(env, caso):
+    def executeTask(env, TaskName, caso, execution):
         start_standBy = env.now
         possibleUsers = resolve_possible_users({element.userTask}, TaskName)
         # Users are handed out in order of arrival (see UserQueue in runtime.py).
@@ -10,7 +10,7 @@ def {function_name(element.id_bpmn)}(env, name):
         try:
             time = resolve_task_time({element.maximumTime}, {element.minimumTime})
             if env.now > start_standBy: 
-                simulationResults[name].append(
+                simulationResults[caso].append(
 f'''
         <event>
             <string key="bpmn:type" value="StandBy"/>
@@ -19,9 +19,9 @@ f'''
             <date key="time:timestamp" value="{{xml_value(start_standBy)}}"/>
             <date key="time:endTime" value="{{xml_value(env.now)}}"/>
             <date key="time:duration" value="{{xml_value(env.now-start_standBy)}}"/>
-            <int key="bpmn:instance" value="{{xml_value(name.split()[-1])}}"/>
+            <int key="bpmn:instance" value="{{xml_value(caso.indice)}}"/>
         </event>''')
-            simulationResults[name].append(
+            simulationResults[caso].append(
 f'''
         <event>
             <string key="bpmn:type" value="{xml_template(element.bpmn_type)}"/>
@@ -33,19 +33,19 @@ f'''
             <int key="bpmn:time" value="{{xml_value(time)}}"/>
             <string key="bpmn:subTask" value="{xml_template(element.subTask)}"/>
             <date key="time:timestamp" value="{{xml_value(env.now)}}"/>
-            <int key="bpmn:instance" value="{{xml_value(name.split()[-1])}}"/>
+            <int key="bpmn:instance" value="{{xml_value(caso.indice)}}"/>
         </event>''')
             yield env.timeout(time)
-            publish_message(TaskName, {element.messageDestiny!r}, execution, name)
+            publish_message(TaskName, {element.messageDestiny!r}, execution, caso)
         finally:
             user_queue.release(userTask)
     TaskName = {element.id_bpmn!r}
     if TaskName in requiredData.keys():
         dataObjects = requiredData[TaskName]
         start_standBy_data = env.now
-        yield env.process(wait_for_data(env, dataObjects, name))
+        yield env.process(wait_for_data(env, dataObjects, caso))
         if env.now > start_standBy_data:
-            simulationResults[name].append(
+            simulationResults[caso].append(
 f'''
         <event>
             <string key="bpmn:type" value="StandByData"/>
@@ -53,17 +53,17 @@ f'''
             <date key="time:timestamp" value="{{xml_value(start_standBy_data)}}"/>
             <date key="time:endTime" value="{{xml_value(env.now)}}"/>
             <date key="time:duration" value="{{xml_value(env.now-start_standBy_data)}}"/>
-            <int key="bpmn:instance" value="{{xml_value(name.split()[-1])}}"/>
+            <int key="bpmn:instance" value="{{xml_value(caso.indice)}}"/>
         </event>''')"""
     if element.multiInstanceType == True or (element.multiInstanceType == None and element.loopParameter == None):
         functionStr = functionStr + f"""
     for execution in range({element.numberOfExecutions}):
-        yield env.process(executeTask(env, TaskName, name, execution+1))"""
+        yield env.process(executeTask(env, TaskName, caso, execution+1))"""
     elif element.multiInstanceType == False:
         functionStr = functionStr + f"""
     executionProcesses = []
     for execution in range({element.numberOfExecutions}):
-        executionProcesses.append(env.process(executeTask(env, TaskName, name, execution+1)))
+        executionProcesses.append(env.process(executeTask(env, TaskName, caso, execution+1)))
     yield simpy.AllOf(env, executionProcesses)"""
     elif element.multiInstanceType == None:
         if "Time" in element.loopParameter.keys():
@@ -86,14 +86,14 @@ f'''
     while ((env.now - loopStartTime < {time}) or ({time}==0)) and (units!=0) and (random.random() < {percentage}) or initial:
         execution = execution + 1
         initial = False
-        yield env.process(executeTask(env, TaskName, name, execution))
+        yield env.process(executeTask(env, TaskName, caso, execution))
         units = units - 1"""
     functionStr = functionStr + f"""
     if TaskName in generatedData.keys():
         dataObjects = generatedData[TaskName]
         for dataObject in dataObjects:
-            publish_data(dataObject, name)
-            simulationResults[name].append(
+            publish_data(dataObject, caso)
+            simulationResults[caso].append(
 f'''
         <container key="dataObjects">
             <string key="bpmn:id" value="{{xml_value(dataObject)}}"/>

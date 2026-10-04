@@ -36,6 +36,18 @@ def _metadata(element, elements):
     return ET.tostring(root, encoding='unicode')
 
 
+def _assign_participant(elements, ids, participant, mapping, seen):
+    """Un pool contiene carriles, y los carriles elementos: se baja hasta el fondo."""
+    for child in ids:
+        if child in seen:
+            continue
+        seen.add(child)
+        contained = getattr(elements.get(child), 'contained_elements', None)
+        if contained:
+            _assign_participant(elements, contained, participant, mapping, seen)
+        mapping[child] = participant
+
+
 def generateScript(elements, process, starts, messageStarts, start_date=DEFAULT_START_DATE, *, seed):
     element = elements[process]
     is_process = element.bpmn_type == 'bpmn:Process'
@@ -71,8 +83,30 @@ def generateScript(elements, process, starts, messageStarts, start_date=DEFAULT_
     else:
         process_users = []
         user_pool = list(dict.fromkeys(user for users in elements['users'].values() for user in users))
+    # A que participante pertenece cada elemento. Sin pools, todo cuelga de la
+    # raiz: el caso es entonces (proceso, indice) y se comporta como antes.
+    #
+    # Solo entran los pools que de verdad simulan algo, es decir los que tienen
+    # un evento de inicio. Un pool vacio lo ignora validate_simulation con un
+    # aviso; si se le crearan casos, no tendrian ni evento de inicio ni de fin y
+    # _assert_complete convertiria ese aviso en una simulacion bloqueada.
+    with_process = {elements['startsParticipant'][node] for node in starts + messageStarts
+                    if node in elements['startsParticipant']}
+    participants = [participant_id for _, participant_id in elements['participants']
+                    if participant_id in with_process] or [process]
+    element_participant = {}
+    for participant_id in participants:
+        contained = getattr(elements.get(participant_id), 'contained_elements', None)
+        if contained:
+            _assign_participant(elements, contained, participant_id, element_participant, set())
+    for item in elements.values():
+        node_id = getattr(item, 'id_bpmn', None)
+        if node_id is not None:
+            element_participant.setdefault(node_id, participants[0] if is_process else process)
     config = {
         'nInstances': element.instances,
+        'participantesOrden': participants,
+        'elementParticipant': element_participant,
         'rolePool': element.userWithRole if is_process else {},
         'processUsers': process_users,
         'userPool': user_pool,

@@ -42,7 +42,7 @@ def xml_template(value):
 def generateFunction(elements, element_id, script=''):
     # Functions precede their successors. An existing definition closes a cycle
     # or shared path without recursing forever or emitting duplicate functions.
-    if f'def {function_name(element_id)}(env, name):' in script:
+    if f'def {function_name(element_id)}(env, caso):' in script:
         return script
     element = elements[element_id]
     element_type = type(element).__name__

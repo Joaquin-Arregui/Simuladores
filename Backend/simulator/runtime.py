@@ -7,6 +7,7 @@ One unit of simulated time is one second.
 """
 
 from collections import Counter, defaultdict, deque
+from typing import NamedTuple
 from datetime import datetime, timedelta, timezone
 from html import escape
 from xml.etree import ElementTree as ET
@@ -14,6 +15,34 @@ from xml.etree import ElementTree as ET
 
 class SimulationError(RuntimeError):
     """A model cannot complete with the configured tokens, messages or data."""
+
+
+class Caso(NamedTuple):
+    """Quien ejecuta: participante, indice dentro de ese participante, convocatoria.
+
+    Sustituye a la cadena 'Instance N', que hacia de clave de mensajes, datos,
+    tokens, uniones y traza a la vez. El indice se guarda aparte porque el
+    emparejamiento de mensajes sigue siendo 1:1 por indice hasta la tarea 2.4.
+    """
+    participante: str
+    indice: int
+    convocatoria: int = 1
+
+    def __str__(self):
+        return f'{self.participante} - {self.indice}'
+
+
+def caso_de(node, indice, convocatoria=1):
+    """El caso al que pertenece un elemento en una instancia dada."""
+    return Caso(elementParticipant[node], indice, convocatoria)
+
+
+def etiqueta_de_traza(caso):
+    # El nombre definitivo de la traza lo fija la tarea 1.6. Hasta entonces, un
+    # modelo de un solo participante conserva el nombre de siempre.
+    if len(participantesOrden) == 1:
+        return f'Instance {caso.indice}'
+    return f'{caso.participante} - {caso.indice}'
 
 
 def xml_value(value):
@@ -81,16 +110,18 @@ class UserQueue:
         request.succeed(user)
 
 
-def publish_message(origin, target, execution, name):
-    key = (origin, target, execution, name)
+def publish_message(origin, target, execution, caso):
+    # La clave usa el indice, no el caso entero: el emparejamiento sigue siendo
+    # 1:1 entre pools hasta que la 2.4 lo cambie por caso destino.
+    key = (origin, target, execution, caso.indice)
     if message_waiters[key]:
         message_waiters[key].popleft().succeed()
     else:
         messages[key] += 1
 
 
-def wait_for_message(env, origin, target, execution, name):
-    key = (origin, target, execution, name)
+def wait_for_message(env, origin, target, execution, caso):
+    key = (origin, target, execution, caso.indice)
     if messages[key]:
         messages[key] -= 1
         return
@@ -99,26 +130,26 @@ def wait_for_message(env, origin, target, execution, name):
     yield event
 
 
-def publish_data(data_object, name):
-    data.add((data_object, name))
-    changed = data_changed.pop(name, None)
+def publish_data(data_object, caso):
+    data.add((data_object, caso))
+    changed = data_changed.pop(caso, None)
     if changed is not None:
         changed.succeed()
 
 
-def wait_for_data(env, objects, name):
-    # Data objects belong to one instance; only its waiters are woken.
-    while not all((item, name) in data for item in objects):
-        if name not in data_changed:
-            data_changed[name] = env.event()
-        yield data_changed[name]
+def wait_for_data(env, objects, caso):
+    # Data objects belong to one caso; only its waiters are woken.
+    while not all((item, caso) in data for item in objects):
+        if caso not in data_changed:
+            data_changed[caso] = env.event()
+        yield data_changed[caso]
 
 
-def _append_event(name, values):
+def _append_event(caso, values):
     event = ET.Element('event')
     for kind, key, value in values:
         ET.SubElement(event, kind, key=key, value=str(value))
-    simulationResults[name].append(ET.tostring(event, encoding='unicode'))
+    simulationResults[caso].append(ET.tostring(event, encoding='unicode'))
 
 
 def _reachable(node, incoming_flow, blocked_join):
@@ -141,7 +172,7 @@ def _reachable(node, incoming_flow, blocked_join):
     return False
 
 
-def _join_ready(node, name, counts):
+def _join_ready(node, caso, counts):
     inputs = incomingFlows[node]
     if joinTypes[node] == 'parallel':
         return all(counts[edge] > 0 for edge in inputs)
@@ -149,8 +180,8 @@ def _join_ready(node, name, counts):
         return False
     missing = [edge for edge in inputs if not counts[edge]]
     occupied = [edge for edge in inputs if counts[edge]]
-    live_nodes = [active_node for active_node, count in active_tokens[name].items() if count > 0]
-    live_nodes.extend(other for other, waiting in pending_joins[name].items()
+    live_nodes = [active_node for active_node, count in active_tokens[caso].items() if count > 0]
+    live_nodes.extend(other for other, waiting in pending_joins[caso].items()
                       if other != node and any(waiting.values()))
     # BPMN 2.0.2 table 13.3: a token that could reach an empty input blocks
     # only if it cannot also reach an already occupied input, without passing
@@ -161,43 +192,43 @@ def _join_ready(node, name, counts):
                    for live in live_nodes)
 
 
-def _register(node, name, incoming_flow=None):
+def _register(node, caso, incoming_flow=None):
     if node in joinTypes:
         if incoming_flow not in incomingFlows[node]:
-            raise SimulationError(f'Entrada desconocida en la unión {node} ({name}).')
-        pending_joins[name].setdefault(node, Counter())[incoming_flow] += 1
+            raise SimulationError(f'Entrada desconocida en la unión {node} ({caso}).')
+        pending_joins[caso].setdefault(node, Counter())[incoming_flow] += 1
     else:
-        active_tokens[name][node] += 1
-        env.process(_run_node(node, name))
+        active_tokens[caso][node] += 1
+        env.process(_run_node(node, caso))
 
 
-def _release_token(name, node):
-    tokens = active_tokens[name]
+def _release_token(caso, node):
+    tokens = active_tokens[caso]
     tokens[node] -= 1
     if tokens[node] <= 0:
         del tokens[node]
 
 
-def _flush_joins(name):
-    # Only this instance's tokens can enable its joins. A firing may unblock
+def _flush_joins(caso):
+    # Only this caso's tokens can enable its joins. A firing may unblock
     # another inclusive join; revisit until stable.
-    joins = pending_joins[name]
+    joins = pending_joins[caso]
     changed = True
     while changed:
         changed = False
         for node, counts in list(joins.items()):
-            if _join_ready(node, name, counts):
+            if _join_ready(node, caso, counts):
                 for edge in incomingFlows[node]:
                     if counts[edge]:
                         counts[edge] -= 1
                 if not any(counts.values()):
                     del joins[node]
-                active_tokens[name][node] += 1
-                env.process(_run_node(node, name))
+                active_tokens[caso][node] += 1
+                env.process(_run_node(node, caso))
                 changed = True
 
 
-def _route(node, name, result):
+def _route(node, caso, result):
     selected = result if isinstance(result, list) else [result]
     edges = []
     for target in selected:
@@ -209,52 +240,52 @@ def _route(node, name, result):
             edges.extend(edge for edge in outgoingFlows.get(node, [])
                          if sequenceFlows[edge][1] == target)
     if not edges and node not in endEvents:
-        raise SimulationError(f'El elemento {node} no tiene una salida ejecutable ({name}).')
+        raise SimulationError(f'El elemento {node} no tiene una salida ejecutable ({caso}).')
     # Register a complete split atomically, including tokens at join inputs.
     for edge in edges:
-        _register(sequenceFlows[edge][1], name, edge)
+        _register(sequenceFlows[edge][1], caso, edge)
 
 
-def _run_node(node, name):
+def _run_node(node, caso):
     function_name = 'node_' + node.encode('utf-8').hex()
-    result = yield env.process(globals()[function_name](env, name))
-    _release_token(name, node)
-    _route(node, name, result)
+    result = yield env.process(globals()[function_name](env, caso))
+    _release_token(caso, node)
+    _route(node, caso, result)
     if node in endEvents:
-        completed[name] += 1
-    _flush_joins(name)
+        completed[caso] += 1
+    _flush_joins(caso)
 
 
-def _start_event(node, name, instance, delay):
+def _start_event(node, caso, delay):
     item = startEvents[node]
     yield env.timeout(delay)
     if item['origin'] is not None:
         start_wait = env.now
-        yield env.process(wait_for_message(env, item['origin'], node, 1, name))
+        yield env.process(wait_for_message(env, item['origin'], node, 1, caso))
         if env.now > start_wait:
-            _append_event(name, [('string', 'bpmn:type', 'StandByMessage'),
+            _append_event(caso, [('string', 'bpmn:type', 'StandByMessage'),
                                 ('string', 'bpmn:id', node),
                                 ('date', 'time:timestamp', start_wait),
                                 ('date', 'time:endTime', env.now),
                                 ('date', 'time:duration', env.now - start_wait),
-                                ('int', 'bpmn:instance', instance)])
+                                ('int', 'bpmn:instance', caso.indice)])
     values = [('string', 'bpmn:type', item['type']), ('string', 'bpmn:name', item['name']),
               ('string', 'bpmn:id', node), ('string', 'bpmn:subTask', item['next']),
-              ('date', 'time:timestamp', env.now), ('int', 'bpmn:instance', instance)]
+              ('date', 'time:timestamp', env.now), ('int', 'bpmn:instance', caso.indice)]
     if item['origin'] is not None:
         values.append(('string', 'bpmn:messageOrigin', item['origin']))
-    _append_event(name, values)
-    _release_token(name, node)
-    _route(node, name, item['next'])
-    _flush_joins(name)
+    _append_event(caso, values)
+    _release_token(caso, node)
+    _route(node, caso, item['next'])
+    _flush_joins(caso)
 
 
 def _assert_complete():
-    pending = [f'{node} ({name})' for name, joins in pending_joins.items()
+    pending = [f'{node} ({caso})' for caso, joins in pending_joins.items()
                for node, counts in joins.items() if any(counts.values())]
-    active = [f'{node} ({name})' for name, tokens in active_tokens.items()
+    active = [f'{node} ({caso})' for caso, tokens in active_tokens.items()
               for node, count in tokens.items() if count]
-    missing = [name for name in simulationResults if not completed[name]]
+    missing = [str(caso) for caso in simulationResults if not completed[caso]]
     if pending or active or missing:
         details = []
         if pending:
@@ -262,7 +293,7 @@ def _assert_complete():
         if active:
             details.append('elementos esperando mensaje o datos: ' + ', '.join(active[:10]))
         if missing:
-            details.append('instancias sin evento de fin: ' + ', '.join(missing[:10]))
+            details.append('casos sin evento de fin: ' + ', '.join(missing[:10]))
         raise SimulationError('Simulación bloqueada o incompleta; ' + '; '.join(details) + '.')
 
 
@@ -300,19 +331,24 @@ def _run_simulation():
     random.seed(simulationSeed)
     env = simpy.Environment()
     startDate = datetime.fromisoformat(simulationStartDate)
-    simulationResults = {f'Instance {i + 1}': [] for i in range(nInstances)}
+    # Un caso por (participante, indice). Con un solo participante el resultado
+    # es el de siempre; en una colaboracion, cada pool lleva su propia traza.
+    simulationResults = {Caso(participante, indice): []
+                         for indice in range(1, nInstances + 1)
+                         for participante in participantesOrden}
     user_assignments = dict.fromkeys(userPool, 0)
     user_queue = UserQueue(userPool)
     messages, message_waiters = Counter(), defaultdict(deque)
-    data = {(item, name) for item in defaultData for name in simulationResults}
+    data = {(item, caso) for item in defaultData for caso in simulationResults}
     data_changed = {}
     active_tokens, pending_joins = defaultdict(Counter), defaultdict(dict)
     reachability, completed = {}, Counter()
     # Waiting for messages never suspends other starts or later instances.
-    for i, name in enumerate(simulationResults):
+    for indice in range(1, nInstances + 1):
         for node, item in startEvents.items():
-            active_tokens[name][node] += 1
-            env.process(_start_event(node, name, i + 1, i * item['frequency']))
+            caso = caso_de(node, indice)
+            active_tokens[caso][node] += 1
+            env.process(_start_event(node, caso, (indice - 1) * item['frequency']))
     env.run()
     _assert_complete()
     metadata = ET.fromstring(logMetadata)
@@ -325,9 +361,9 @@ def _run_simulation():
              '  <classifier name="Activity (by BPMN ID)" keys="bpmn:id" scope="event"/>',
              '  ' + ET.tostring(metadata, encoding='unicode'),
              f'  <int key="simulation:seed" value="{simulationSeed}"/>']
-    for name, events in simulationResults.items():
+    for caso, events in simulationResults.items():
         trace = ET.Element('trace')
-        ET.SubElement(trace, 'string', key='concept:name', value=name)
+        ET.SubElement(trace, 'string', key='concept:name', value=etiqueta_de_traza(caso))
         for event in events:
             trace.append(_finalize_item(ET.fromstring(event)))
         ET.indent(trace, space='  ', level=1)

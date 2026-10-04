@@ -20,9 +20,9 @@ def exclusiveGateway(elements, element, script):
     from simulator.simulationFunctions.generateFunction import generateFunction, function_name, xml_template
     possibleElements, percents = getPercentOfBranches(elements, element.id_bpmn)
     functionStr = f"""
-def {function_name(element.id_bpmn)}(env, name):
+def {function_name(element.id_bpmn)}(env, caso):
     selectedElement = random.choices({possibleElements}, {percents})[0]
-    simulationResults[name].append(
+    simulationResults[caso].append(
 f'''
         <event>
             <string key="bpmn:type" value="{xml_template(element.bpmn_type)}"/>
@@ -30,7 +30,7 @@ f'''
             <string key="bpmn:id" value="{xml_template(element.id_bpmn)}"/>
             <string key="bpmn:subTask" value="{{xml_value(sequenceFlows[selectedElement][1])}}"/>
             <date key="time:timestamp" value="{{xml_value(env.now)}}"/>
-            <int key="bpmn:instance" value="{{xml_value(name.split()[-1])}}"/>
+            <int key="bpmn:instance" value="{{xml_value(caso.indice)}}"/>
         </event>''')
     yield env.timeout(0)
     return selectedElement
@@ -46,9 +46,9 @@ def parallelGateway(elements, element, script):
                         if type(item).__name__ == 'BPMNSequenceFlow' and
                         item.superElement == element.id_bpmn]
     functionStr = f"""
-def {function_name(element.id_bpmn)}(env, name):
+def {function_name(element.id_bpmn)}(env, caso):
     strSelectedElements = ", ".join(sequenceFlows[edge][1] for edge in {possibleElements})
-    simulationResults[name].append(
+    simulationResults[caso].append(
 f'''
         <event>
             <string key="bpmn:type" value="{xml_template(element.bpmn_type)}"/>
@@ -56,7 +56,7 @@ f'''
             <string key="bpmn:id" value="{xml_template(element.id_bpmn)}"/>
             <string key="bpmn:subTask" value="{{xml_value(strSelectedElements)}}"/>
             <date key="time:timestamp" value="{{xml_value(env.now)}}"/>
-            <int key="bpmn:instance" value="{{xml_value(name.split()[-1])}}"/>
+            <int key="bpmn:instance" value="{{xml_value(caso.indice)}}"/>
         </event>''')
     yield env.timeout(0)
     return {possibleElements}
@@ -70,13 +70,13 @@ def inclusiveGateway(elements, element, script):
     from simulator.simulationFunctions.generateFunction import generateFunction, function_name, xml_template
     possibleElements, percents = getPercentOfBranches(elements, element.id_bpmn)
     functionStr = f"""
-def {function_name(element.id_bpmn)}(env, name):
+def {function_name(element.id_bpmn)}(env, caso):
     elements = {possibleElements}
     percents = {percents}
     selectedElements = [element for element, percent in zip(elements, percents) if random.random() < percent]
     if not selectedElements:
         selectedElements = random.choices(elements, weights=percents, k=1)
-    simulationResults[name].append(
+    simulationResults[caso].append(
 f'''
         <event>
             <string key="bpmn:type" value="{xml_template(element.bpmn_type)}"/>
@@ -84,7 +84,7 @@ f'''
             <string key="bpmn:id" value="{xml_template(element.id_bpmn)}"/>
             <string key="bpmn:subTask" value="{{xml_value([sequenceFlows[edge][1] for edge in selectedElements])}}"/>
             <date key="time:timestamp" value="{{xml_value(env.now)}}"/>
-            <int key="bpmn:instance" value="{{xml_value(name.split()[-1])}}"/>
+            <int key="bpmn:instance" value="{{xml_value(caso.indice)}}"/>
         </event>''')
     yield env.timeout(0)
     return selectedElements

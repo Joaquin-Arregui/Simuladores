@@ -11,22 +11,13 @@
   </global>
   <int key="simulation:seed" value="20260101"/>
   <trace>
-    <string key="concept:name" value="Instance 1" />
+    <string key="concept:name" value="Pool_Cliente - 1" />
     <event>
       <string key="concept:name" value="Inicio_C" />
       <string key="bpmn:type" value="bpmn:StartEvent" />
       <string key="bpmn:name" value="Arranca el cliente" />
       <string key="bpmn:id" value="Inicio_C" />
       <string key="bpmn:subTask" value="Enviar_Peticion" />
-      <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
-      <int key="bpmn:instance" value="1" />
-    </event>
-    <event>
-      <string key="concept:name" value="Inicio_S" />
-      <string key="bpmn:type" value="bpmn:StartEvent" />
-      <string key="bpmn:name" value="Arranca el servicio" />
-      <string key="bpmn:id" value="Inicio_S" />
-      <string key="bpmn:subTask" value="Recibir_Peticion" />
       <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
       <int key="bpmn:instance" value="1" />
     </event>
@@ -40,6 +31,50 @@
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="16" />
       <string key="bpmn:subTask" value="Esperar_Respuesta" />
+      <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
+      <int key="bpmn:instance" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandByMessage · Esperar_Respuesta" />
+      <string key="bpmn:type" value="StandByMessage" />
+      <string key="bpmn:id" value="Esperar_Respuesta" />
+      <string key="bpmn:execution" value="1" />
+      <date key="time:timestamp" value="2026-01-01T00:00:16.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:02:00.000+00:00" />
+      <float key="time:duration" value="104.0" />
+      <int key="bpmn:instance" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Esperar_Respuesta" />
+      <string key="bpmn:type" value="bpmn:ReceiveTask" />
+      <string key="bpmn:name" value="Esperar la respuesta" />
+      <string key="bpmn:id" value="Esperar_Respuesta" />
+      <string key="bpmn:messageOrigin" value="Enviar_Respuesta" />
+      <string key="bpmn:userTask" value="Carla" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="7" />
+      <string key="bpmn:subTask" value="Fin_C" />
+      <date key="time:timestamp" value="2026-01-01T00:02:00.000+00:00" />
+      <int key="bpmn:instance" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Fin_C" />
+      <string key="bpmn:type" value="bpmn:EndEvent" />
+      <string key="bpmn:name" value="Fin del cliente" />
+      <string key="bpmn:id" value="Fin_C" />
+      <string key="bpmn:subTask" value="" />
+      <date key="time:timestamp" value="2026-01-01T00:02:07.000+00:00" />
+      <int key="bpmn:instance" value="1" />
+    </event>
+  </trace>
+  <trace>
+    <string key="concept:name" value="Pool_Servicio - 1" />
+    <event>
+      <string key="concept:name" value="Inicio_S" />
+      <string key="bpmn:type" value="bpmn:StartEvent" />
+      <string key="bpmn:name" value="Arranca el servicio" />
+      <string key="bpmn:id" value="Inicio_S" />
+      <string key="bpmn:subTask" value="Recibir_Peticion" />
       <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
       <int key="bpmn:instance" value="1" />
     </event>
@@ -92,16 +127,6 @@
       <int key="bpmn:instance" value="1" />
     </event>
     <event>
-      <string key="concept:name" value="StandByMessage · Esperar_Respuesta" />
-      <string key="bpmn:type" value="StandByMessage" />
-      <string key="bpmn:id" value="Esperar_Respuesta" />
-      <string key="bpmn:execution" value="1" />
-      <date key="time:timestamp" value="2026-01-01T00:00:16.000+00:00" />
-      <date key="time:endTime" value="2026-01-01T00:02:00.000+00:00" />
-      <float key="time:duration" value="104.0" />
-      <int key="bpmn:instance" value="1" />
-    </event>
-    <event>
       <string key="concept:name" value="Fin_S" />
       <string key="bpmn:type" value="bpmn:EndEvent" />
       <string key="bpmn:name" value="Fin del servicio" />
@@ -110,40 +135,9 @@
       <date key="time:timestamp" value="2026-01-01T00:02:00.000+00:00" />
       <int key="bpmn:instance" value="1" />
     </event>
-    <event>
-      <string key="concept:name" value="Esperar_Respuesta" />
-      <string key="bpmn:type" value="bpmn:ReceiveTask" />
-      <string key="bpmn:name" value="Esperar la respuesta" />
-      <string key="bpmn:id" value="Esperar_Respuesta" />
-      <string key="bpmn:messageOrigin" value="Enviar_Respuesta" />
-      <string key="bpmn:userTask" value="Carla" />
-      <int key="bpmn:execution" value="1" />
-      <int key="bpmn:time" value="7" />
-      <string key="bpmn:subTask" value="Fin_C" />
-      <date key="time:timestamp" value="2026-01-01T00:02:00.000+00:00" />
-      <int key="bpmn:instance" value="1" />
-    </event>
-    <event>
-      <string key="concept:name" value="Fin_C" />
-      <string key="bpmn:type" value="bpmn:EndEvent" />
-      <string key="bpmn:name" value="Fin del cliente" />
-      <string key="bpmn:id" value="Fin_C" />
-      <string key="bpmn:subTask" value="" />
-      <date key="time:timestamp" value="2026-01-01T00:02:07.000+00:00" />
-      <int key="bpmn:instance" value="1" />
-    </event>
   </trace>
   <trace>
-    <string key="concept:name" value="Instance 2" />
-    <event>
-      <string key="concept:name" value="Inicio_S" />
-      <string key="bpmn:type" value="bpmn:StartEvent" />
-      <string key="bpmn:name" value="Arranca el servicio" />
-      <string key="bpmn:id" value="Inicio_S" />
-      <string key="bpmn:subTask" value="Recibir_Peticion" />
-      <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
-      <int key="bpmn:instance" value="2" />
-    </event>
+    <string key="concept:name" value="Pool_Cliente - 2" />
     <event>
       <string key="concept:name" value="Inicio_C" />
       <string key="bpmn:type" value="bpmn:StartEvent" />
@@ -164,6 +158,50 @@
       <int key="bpmn:time" value="15" />
       <string key="bpmn:subTask" value="Esperar_Respuesta" />
       <date key="time:timestamp" value="2026-01-01T00:00:40.000+00:00" />
+      <int key="bpmn:instance" value="2" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandByMessage · Esperar_Respuesta" />
+      <string key="bpmn:type" value="StandByMessage" />
+      <string key="bpmn:id" value="Esperar_Respuesta" />
+      <string key="bpmn:execution" value="1" />
+      <date key="time:timestamp" value="2026-01-01T00:00:55.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:02:20.000+00:00" />
+      <float key="time:duration" value="85.0" />
+      <int key="bpmn:instance" value="2" />
+    </event>
+    <event>
+      <string key="concept:name" value="Esperar_Respuesta" />
+      <string key="bpmn:type" value="bpmn:ReceiveTask" />
+      <string key="bpmn:name" value="Esperar la respuesta" />
+      <string key="bpmn:id" value="Esperar_Respuesta" />
+      <string key="bpmn:messageOrigin" value="Enviar_Respuesta" />
+      <string key="bpmn:userTask" value="Carla" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="7" />
+      <string key="bpmn:subTask" value="Fin_C" />
+      <date key="time:timestamp" value="2026-01-01T00:02:20.000+00:00" />
+      <int key="bpmn:instance" value="2" />
+    </event>
+    <event>
+      <string key="concept:name" value="Fin_C" />
+      <string key="bpmn:type" value="bpmn:EndEvent" />
+      <string key="bpmn:name" value="Fin del cliente" />
+      <string key="bpmn:id" value="Fin_C" />
+      <string key="bpmn:subTask" value="" />
+      <date key="time:timestamp" value="2026-01-01T00:02:27.000+00:00" />
+      <int key="bpmn:instance" value="2" />
+    </event>
+  </trace>
+  <trace>
+    <string key="concept:name" value="Pool_Servicio - 2" />
+    <event>
+      <string key="concept:name" value="Inicio_S" />
+      <string key="bpmn:type" value="bpmn:StartEvent" />
+      <string key="bpmn:name" value="Arranca el servicio" />
+      <string key="bpmn:id" value="Inicio_S" />
+      <string key="bpmn:subTask" value="Recibir_Peticion" />
+      <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
       <int key="bpmn:instance" value="2" />
     </event>
     <event>
@@ -215,16 +253,6 @@
       <int key="bpmn:instance" value="2" />
     </event>
     <event>
-      <string key="concept:name" value="StandByMessage · Esperar_Respuesta" />
-      <string key="bpmn:type" value="StandByMessage" />
-      <string key="bpmn:id" value="Esperar_Respuesta" />
-      <string key="bpmn:execution" value="1" />
-      <date key="time:timestamp" value="2026-01-01T00:00:55.000+00:00" />
-      <date key="time:endTime" value="2026-01-01T00:02:20.000+00:00" />
-      <float key="time:duration" value="85.0" />
-      <int key="bpmn:instance" value="2" />
-    </event>
-    <event>
       <string key="concept:name" value="Fin_S" />
       <string key="bpmn:type" value="bpmn:EndEvent" />
       <string key="bpmn:name" value="Fin del servicio" />
@@ -233,40 +261,9 @@
       <date key="time:timestamp" value="2026-01-01T00:02:20.000+00:00" />
       <int key="bpmn:instance" value="2" />
     </event>
-    <event>
-      <string key="concept:name" value="Esperar_Respuesta" />
-      <string key="bpmn:type" value="bpmn:ReceiveTask" />
-      <string key="bpmn:name" value="Esperar la respuesta" />
-      <string key="bpmn:id" value="Esperar_Respuesta" />
-      <string key="bpmn:messageOrigin" value="Enviar_Respuesta" />
-      <string key="bpmn:userTask" value="Carla" />
-      <int key="bpmn:execution" value="1" />
-      <int key="bpmn:time" value="7" />
-      <string key="bpmn:subTask" value="Fin_C" />
-      <date key="time:timestamp" value="2026-01-01T00:02:20.000+00:00" />
-      <int key="bpmn:instance" value="2" />
-    </event>
-    <event>
-      <string key="concept:name" value="Fin_C" />
-      <string key="bpmn:type" value="bpmn:EndEvent" />
-      <string key="bpmn:name" value="Fin del cliente" />
-      <string key="bpmn:id" value="Fin_C" />
-      <string key="bpmn:subTask" value="" />
-      <date key="time:timestamp" value="2026-01-01T00:02:27.000+00:00" />
-      <int key="bpmn:instance" value="2" />
-    </event>
   </trace>
   <trace>
-    <string key="concept:name" value="Instance 3" />
-    <event>
-      <string key="concept:name" value="Inicio_S" />
-      <string key="bpmn:type" value="bpmn:StartEvent" />
-      <string key="bpmn:name" value="Arranca el servicio" />
-      <string key="bpmn:id" value="Inicio_S" />
-      <string key="bpmn:subTask" value="Recibir_Peticion" />
-      <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
-      <int key="bpmn:instance" value="3" />
-    </event>
+    <string key="concept:name" value="Pool_Cliente - 3" />
     <event>
       <string key="concept:name" value="Inicio_C" />
       <string key="bpmn:type" value="bpmn:StartEvent" />
@@ -287,6 +284,50 @@
       <int key="bpmn:time" value="16" />
       <string key="bpmn:subTask" value="Esperar_Respuesta" />
       <date key="time:timestamp" value="2026-01-01T00:01:20.000+00:00" />
+      <int key="bpmn:instance" value="3" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandByMessage · Esperar_Respuesta" />
+      <string key="bpmn:type" value="StandByMessage" />
+      <string key="bpmn:id" value="Esperar_Respuesta" />
+      <string key="bpmn:execution" value="1" />
+      <date key="time:timestamp" value="2026-01-01T00:01:36.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:03:39.000+00:00" />
+      <float key="time:duration" value="123.0" />
+      <int key="bpmn:instance" value="3" />
+    </event>
+    <event>
+      <string key="concept:name" value="Esperar_Respuesta" />
+      <string key="bpmn:type" value="bpmn:ReceiveTask" />
+      <string key="bpmn:name" value="Esperar la respuesta" />
+      <string key="bpmn:id" value="Esperar_Respuesta" />
+      <string key="bpmn:messageOrigin" value="Enviar_Respuesta" />
+      <string key="bpmn:userTask" value="Carla" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="8" />
+      <string key="bpmn:subTask" value="Fin_C" />
+      <date key="time:timestamp" value="2026-01-01T00:03:39.000+00:00" />
+      <int key="bpmn:instance" value="3" />
+    </event>
+    <event>
+      <string key="concept:name" value="Fin_C" />
+      <string key="bpmn:type" value="bpmn:EndEvent" />
+      <string key="bpmn:name" value="Fin del cliente" />
+      <string key="bpmn:id" value="Fin_C" />
+      <string key="bpmn:subTask" value="" />
+      <date key="time:timestamp" value="2026-01-01T00:03:47.000+00:00" />
+      <int key="bpmn:instance" value="3" />
+    </event>
+  </trace>
+  <trace>
+    <string key="concept:name" value="Pool_Servicio - 3" />
+    <event>
+      <string key="concept:name" value="Inicio_S" />
+      <string key="bpmn:type" value="bpmn:StartEvent" />
+      <string key="bpmn:name" value="Arranca el servicio" />
+      <string key="bpmn:id" value="Inicio_S" />
+      <string key="bpmn:subTask" value="Recibir_Peticion" />
+      <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
       <int key="bpmn:instance" value="3" />
     </event>
     <event>
@@ -348,44 +389,12 @@
       <int key="bpmn:instance" value="3" />
     </event>
     <event>
-      <string key="concept:name" value="StandByMessage · Esperar_Respuesta" />
-      <string key="bpmn:type" value="StandByMessage" />
-      <string key="bpmn:id" value="Esperar_Respuesta" />
-      <string key="bpmn:execution" value="1" />
-      <date key="time:timestamp" value="2026-01-01T00:01:36.000+00:00" />
-      <date key="time:endTime" value="2026-01-01T00:03:39.000+00:00" />
-      <float key="time:duration" value="123.0" />
-      <int key="bpmn:instance" value="3" />
-    </event>
-    <event>
       <string key="concept:name" value="Fin_S" />
       <string key="bpmn:type" value="bpmn:EndEvent" />
       <string key="bpmn:name" value="Fin del servicio" />
       <string key="bpmn:id" value="Fin_S" />
       <string key="bpmn:subTask" value="" />
       <date key="time:timestamp" value="2026-01-01T00:03:39.000+00:00" />
-      <int key="bpmn:instance" value="3" />
-    </event>
-    <event>
-      <string key="concept:name" value="Esperar_Respuesta" />
-      <string key="bpmn:type" value="bpmn:ReceiveTask" />
-      <string key="bpmn:name" value="Esperar la respuesta" />
-      <string key="bpmn:id" value="Esperar_Respuesta" />
-      <string key="bpmn:messageOrigin" value="Enviar_Respuesta" />
-      <string key="bpmn:userTask" value="Carla" />
-      <int key="bpmn:execution" value="1" />
-      <int key="bpmn:time" value="8" />
-      <string key="bpmn:subTask" value="Fin_C" />
-      <date key="time:timestamp" value="2026-01-01T00:03:39.000+00:00" />
-      <int key="bpmn:instance" value="3" />
-    </event>
-    <event>
-      <string key="concept:name" value="Fin_C" />
-      <string key="bpmn:type" value="bpmn:EndEvent" />
-      <string key="bpmn:name" value="Fin del cliente" />
-      <string key="bpmn:id" value="Fin_C" />
-      <string key="bpmn:subTask" value="" />
-      <date key="time:timestamp" value="2026-01-01T00:03:47.000+00:00" />
       <int key="bpmn:instance" value="3" />
     </event>
   </trace>
