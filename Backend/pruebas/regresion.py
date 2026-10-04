@@ -1,0 +1,256 @@
+#!/usr/bin/env python3
+"""Reejecuta los modelos de referencia y los compara con lo congelado.
+
+    python3 pruebas/regresion.py
+    python3 pruebas/regresion.py --acepta-reorganizacion
+    python3 pruebas/regresion.py --acepta-reorganizacion --correspondencia pruebas/correspondencia.json
+
+Separa dos cosas que no conviene confundir:
+
+- COMPORTAMIENTO: que le ocurre a CADA CASO. Que eventos tiene, cuando, con que
+  recurso y que rama elige cada compuerta. Esto no puede cambiar mientras no se
+  cambie el motor a proposito: cualquier diferencia es un fallo.
+- ORGANIZACION: en cuantas trazas se reparten los eventos de un caso y como se
+  llaman esas trazas. Las tareas 1.5 y 1.6 van a separar las trazas por
+  participante, y eso es legitimo: se informa aparte y se acepta con
+  --acepta-reorganizacion.
+
+La linea entre las dos esta en el CASO, no en la traza. Aceptar la
+reorganizacion no es ignorar a quien pertenece cada evento: los eventos se
+agrupan por caso antes de comparar, asi que si la respuesta del cliente 1
+acabara en el cliente 2 seguiria siendo un fallo aunque las trazas se hayan
+reorganizado. Esa es justo la rotura que vigila el modelo 02.
+
+Si la reorganizacion ademas renumera los casos, la correspondencia explicita
+(--correspondencia, un JSON {"caso nuevo": "caso de referencia"}) dice como se
+leen los nuevos identificadores. Sin ella se asume que no cambian.
+"""
+import argparse
+import json
+import os
+import sys
+from pathlib import Path
+from xml.etree import ElementTree as ET
+
+AQUI = Path(__file__).resolve().parent
+sys.path.insert(0, str(AQUI.parent))
+os.environ["SIMULATION_START_DATE"] = "2026-01-01T00:00:00+00:00"
+
+from simulator.main import processSimulation  # noqa: E402
+
+SEMILLA = 20260101
+MODELOS = AQUI / "modelos"
+ESPERADO = AQUI / "esperado"
+
+# Atributos que dicen a que caso pertenece un evento. Hoy solo esta la
+# instancia; cuando la 1.6 anada el participante, se anade aqui y la clave de
+# caso pasa a ser el par, sin tocar nada mas.
+IDENTIDAD = ("bpmn:participant", "bpmn:instance")
+
+
+def _etiqueta(nodo):
+    return nodo.tag.split("}")[-1]
+
+
+def lee_xes(texto):
+    """[{nombre, eventos: [{clave: valor}]}] a partir del XES."""
+    trazas = []
+    for hijo in ET.fromstring(texto):
+        if _etiqueta(hijo) != "trace":
+            continue
+        nombre, eventos = None, []
+        for nodo in hijo:
+            if _etiqueta(nodo) == "event":
+                eventos.append({a.get("key"): a.get("value") for a in nodo})
+            elif nodo.get("key") == "concept:name":
+                nombre = nodo.get("value")
+        trazas.append({"nombre": nombre, "eventos": eventos})
+    return trazas
+
+
+def clave_caso(evento, traza, correspondencia):
+    """A que caso pertenece un evento, ya normalizado."""
+    partes = tuple(evento[c] for c in IDENTIDAD if evento.get(c) is not None)
+    bruta = " / ".join(partes) if partes else (traza["nombre"] or "sin nombre")
+    return correspondencia.get(bruta, bruta)
+
+
+def firma(evento):
+    """Lo que define el comportamiento de un evento dentro de su caso."""
+    return tuple(sorted((c, v) for c, v in evento.items() if c not in IDENTIDAD))
+
+
+def describe(evento):
+    return "%s (%s) en %s" % (evento.get("bpmn:id", "?"),
+                              evento.get("bpmn:type", "?"),
+                              evento.get("time:timestamp", "sin marca de tiempo"))
+
+
+def agrupa_por_caso(trazas, correspondencia):
+    casos = {}
+    for traza in trazas:
+        for posicion, evento in enumerate(traza["eventos"], 1):
+            clave = clave_caso(evento, traza, correspondencia)
+            casos.setdefault(clave, []).append((traza["nombre"], posicion, evento))
+    return casos
+
+
+def _atributos_distintos(ref, obt):
+    return ["%s esperaba %r y ha dado %r" % (c, ref.get(c), obt.get(c))
+            for c in sorted(set(ref) | set(obt)) if ref.get(c) != obt.get(c)]
+
+
+def compara_caso(caso, eventos_ref, eventos_obt):
+    """Compara los eventos de UN caso, sin depender de como se repartan."""
+    pendientes = {}
+    for nombre, posicion, evento in eventos_ref:
+        pendientes.setdefault(firma(evento), []).append((nombre, posicion, evento))
+
+    sobran = []
+    for nombre, posicion, evento in eventos_obt:
+        cola = pendientes.get(firma(evento))
+        if cola:
+            cola.pop()
+        else:
+            sobran.append((nombre, posicion, evento))
+
+    faltan = [dato for cola in pendientes.values() for dato in cola]
+    por_elemento = {}
+    for dato in sobran:
+        por_elemento.setdefault((dato[2].get("bpmn:id"), dato[2].get("bpmn:type")), []).append(dato)
+
+    fallos, emparejados = [], set()
+    for nombre, posicion, evento in faltan:
+        cola = por_elemento.get((evento.get("bpmn:id"), evento.get("bpmn:type")))
+        if cola:
+            _, _, otro = cola.pop(0)
+            emparejados.add(id(otro))
+            for linea in _atributos_distintos(evento, otro):
+                fallos.append("caso %s, evento %d (%s): %s"
+                              % (caso, posicion, describe(evento), linea))
+        else:
+            fallos.append("caso %s: falta el evento %s (posicion %d de la traza %s)"
+                          % (caso, describe(evento), posicion, nombre))
+    for nombre, posicion, evento in sobran:
+        if id(evento) not in emparejados:
+            fallos.append("caso %s: sobra el evento %s (posicion %d de la traza %s)"
+                          % (caso, describe(evento), posicion, nombre))
+    return fallos
+
+
+def revisa(texto_ref, texto_obt, correspondencia):
+    """Devuelve (fallos_de_comportamiento, notas_de_organizacion)."""
+    ref, obt = lee_xes(texto_ref), lee_xes(texto_obt)
+
+    organizacion = []
+    estructura_ref = [(t["nombre"], len(t["eventos"])) for t in ref]
+    estructura_obt = [(t["nombre"], len(t["eventos"])) for t in obt]
+    if estructura_ref != estructura_obt:
+        organizacion.append("la estructura de trazas ha cambiado: antes %s, ahora %s"
+                            % (estructura_ref, estructura_obt))
+
+    casos_ref = agrupa_por_caso(ref, {})
+    casos_obt = agrupa_por_caso(obt, correspondencia)
+
+    comportamiento = []
+    faltan_casos = sorted(set(casos_ref) - set(casos_obt))
+    sobran_casos = sorted(set(casos_obt) - set(casos_ref))
+    for caso in faltan_casos:
+        comportamiento.append("falta el caso %s, que tenia %d eventos"
+                              % (caso, len(casos_ref[caso])))
+    for caso in sobran_casos:
+        comportamiento.append("aparece un caso nuevo, %s, con %d eventos"
+                              % (caso, len(casos_obt[caso])))
+    if faltan_casos or sobran_casos:
+        comportamiento.append("si la reorganizacion renumera los casos, declara la "
+                              "correspondencia con --correspondencia")
+
+    for caso in sorted(set(casos_ref) & set(casos_obt)):
+        comportamiento.extend(compara_caso(caso, casos_ref[caso], casos_obt[caso]))
+
+    return comportamiento, organizacion
+
+
+def carga_correspondencia(ruta):
+    if ruta is None:
+        return {}
+    datos = json.loads(Path(ruta).read_text(encoding="utf-8"))
+    if not isinstance(datos, dict) or any(not isinstance(v, str) for v in datos.values()):
+        raise ValueError("La correspondencia debe ser un objeto {\"caso nuevo\": \"caso de referencia\"}.")
+    return datos
+
+
+def main():
+    opciones = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    opciones.add_argument("--acepta-reorganizacion", action="store_true",
+                          help="el reparto de los eventos en trazas puede cambiar; su caso, no")
+    opciones.add_argument("--correspondencia", default=None,
+                          help="JSON {\"caso nuevo\": \"caso de referencia\"} cuando la reorganizacion renumera")
+    argumentos = opciones.parse_args()
+
+    try:
+        correspondencia = carga_correspondencia(argumentos.correspondencia)
+    except Exception as error:
+        print("No se pudo leer la correspondencia: %s" % error)
+        return 1
+
+    modelos = sorted(MODELOS.glob("*.txt"))
+    if not modelos:
+        print("No hay modelos en %s." % MODELOS)
+        return 1
+
+    fallos = 0
+    for ruta in modelos:
+        referencia = ESPERADO / (ruta.stem + ".xes")
+        if not referencia.exists():
+            print("%-24s SIN REFERENCIA  ejecuta congelar.py" % ruta.name)
+            fallos += 1
+            continue
+        try:
+            resultado = processSimulation(ruta.read_text(encoding="utf-8"), seed=SEMILLA)
+        except Exception as error:
+            print("%-24s ERROR   %s: %s" % (ruta.name, type(error).__name__, error))
+            fallos += 1
+            continue
+
+        comportamiento, organizacion = revisa(
+            referencia.read_text(encoding="utf-8"), resultado.simulation, correspondencia)
+
+        if resultado.warnings:
+            print("%-24s AVISOS" % ruta.name)
+            for aviso in resultado.warnings:
+                print("         %s" % aviso)
+            fallos += 1
+        if comportamiento:
+            print("%-24s CAMBIA EL COMPORTAMIENTO" % ruta.name)
+            for linea in comportamiento[:12]:
+                print("         %s" % linea)
+            if len(comportamiento) > 12:
+                print("         ... y %d diferencias mas" % (len(comportamiento) - 12))
+            fallos += 1
+        if organizacion:
+            etiqueta = "reorganizacion aceptada" if argumentos.acepta_reorganizacion else "CAMBIA LA ORGANIZACION"
+            print("%-24s %s" % (ruta.name, etiqueta))
+            for linea in organizacion[:6]:
+                print("         %s" % linea)
+            if not argumentos.acepta_reorganizacion:
+                fallos += 1
+        if not (resultado.warnings or comportamiento or organizacion):
+            print("%-24s ok" % ruta.name)
+
+    huerfanas = ({p.stem for p in ESPERADO.glob("*.xes")} - {p.stem for p in modelos}) if ESPERADO.is_dir() else set()
+    for nombre in sorted(huerfanas):
+        print("%-24s REFERENCIA HUERFANA  no existe su modelo" % (nombre + ".xes"))
+        fallos += 1
+
+    print()
+    if fallos:
+        print("Regresion en rojo: %d problema(s)." % fallos)
+        print("Si el cambio de comportamiento es intencionado, revisa el diff y vuelve a congelar.")
+        return 1
+    print("Regresion en verde: %d modelos sin cambios." % len(modelos))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

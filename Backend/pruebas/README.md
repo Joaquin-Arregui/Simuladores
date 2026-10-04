@@ -8,6 +8,7 @@ mientras el comportamiento no deba cambiar, su XES no debe cambiar.
 - `modelos/` — las reglas de cada modelo, en el formato que exporta el Modeler.
 - `esperado/` — el XES congelado de cada modelo. **No se edita a mano.**
 - `congelar.py` — reejecuta los modelos y reescribe `esperado/`.
+- `regresion.py` — reejecuta los modelos y **compara** con `esperado/`.
 
 ## Los tres modelos
 
@@ -44,8 +45,50 @@ aprendizaje por repetición (tarea 1.2), que es lo que ese orden perseguía: si 
 hubieran congelado antes, el cambio de duraciones habría invalidado la referencia
 el mismo día.
 
-## Qué viene después
+## La regresión
 
-La tarea **1.4** añade `regresion.py`, que reejecuta estos modelos y compara
-contra `esperado/` en vez de sobrescribirlo, señalando qué traza y qué evento no
-cuadran.
+```
+python3 pruebas/regresion.py
+python3 pruebas/regresion.py --acepta-reorganizacion
+```
+
+Separa dos cosas que no conviene confundir:
+
+- **Comportamiento** — qué le ocurre a **cada caso**: qué eventos tiene, cuándo,
+  con qué recurso y qué rama elige cada compuerta. Mientras no se cambie el
+  motor a propósito, esto no puede cambiar: cualquier diferencia es un fallo, y
+  el mensaje dice el caso, el evento, el atributo y los dos valores.
+- **Organización** — en cuántas trazas se reparten los eventos de un caso y cómo
+  se llaman. Las tareas 1.5 y 1.6 van a separarlas por participante, y eso es
+  legítimo: se informa aparte y se acepta con `--acepta-reorganizacion`.
+
+**La línea entre las dos está en el caso, no en la traza.** Los eventos se
+agrupan por caso *antes* de comparar, y la comparación ocurre dentro de cada
+caso. Aceptar la reorganización no es ignorar a quién pertenece cada evento: si
+la respuesta del cliente 1 acabara en el cliente 2, sigue siendo un fallo aunque
+las trazas se hayan reorganizado. Esa es justo la rotura que vigila el modelo 02,
+y comparar un conjunto global de eventos no la vería, porque el conjunto global
+no cambia al intercambiar dos respuestas.
+
+Si la reorganización además renumera los casos, hay que declararlo:
+
+```
+python3 pruebas/regresion.py --acepta-reorganizacion --correspondencia pruebas/correspondencia.json
+```
+
+con un JSON `{"caso nuevo": "caso de referencia"}`. Sin él se asume que los
+identificadores no cambian, y un caso que aparece o desaparece es un fallo — no
+un detalle de formato.
+
+Por eso la comparación no es un diff del XES. Un diff fallaría entero el día que
+se separen las trazas, y la tentación entonces sería relajarlo hasta que dejara
+de avisar de nada.
+
+También avisa de una referencia huérfana —un `.xes` cuyo modelo ya no existe—
+para que `esperado/` no acumule restos.
+
+## Cuando el cambio es intencionado
+
+Revisar lo que dice la regresión, comprobar que el cambio es el que se buscaba,
+y entonces `congelar.py` para fijar la nueva referencia. Nunca al revés: si se
+congela primero, nadie llega a ver qué cambió.
