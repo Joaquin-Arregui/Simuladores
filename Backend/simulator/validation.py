@@ -369,6 +369,12 @@ def validate_simulation(elements, process, starts, message_starts, warnings=None
                 _fail(root, "cada rol debe tener un nombre y una lista válida de usuarios.")
         process_users = set(root.userWithoutRole) | {user for users in root.userWithRole.values() for user in users}
         known_users = process_users | {user for lane in lanes for user in lane.users}
+        # Sin pools no hay a quien mandarle un mensaje: en un Process todo nodo
+        # es del mismo participante implicito.
+        for element in model.values():
+            if _kind(element) == "MessageFlow":
+                _fail(element, "un Process no tiene con quien intercambiar mensajes; los mensajes "
+                               "necesitan dos participantes de una colaboración.")
     else:
         any_marked = any(getattr(p, "multiplicity", False) for p in participants)
         orchestrators = [p for p in participants if getattr(p, "role", None) == "orchestrator"]
@@ -412,6 +418,17 @@ def validate_simulation(elements, process, starts, message_starts, warnings=None
             for target in targets:
                 if ownership[source] != ownership[target]:
                     _fail(nodes[source], f"el flujo de secuencia hacia {target} cruza participantes; utiliza mensajes.")
+        # Lo contrario tambien: un mensaje tiene que salir del pool. Dentro de un
+        # participante se usan flujos de secuencia, y un mensaje de un caso a si
+        # mismo no significa nada. Un mensaje dirigido al pool de enfrente, en
+        # cambio, ya lo admite validate_references con un aviso.
+        for element in model.values():
+            if _kind(element) != "MessageFlow":
+                continue
+            emisor, receptor = ownership.get(element.superElement), ownership.get(element.subElement)
+            if emisor is not None and emisor == receptor:
+                _fail(element, f"el mensaje no sale del pool {emisor}; dentro de un participante se "
+                               "usan flujos de secuencia, no mensajes.")
 
     for element in nodes.values():
         if _kind(element) not in TASK_TYPES:

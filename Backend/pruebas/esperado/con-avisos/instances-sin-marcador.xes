@@ -14,7 +14,7 @@
   <string key="simulation:startDate" value="2026-01-01T00:00:00+00:00"/>
   <string key="simulation:participants" value="Pool_Unico"/>
   <trace>
-    <string key="concept:name" value="Instance 1" />
+    <string key="concept:name" value="Pool_Unico - 1" />
     <string key="bpmn:participant" value="Pool_Unico" />
     <int key="bpmn:instance" value="1" />
     <int key="bpmn:convocatoria" value="1" />
@@ -61,7 +61,7 @@
     </event>
   </trace>
   <trace>
-    <string key="concept:name" value="Instance 2" />
+    <string key="concept:name" value="Pool_Unico - 2" />
     <string key="bpmn:participant" value="Pool_Unico" />
     <int key="bpmn:instance" value="2" />
     <int key="bpmn:convocatoria" value="1" />

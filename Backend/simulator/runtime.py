@@ -55,8 +55,10 @@ def caso_arrancado(caso):
 
 def etiqueta_de_traza(caso):
     # El nombre definitivo de la traza lo fija la tarea 1.6. Hasta entonces, un
-    # modelo de un solo participante conserva el nombre de siempre.
-    if len(participantesOrden) == 1:
+    # Process conserva el nombre de siempre. Se mira isProcess y no el numero de
+    # participantes: una colaboracion de un solo pool sigue siendo una
+    # colaboracion, y su traza se llama por el pool.
+    if isProcess:
         return f'Instance {caso.indice}'
     return f'{caso.participante} - {caso.indice}'
 
@@ -181,8 +183,19 @@ def nuevo_contexto(padres):
 
 
 def _anotacion(caso, recepcion, execution, contexto):
-    """El remitente que anoto esa recepcion para este token, subiendo por los
-    contextos de los que viene hasta encontrarlo."""
+    """El remitente que anoto esa recepcion para este token.
+
+    Se sube por los contextos de los que viene el token hasta encontrarlo, que
+    es lo que permite responder a algo recogido antes de un corte o al otro lado
+    de una union.
+
+    La subida se para en el primer contexto que tenga ALGUNA anotacion de esa
+    recepcion: si esa activacion recogio menos sobres de los que esta respuesta
+    pide, lo honesto es quedarse sin anotacion y que el destino salga de las
+    cardinalidades, no heredar el remitente de una activacion anterior. Hoy no
+    puede pasar, porque con el numero de ejecuciones escrito a mano una vuelta
+    corta se bloquea en vez de seguir; cuando la 3.2 calcule N en ejecucion, si.
+    """
     vistos, frontera = {contexto}, [contexto]
     while frontera:
         siguiente = []
@@ -190,6 +203,8 @@ def _anotacion(caso, recepcion, execution, contexto):
             anotado = correspondientes.get((caso, ctx, recepcion, execution))
             if anotado is not None:
                 return anotado
+            if (caso, ctx, recepcion) in recepciones_anotadas:
+                return None
             for padre in contextos_padres.get(ctx, ()):
                 if padre not in vistos:
                     vistos.add(padre)
@@ -290,6 +305,7 @@ def wait_for_message(env, origin, target, execution, caso, contexto):
     # remitente, y ni otra recepcion del caso ni otra activacion de esta le pisan
     # el contexto.
     correspondientes[(caso, contexto, target, execution)] = remitente
+    recepciones_anotadas.add((caso, contexto, target))
     return remitente
 
 
@@ -563,7 +579,7 @@ def _finalize_item(item):
 
 def _run_simulation():
     global env, simulationResults, colasPorParticipante
-    global messages, message_waiters, correspondientes
+    global messages, message_waiters, correspondientes, recepciones_anotadas
     global contextos_padres, contador_contextos
     global data, data_changed, active_tokens, pending_joins
     global reachability, completed, startDate, join_waits
@@ -594,6 +610,9 @@ def _run_simulation():
     messages, message_waiters = defaultdict(deque), defaultdict(deque)
     # Cada token estrena contexto; los padres son los contextos de los que viene.
     correspondientes, contextos_padres, contador_contextos = {}, {}, 0
+    # Que recepciones tienen ya alguna anotacion en cada contexto, para que
+    # _anotacion no tenga que recorrer todas las anotaciones para saberlo.
+    recepciones_anotadas = set()
     data = {(item, caso) for item in defaultData for caso in simulationResults}
     data_changed = {}
     active_tokens, pending_joins = defaultdict(Counter), defaultdict(dict)

@@ -38,6 +38,8 @@ mientras el comportamiento no deba cambiar, su XES no debe cambiar.
 | `11-dos-conversaciones` | Dos ventanillas en paralelo hablando con el mismo pool, con las solicitudes llegando en orden distinto | Que el contexto de una recepcion pise el de la otra y una ventanilla responda a quien no le escribio |
 | `12-dos-activaciones` | Dos tokens paralelos activando la misma ReceiveTask, con la respuesta retrasada | Que dos activaciones de una recepcion compartan contexto y una respuesta vuelva a quien no escribio |
 | `13-ciclo-de-flujos` | Un ciclo real de flujos de secuencia, con un gateway que reintenta o cierra | Que el generador no reconozca una funcion ya escrita y se vaya a la recursion infinita |
+| `14-convocatoria-de-50` | La convocatoria del 10 con 50 orquestados: 51 casos, 50 sobres, 50 respuestas | Que la cifra que nombran los criterios del hito 2 deje de salir |
+| `15-contexto-heredado` | La recepcion antes del corte y las dos respuestas despues | Que una respuesta no sepa subir por los contextos del token hasta su recepcion |
 | `con-avisos/envio-a-pool-externo` | Un mensaje dirigido al pool y no a un receptor | Que un envio que sale de la simulacion acabe en un error interno en vez de en un aviso |
 | `con-avisos/mismo-usuario-en-dos-pools` | El mismo nombre declarado en dos pools | Que dos pools vuelvan a competir por el mismo recurso |
 | `con-error/sin-destino` | Tres agencias escribiendo a cinco oficinas: ni 1 a N, ni N a 1, ni mismo numero | Que el motor se invente un emparejamiento en vez de decir que no hay ninguno |
