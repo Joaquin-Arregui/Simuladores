@@ -37,6 +37,21 @@ def caso_de(node, indice, convocatoria=1):
     return Caso(elementParticipant[node], indice, convocatoria)
 
 
+def casos_de(participante):
+    """Todos los casos de un pool, hayan arrancado o no.
+
+    La difusion necesita esta lista completa: un mensaje dirigido a un caso que
+    todavia no ha arrancado tiene que quedarse esperandole, no perderse. Por eso
+    la tabla se construye entera antes de lanzar ningun evento.
+    """
+    return casosPorParticipante[participante]
+
+
+def caso_arrancado(caso):
+    """Si su evento de inicio ya ha pasado su retardo de llegada."""
+    return caso in casosArrancados
+
+
 def etiqueta_de_traza(caso):
     # El nombre definitivo de la traza lo fija la tarea 1.6. Hasta entonces, un
     # modelo de un solo participante conserva el nombre de siempre.
@@ -283,6 +298,7 @@ def _run_node(node, caso):
 def _start_event(node, caso, delay):
     item = startEvents[node]
     yield env.timeout(delay)
+    casosArrancados.add(caso)
     if item['origin'] is not None:
         start_wait = env.now
         yield env.process(wait_for_message(env, item['origin'], node, 1, caso))
@@ -309,13 +325,16 @@ def _assert_complete():
                for node, counts in joins.items() if any(counts.values())]
     active = [f'{node} ({caso})' for caso, tokens in active_tokens.items()
               for node, count in tokens.items() if count]
+    sin_arrancar = [str(caso) for caso in simulationResults if caso not in casosArrancados]
     missing = [str(caso) for caso in simulationResults if not completed[caso]]
-    if pending or active or missing:
+    if pending or active or missing or sin_arrancar:
         details = []
         if pending:
             details.append('uniones pendientes: ' + ', '.join(pending[:10]))
         if active:
             details.append('elementos esperando mensaje o datos: ' + ', '.join(active[:10]))
+        if sin_arrancar:
+            details.append('casos preparados que nunca arrancaron: ' + ', '.join(sin_arrancar[:10]))
         if missing:
             details.append('casos sin evento de fin: ' + ', '.join(missing[:10]))
         raise SimulationError('Simulación bloqueada o incompleta; ' + '; '.join(details) + '.')
@@ -382,15 +401,21 @@ def _run_simulation():
     global env, simulationResults, user_queue, user_assignments
     global messages, message_waiters, data, data_changed, active_tokens, pending_joins
     global reachability, completed, startDate, join_waits
+    global casosPorParticipante, casosArrancados
     # Every draw (durations, gateways, loops) comes from this generator, so the
     # seed alone fixes the run.
     random.seed(simulationSeed)
     env = simpy.Environment()
     startDate = datetime.fromisoformat(simulationStartDate)
-    # Un caso por (participante, indice). Con un solo participante el resultado
-    # es el de siempre; en una colaboracion, cada pool lleva su propia traza.
+    # La tabla de casos de la convocatoria, completa ANTES de lanzar nada. El
+    # numero total se conoce desde el principio del experimento, asi que no hay
+    # que esperar a que un caso arranque para poder dirigirle un mensaje.
     # Un caso por (participante, indice), con el numero de instancias de cada
-    # pool. Cuando todos tienen el mismo, el orden es el de siempre.
+    # pool; cuando todos tienen el mismo, el orden es el de siempre.
+    casosPorParticipante = {participante: [Caso(participante, indice)
+                                           for indice in range(1, instanciasPorParticipante[participante] + 1)]
+                            for participante in participantesOrden}
+    casosArrancados = set()
     maximo = max(instanciasPorParticipante.values())
     simulationResults = {Caso(participante, indice): []
                          for indice in range(1, maximo + 1)

@@ -1,0 +1,21 @@
+# Modelo de referencia 6 - un mensaje dirigido a un caso que aun no ha arrancado.
+# El emisor va con frecuencia 0: sus tres casos arrancan a la vez y envian
+# enseguida. El receptor va con frecuencia 40: los suyos arrancan en 0, 40 y 80.
+# Los avisos para los casos 2 y 3 se publican mucho antes de que esos casos
+# existan, y tienen que quedarse esperandoles.
+# Se nota en el registro: el receptor 1 espera el mensaje (StandByMessage), y
+# los otros dos no esperan nada porque el mensaje ya estaba ahi.
+Element: [type=bpmn:Collaboration, id_bpmn='Colaboracion', name='Mensaje antes de arrancar', instances=1]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Emisor', name='Emisor', frequency=0, userWithoutRole=['Ana'], instances=3, participantMultiplicity='true', containedElements=['Ini_E', 'Enviar', 'Fin_E', 'e1', 'e2']]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Receptor', name='Receptor', frequency=40, userWithoutRole=['Beto'], instances=3, participantMultiplicity='true', containedElements=['Ini_R', 'Recibir', 'Fin_R', 'r1', 'r2']]
+Element: [type=bpmn:StartEvent, id_bpmn='Ini_E', name='Arranca el emisor', subTask='Enviar']
+Element: [type=bpmn:SendTask, id_bpmn='Enviar', name='Enviar el aviso', userTask='Ana', numberOfExecutions=1, minimumTime=3, maximumTime=5, subTask='Fin_E']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_E', name='Fin del emisor', subTask='']
+Element: [type=bpmn:StartEvent, id_bpmn='Ini_R', name='Arranca el receptor', subTask='Recibir']
+Element: [type=bpmn:ReceiveTask, id_bpmn='Recibir', name='Recibir el aviso', userTask='Beto', numberOfExecutions=1, minimumTime=2, maximumTime=4, subTask='Fin_R']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_R', name='Fin del receptor', subTask='']
+Element: [type=bpmn:SequenceFlow, id_bpmn='e1', name='', superElement='Ini_E', subElement='Enviar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='e2', name='', superElement='Enviar', subElement='Fin_E']
+Element: [type=bpmn:SequenceFlow, id_bpmn='r1', name='', superElement='Ini_R', subElement='Recibir']
+Element: [type=bpmn:SequenceFlow, id_bpmn='r2', name='', superElement='Recibir', subElement='Fin_R']
+Element: [type=bpmn:MessageFlow, id_bpmn='Aviso', name='Aviso', superElement='Enviar', subElement='Recibir']

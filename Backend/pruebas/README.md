@@ -24,6 +24,7 @@ mientras el comportamiento no deba cambiar, su XES no debe cambiar.
 | `03-uniones-y-bucle` | Unión paralela e inclusiva, bucle y temporizador | Tokens, uniones que esperan solo a las ramas abiertas, y esperas con fin propio |
 | `04-datos-y-mensajes` | Objetos de datos y evento de inicio por mensaje | Que cada caso espere **su** dato, y que un pool arranque al recibir |
 | `05-multiplicidad-por-pool` | Orquestador con 1 instancia y orquestado con 3 | Que cada pool use su propio número y no el de la colaboración |
+| `06-mensaje-antes-de-arrancar` | Un mensaje dirigido a un caso que aún no ha arrancado | Que un mensaje se pierda porque su destinatario todavía no existía |
 | `con-avisos/pool-vacio` | Un pool sin proceso que simular | Que un aviso se convierta en una simulación bloqueada |
 | `con-avisos/parametro-desconocido` | Un parámetro que el simulador no conoce | Que un modelo de una versión más nueva del Modeler deje de cargarse |
 | `con-avisos/instances-sin-marcador` | Un pool con número de instancias pero sin marcador | Que se simule un número distinto del dibujado, en silencio |
