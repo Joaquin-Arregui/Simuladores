@@ -30,5 +30,12 @@ La aplicación conserva edición BPMN, parámetros, usuarios/roles y simulación
 Cada simulación dispone de 5 minutos de tiempo real, configurables en el Backend
 con `SIMULATION_TIMEOUT_SECONDS`. El tiempo simulado se mide en segundos y el
 registro XES usa fechas ISO 8601. El modelador muestra los errores, los avisos y
-las funciones BPMN no soportadas. Por ahora el proyecto no incluye pruebas
-automáticas.
+las funciones BPMN no soportadas. El proyecto incluye un
+[banco de pruebas de regresión](Backend/pruebas/README.md) con modelos y
+resultados de referencia. Desde la raíz, ejecútalo con:
+
+```sh
+Backend/.venv/Scripts/python -B Backend/pruebas/regresion.py
+```
+
+En Linux o macOS, usa `Backend/.venv/bin/python`.

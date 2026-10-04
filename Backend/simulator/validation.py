@@ -425,7 +425,11 @@ def validate_simulation(elements, process, starts, message_starts, warnings=None
         for element in model.values():
             if _kind(element) != "MessageFlow":
                 continue
-            emisor, receptor = ownership.get(element.superElement), ownership.get(element.subElement)
+            emisor = ownership.get(element.superElement)
+            destino = model[element.subElement]
+            # Un Participant es el propio pool; ownership solo contiene sus nodos.
+            receptor = (destino.id_bpmn if _kind(destino) == "Participant"
+                        else ownership.get(element.subElement))
             if emisor is not None and emisor == receptor:
                 _fail(element, f"el mensaje no sale del pool {emisor}; dentro de un participante se "
                                "usan flujos de secuencia, no mensajes.")

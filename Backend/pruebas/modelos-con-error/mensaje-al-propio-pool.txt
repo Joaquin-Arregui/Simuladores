@@ -1,0 +1,12 @@
+# El mensaje apunta al participante que contiene al emisor, no a otro pool.
+# El ID del participante no figura en ownership: antes se confundia este envio
+# con uno externo y la simulacion terminaba bien, sin que nadie lo recibiera.
+# Debe fallar igual que un mensaje entre dos nodos del mismo participante.
+Element: [type=bpmn:Collaboration, id_bpmn='Colaboracion', name='Mensaje al propio pool', instances=2]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Interno', name='Oficina', frequency=20, userWithoutRole=['Ana'], containedElements=['Ini', 'Comunicar', 'Fin', 'f1', 'f2']]
+Element: [type=bpmn:StartEvent, id_bpmn='Ini', name='Inicio', subTask='Comunicar']
+Element: [type=bpmn:SendTask, id_bpmn='Comunicar', name='Comunicar a la propia oficina', userTask='Ana', numberOfExecutions=1, minimumTime=1, maximumTime=1, subTask='Fin']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin', name='Fin', subTask='']
+Element: [type=bpmn:SequenceFlow, id_bpmn='f1', name='', superElement='Ini', subElement='Comunicar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='f2', name='', superElement='Comunicar', subElement='Fin']
+Element: [type=bpmn:MessageFlow, id_bpmn='Comunicacion', name='Comunicacion', superElement='Comunicar', subElement='Pool_Interno']

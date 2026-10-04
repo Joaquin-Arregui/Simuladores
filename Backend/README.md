@@ -104,7 +104,9 @@ interno de los conjuntos de Python cambia de una ejecución a otra.
 Las uniones paralelas esperan una llegada por cada flujo de entrada y consumen
 esas llegadas en cada activación, también al repetirse en un ciclo. Las uniones
 inclusivas tienen en cuenta las ramas todavía activas. Los mensajes se consumen
-una vez y se distinguen por origen, destino, ejecución de la tarea e instancia.
+una vez y se guardan por elemento emisor, elemento receptor y caso destinatario.
+Cada mensaje conserva el caso remitente; la recepción lo vincula a su contexto
+de token y a su ejecución para que la respuesta vuelva al caso correcto.
 Esperar un inicio por mensaje no detiene el lanzamiento de los demás inicios.
 Los usuarios se asignan por orden de llegada: cada usuario que queda libre pasa a
 la petición más antigua que puede atender y, si hay varios libres, se elige el que

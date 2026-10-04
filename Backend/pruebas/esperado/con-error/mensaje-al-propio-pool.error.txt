@@ -1,0 +1,1 @@
+ValueError: Comunicacion (bpmn:MessageFlow): el mensaje no sale del pool Pool_Interno; dentro de un participante se usan flujos de secuencia, no mensajes.
