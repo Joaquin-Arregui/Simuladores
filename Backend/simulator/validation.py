@@ -166,6 +166,56 @@ def _reachable(seeds, adjacency):
     return found
 
 
+def _check_participant_multiplicity(participant, warnings, any_marked):
+    """Reglas del numero de instancias de un pool.
+
+    El marcador es lo que habilita el campo: marcarlo sin decir cuantas es un
+    modelo incompleto. Y un numero sin marcador no hace nada, porque mientras
+    ningun pool este marcado manda el numero de la colaboracion; se avisa en
+    vez de simular en silencio algo distinto de lo dibujado.
+    """
+    marcado = getattr(participant, "multiplicity", False)
+    instancias = getattr(participant, "instances", None)
+    etiqueta = f"{participant.id_bpmn} (bpmn:Participant)"
+    # El tipo se comprueba siempre que haya valor, lleve marcador o no: un pool
+    # sin marcador ignora el numero, pero aceptar ahi una lista en silencio
+    # esconde un modelo mal exportado hasta que alguien le ponga el marcador.
+    if instancias is not None and (isinstance(instancias, bool) or not isinstance(instancias, int)):
+        _fail(participant, f"instances debe ser un entero positivo, no {type(instancias).__name__}.")
+    if marcado:
+        if instancias is None:
+            _fail(participant, "lleva el marcador de multiplicidad pero no dice cuántas instancias.")
+        if instancias < 1:
+            _fail(participant, "instances debe ser un entero positivo.")
+    elif instancias is not None:
+        if any_marked:
+            add_warning(warnings, f"{etiqueta}: tiene instances pero no el marcador de multiplicidad; se simula con una sola instancia.")
+        else:
+            add_warning(warnings, f"{etiqueta}: se ignora instances porque ningún pool lleva el marcador; se usa el número de la colaboración.")
+
+
+def resolve_participant_instances(elements, root):
+    """Cuantas instancias simula cada pool.
+
+    Sin ningun marcador se conserva la colaboracion 1:1 heredada: todos los
+    pools toman el numero de la colaboracion, igual que antes de la tarea 2.1.
+    En cuanto un pool lleva marcador, manda el numero de cada uno y el que no
+    lo lleva vale 1.
+
+    Las instancias del orquestador son convocatorias sucesivas y las del
+    orquestado, casos por convocatoria; esa diferencia la aplica la tarea 4.1,
+    aqui solo se cuenta cuantos casos hay.
+    """
+    participants = [elements[pid] for _, pid in elements.get("participants", [])]
+    if not participants:
+        return {root: elements[root].instances}
+    if not any(getattr(p, "multiplicity", False) for p in participants):
+        heredado = elements[root].instances
+        return {p.id_bpmn: heredado for p in participants}
+    return {p.id_bpmn: (p.instances if getattr(p, "multiplicity", False) else 1)
+            for p in participants}
+
+
 def validate_simulation(elements, process, starts, message_starts, warnings=None):
     """Reject invalid rules before generating or executing Python code."""
     validate_references(elements, warnings)
@@ -262,6 +312,10 @@ def validate_simulation(elements, process, starts, message_starts, warnings=None
         process_users = set(root.userWithoutRole) | {user for users in root.userWithRole.values() for user in users}
         known_users = process_users | {user for lane in lanes for user in lane.users}
     else:
+        any_marked = any(getattr(p, "multiplicity", False) for p in participants)
+        orchestrators = [p for p in participants if getattr(p, "role", None) == "orchestrator"]
+        if len(orchestrators) > 1:
+            _fail(orchestrators[1], "solo puede haber un pool orquestador en la colaboración.")
         ownership, simulated = {}, 0
         for participant in participants:
             contained_nodes = set(participant.contained_elements) & set(nodes)
@@ -270,6 +324,7 @@ def validate_simulation(elements, process, starts, message_starts, warnings=None
                 continue
             simulated += 1
             _number(participant, "frequency")
+            _check_participant_multiplicity(participant, warnings, any_marked)
             if not (contained_nodes & set(starts + message_starts)):
                 _fail(participant, "necesita un proceso visible con al menos un evento de inicio.")
             for child in contained_nodes:
@@ -359,6 +414,7 @@ XML_ALLOWED = XML_NODE_TYPES | {
     "inputSet", "outputSet", "dataInputRefs", "dataOutputRefs", "property", "itemDefinition",
     "textAnnotation", "text", "association", "group", "category", "categoryValue",
     "standardLoopCharacteristics", "multiInstanceLoopCharacteristics",
+    "participantMultiplicity",
 }
 
 

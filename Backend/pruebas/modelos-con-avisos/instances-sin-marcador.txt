@@ -1,0 +1,10 @@
+# Un pool con numero de instancias pero sin el marcador de multiplicidad.
+# Debe avisar y usar el numero de la colaboracion: el marcador es lo que
+# habilita el campo, y simular 5 cuando el dibujo dice 2 seria peor que avisar.
+Element: [type=bpmn:Collaboration, id_bpmn='Colaboracion', name='Numero sin marcador', instances=2]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Unico', name='Oficina', frequency=15, userWithoutRole=['Ana'], instances=5, containedElements=['Ini', 'Tramitar', 'Fin', 'f1', 'f2']]
+Element: [type=bpmn:StartEvent, id_bpmn='Ini', name='Inicio', subTask='Tramitar']
+Element: [type=bpmn:Task, id_bpmn='Tramitar', name='Tramitar', userTask='Ana', numberOfExecutions=1, minimumTime=10, maximumTime=20, subTask='Fin']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin', name='Fin', subTask='']
+Element: [type=bpmn:SequenceFlow, id_bpmn='f1', name='', superElement='Ini', subElement='Tramitar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='f2', name='', superElement='Tramitar', subElement='Fin']

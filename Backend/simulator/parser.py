@@ -45,7 +45,8 @@ TASK_FIELDS = {"userTask", "numberOfExecutions", "minimumTime", "maximumTime", "
 FIELDS_BY_TYPE = {
     "Process": {"instances", "frequency", "userWithoutRole", "userWithRole"},
     "Collaboration": {"instances"},
-    "Participant": {"frequency", "userWithoutRole", "containedElements"},
+    "Participant": {"frequency", "userWithoutRole", "containedElements",
+                    "instances", "participantMultiplicity", "orchestrationRole"},
     "Lane": {"userWithoutRole", "containedElements", "parentLane"},
     "SequenceFlow": {"superElement", "subElement", "percentageOfBranches"},
     "MessageFlow": {"superElement", "subElement"},
@@ -174,8 +175,25 @@ def parse_bpmn_elements(file_content: str, warnings=None):
             parent = fields.get("parentLane") or None
             if parent is not None and not isinstance(parent, str):
                 raise ValueError(f"{element_id}: parentLane debe ser el ID de un carril.")
-            element = (BPMNParticipant(*args, get("frequency"), users(), contained)
-                       if kind == "Participant" else BPMNLane(*args, users(), contained, parent))
+            if kind == "Lane":
+                element = BPMNLane(*args, users(), contained, parent)
+            else:
+                marcador = fields.get("participantMultiplicity")
+                if marcador not in (None, "true", "false"):
+                    raise ValueError(f"{element_id}: participantMultiplicity debe ser 'true' o 'false'.")
+                # El tipo primero: comprobar la pertenencia a un conjunto con un
+                # valor no hashable (una lista, un diccionario) revienta con
+                # TypeError, que la API devolveria como un 500 sin explicar nada.
+                rol = fields.get("orchestrationRole")
+                if rol is not None and not isinstance(rol, str):
+                    raise ValueError(f"{element_id}: orchestrationRole debe ser texto, no {type(rol).__name__}.")
+                # Vacio significa "sin rol"; un `or None` a secas tambien habria
+                # aceptado en silencio 0, False y las colecciones vacias.
+                rol = (rol or "").strip() or None
+                if rol is not None and rol not in {"orchestrator", "orchestrated"}:
+                    raise ValueError(f"{element_id}: orchestrationRole debe ser 'orchestrator' u 'orchestrated'.")
+                element = BPMNParticipant(*args, get("frequency"), users(), contained,
+                                          fields.get("instances"), marcador == "true", rol)
         elif kind in FLOW_CLASSES:
             endpoints = (get("superElement", str), get("subElement", str))
             element = (BPMNSequenceFlow(*args, *endpoints, fields.get("percentageOfBranches"))

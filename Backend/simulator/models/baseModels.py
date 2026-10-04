@@ -20,11 +20,20 @@ class BPMNCollaboration(BPMNElement):
         self.instances = instances
 
 class BPMNParticipant(BPMNElement):
-    def __init__(self, name: str, id_bpmn: str, bpmn_type: str, frequency: int, users: List[str], contained_elements: List[str]):
+    def __init__(self, name: str, id_bpmn: str, bpmn_type: str, frequency: int, users: List[str],
+                 contained_elements: List[str], instances: int = None,
+                 multiplicity: bool = False, role: str = None):
         super().__init__(name, id_bpmn, bpmn_type)
         self.frequency = frequency
         self.users = users
         self.contained_elements = contained_elements
+        # Marcador estandar de BPMN: habilita el numero de instancias del pool.
+        # Sin marcador en ningun pool se conserva la colaboracion 1:1 heredada.
+        self.instances = instances
+        self.multiplicity = multiplicity
+        # 'orchestrator' o 'orchestrated'; sus instancias significan cosas
+        # distintas: convocatorias sucesivas frente a casos por convocatoria.
+        self.role = role
 
 class BPMNLane(BPMNElement):
     def __init__(self, name: str, id_bpmn: str, bpmn_type: str, users: List[str], contained_elements: List[str], parent_lane: str = None):

@@ -4,7 +4,7 @@ from pathlib import Path
 from xml.etree import ElementTree as ET
 
 from simulator.simulationFunctions.generateFunction import generateFunction
-from simulator.validation import TASK_TYPES, task_base_users
+from simulator.validation import TASK_TYPES, resolve_participant_instances, task_base_users
 
 DEFAULT_START_DATE = '2026-01-01T00:00:00+00:00'
 
@@ -103,9 +103,13 @@ def generateScript(elements, process, starts, messageStarts, start_date=DEFAULT_
         node_id = getattr(item, 'id_bpmn', None)
         if node_id is not None:
             element_participant.setdefault(node_id, participants[0] if is_process else process)
+    # Cuantas instancias simula cada pool. Sin marcadores todos heredan el
+    # numero de la colaboracion, que es como se comportaba hasta la tarea 2.1.
+    instancias = resolve_participant_instances(elements, process)
     config = {
         'nInstances': element.instances,
         'participantesOrden': participants,
+        'instanciasPorParticipante': {p: instancias[p] for p in participants},
         'elementParticipant': element_participant,
         'rolePool': element.userWithRole if is_process else {},
         'processUsers': process_users,

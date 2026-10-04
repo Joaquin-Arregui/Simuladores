@@ -1,0 +1,1 @@
+Pool_Unico (bpmn:Participant): se ignora instances porque ningún pool lleva el marcador; se usa el número de la colaboración.

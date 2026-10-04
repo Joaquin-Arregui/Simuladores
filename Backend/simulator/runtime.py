@@ -389,9 +389,13 @@ def _run_simulation():
     startDate = datetime.fromisoformat(simulationStartDate)
     # Un caso por (participante, indice). Con un solo participante el resultado
     # es el de siempre; en una colaboracion, cada pool lleva su propia traza.
+    # Un caso por (participante, indice), con el numero de instancias de cada
+    # pool. Cuando todos tienen el mismo, el orden es el de siempre.
+    maximo = max(instanciasPorParticipante.values())
     simulationResults = {Caso(participante, indice): []
-                         for indice in range(1, nInstances + 1)
-                         for participante in participantesOrden}
+                         for indice in range(1, maximo + 1)
+                         for participante in participantesOrden
+                         if indice <= instanciasPorParticipante[participante]}
     user_assignments = dict.fromkeys(userPool, 0)
     user_queue = UserQueue(userPool)
     messages, message_waiters = Counter(), defaultdict(deque)
@@ -401,8 +405,10 @@ def _run_simulation():
     join_waits = defaultdict(dict)
     reachability, completed = {}, Counter()
     # Waiting for messages never suspends other starts or later instances.
-    for indice in range(1, nInstances + 1):
+    for indice in range(1, maximo + 1):
         for node, item in startEvents.items():
+            if indice > instanciasPorParticipante[elementParticipant[node]]:
+                continue
             caso = caso_de(node, indice)
             active_tokens[caso][node] += 1
             env.process(_start_event(node, caso, (indice - 1) * item['frequency']))
