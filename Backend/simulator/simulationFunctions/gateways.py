@@ -29,6 +29,7 @@ f'''
             <string key="bpmn:name" value="{xml_template(element.name)}"/>
             <string key="bpmn:id" value="{xml_template(element.id_bpmn)}"/>
             <string key="bpmn:subTask" value="{{xml_value(sequenceFlows[selectedElement][1])}}"/>
+            <string key="bpmn:selectedFlow" value="{{xml_value(selectedElement)}}"/>
             <date key="time:timestamp" value="{{xml_value(env.now)}}"/>
             <int key="bpmn:instance" value="{{xml_value(caso.indice)}}"/>
         </event>''')
@@ -55,6 +56,7 @@ f'''
             <string key="bpmn:name" value="{xml_template(element.name)}"/>
             <string key="bpmn:id" value="{xml_template(element.id_bpmn)}"/>
             <string key="bpmn:subTask" value="{{xml_value(strSelectedElements)}}"/>
+            <string key="bpmn:selectedFlow" value="{xml_template(', '.join(possibleElements))}"/>
             <date key="time:timestamp" value="{{xml_value(env.now)}}"/>
             <int key="bpmn:instance" value="{{xml_value(caso.indice)}}"/>
         </event>''')
@@ -83,6 +85,7 @@ f'''
             <string key="bpmn:name" value="{xml_template(element.name)}"/>
             <string key="bpmn:id" value="{xml_template(element.id_bpmn)}"/>
             <string key="bpmn:subTask" value="{{xml_value([sequenceFlows[edge][1] for edge in selectedElements])}}"/>
+            <string key="bpmn:selectedFlow" value="{{xml_value(', '.join(selectedElements))}}"/>
             <date key="time:timestamp" value="{{xml_value(env.now)}}"/>
             <int key="bpmn:instance" value="{{xml_value(caso.indice)}}"/>
         </event>''')

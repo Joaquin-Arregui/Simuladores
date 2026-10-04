@@ -37,6 +37,10 @@ f'''
             <date key="time:duration" value="{{xml_value(env.now-start_standBy)}}"/>
             <int key="bpmn:instance" value="{{xml_value(caso.indice)}}"/>
         </event>''')
+            # El evento se registra al terminar, para que el fin sea el real y no
+            # el nominal: una tarea cancelada no habria llegado hasta aqui.
+            start_task = env.now
+            yield env.timeout(time)
             simulationResults[caso].append(
 f'''
         <event>
@@ -48,10 +52,11 @@ f'''
             <int key="bpmn:execution" value="{{xml_value(execution)}}"/>
             <int key="bpmn:time" value="{{xml_value(time)}}"/>
             <string key="bpmn:subTask" value="{xml_template(element.subTask)}"/>
-            <date key="time:timestamp" value="{{xml_value(env.now)}}"/>
+            <date key="time:timestamp" value="{{xml_value(start_task)}}"/>
+            <date key="time:endTime" value="{{xml_value(env.now)}}"/>
+            <date key="time:duration" value="{{xml_value(env.now-start_task)}}"/>
             <int key="bpmn:instance" value="{{xml_value(caso.indice)}}"/>
         </event>''')
-            yield env.timeout(time)
         finally:
             user_queue.release(userTask)
     TaskName = {element.id_bpmn!r}

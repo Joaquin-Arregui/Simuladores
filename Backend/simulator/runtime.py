@@ -197,6 +197,8 @@ def _register(node, caso, incoming_flow=None):
         if incoming_flow not in incomingFlows[node]:
             raise SimulationError(f'Entrada desconocida en la unión {node} ({caso}).')
         pending_joins[caso].setdefault(node, Counter())[incoming_flow] += 1
+        # Cuando llego el token, para poder medir despues lo que espero aqui.
+        join_waits[caso].setdefault(node, {}).setdefault(incoming_flow, deque()).append(env.now)
     else:
         active_tokens[caso][node] += 1
         env.process(_run_node(node, caso))
@@ -207,6 +209,27 @@ def _release_token(caso, node):
     tokens[node] -= 1
     if tokens[node] <= 0:
         del tokens[node]
+
+
+def _registra_espera_union(caso, node, edge):
+    """La espera de un token en una union, de su llegada al disparo.
+
+    Una rama que termina pronto se queda esperando a su hermana, y sin esto
+    esos segundos no aparecen en ninguna parte del registro: solo se veia el
+    disparo de la union. Como el resto de esperas del motor, solo se registra
+    cuando de verdad hubo espera; el ultimo token en llegar no espera nada.
+    """
+    llegadas = join_waits[caso].get(node, {}).get(edge)
+    inicio = llegadas.popleft() if llegadas else env.now
+    if env.now <= inicio:
+        return
+    _append_event(caso, [('string', 'bpmn:type', 'StandByJoin'),
+                         ('string', 'bpmn:id', node),
+                         ('string', 'bpmn:incomingFlow', edge),
+                         ('date', 'time:timestamp', inicio),
+                         ('date', 'time:endTime', env.now),
+                         ('date', 'time:duration', env.now - inicio),
+                         ('int', 'bpmn:instance', caso.indice)])
 
 
 def _flush_joins(caso):
@@ -221,6 +244,7 @@ def _flush_joins(caso):
                 for edge in incomingFlows[node]:
                     if counts[edge]:
                         counts[edge] -= 1
+                        _registra_espera_union(caso, node, edge)
                 if not any(counts.values()):
                     del joins[node]
                 active_tokens[caso][node] += 1
@@ -302,6 +326,38 @@ def xes_time(seconds):
     return (startDate + timedelta(seconds=float(seconds))).isoformat(timespec='milliseconds')
 
 
+def _instante(item):
+    for child in item:
+        if child.get('key') == 'time:timestamp':
+            return float(child.get('value'))
+    return 0.0
+
+
+def _ordena_eventos(events):
+    """Orden temporal, con el orden de registro como desempate.
+
+    Dos eventos del mismo instante salen siempre en el mismo orden, que es lo
+    que pide el contrato de registro. Ademas deja la traza ordenada en el
+    tiempo, que es como PM4Py espera leerla.
+    """
+    items = [ET.fromstring(event) for event in events]
+    ordenados = sorted(enumerate(items), key=lambda par: (_instante(par[1]), par[0]))
+    return [item for _, item in ordenados]
+
+
+def _identifica(item, caso, ocurrencia):
+    """Marca cada evento con su caso y con un numero de ocurrencia unico.
+
+    La ocurrencia no se reutiliza en bucles ni en ramas paralelas, asi que dos
+    ejecuciones simultaneas del mismo elemento en el mismo caso se distinguen.
+    Se anade aqui y no en cada plantilla: hay un solo sitio donde se conoce el
+    caso completo y por donde pasan todos los eventos.
+    """
+    item.append(ET.Element('int', key='bpmn:occurrence', value=str(ocurrencia)))
+    item.append(ET.Element('string', key='bpmn:participant', value=str(caso.participante)))
+    item.append(ET.Element('int', key='bpmn:convocatoria', value=str(caso.convocatoria)))
+
+
 def _finalize_item(item):
     # Generated code logs simulated seconds; XES needs dates, and durations are
     # numbers rather than dates. Events are named by BPMN ID for process mining.
@@ -325,7 +381,7 @@ def _finalize_item(item):
 def _run_simulation():
     global env, simulationResults, user_queue, user_assignments
     global messages, message_waiters, data, data_changed, active_tokens, pending_joins
-    global reachability, completed, startDate
+    global reachability, completed, startDate, join_waits
     # Every draw (durations, gateways, loops) comes from this generator, so the
     # seed alone fixes the run.
     random.seed(simulationSeed)
@@ -342,6 +398,7 @@ def _run_simulation():
     data = {(item, caso) for item in defaultData for caso in simulationResults}
     data_changed = {}
     active_tokens, pending_joins = defaultdict(Counter), defaultdict(dict)
+    join_waits = defaultdict(dict)
     reachability, completed = {}, Counter()
     # Waiting for messages never suspends other starts or later instances.
     for indice in range(1, nInstances + 1):
@@ -359,13 +416,22 @@ def _run_simulation():
              '  <extension name="Concept" prefix="concept" uri="http://www.xes-standard.org/concept.xesext"/>',
              '  <extension name="Time" prefix="time" uri="http://www.xes-standard.org/time.xesext"/>',
              '  <classifier name="Activity (by BPMN ID)" keys="bpmn:id" scope="event"/>',
+             '  <classifier name="Case (by participant and instance)" '
+             'keys="bpmn:participant bpmn:instance" scope="event"/>',
              '  ' + ET.tostring(metadata, encoding='unicode'),
-             f'  <int key="simulation:seed" value="{simulationSeed}"/>']
+             f'  <int key="simulation:seed" value="{simulationSeed}"/>',
+             f'  <string key="simulation:startDate" value="{xml_value(simulationStartDate)}"/>',
+             f'  <string key="simulation:participants" '
+             f'value="{xml_value(", ".join(participantesOrden))}"/>']
     for caso, events in simulationResults.items():
         trace = ET.Element('trace')
         ET.SubElement(trace, 'string', key='concept:name', value=etiqueta_de_traza(caso))
-        for event in events:
-            trace.append(_finalize_item(ET.fromstring(event)))
+        ET.SubElement(trace, 'string', key='bpmn:participant', value=str(caso.participante))
+        ET.SubElement(trace, 'int', key='bpmn:instance', value=str(caso.indice))
+        ET.SubElement(trace, 'int', key='bpmn:convocatoria', value=str(caso.convocatoria))
+        for ocurrencia, item in enumerate(_ordena_eventos(events), 1):
+            _identifica(item, caso, ocurrencia)
+            trace.append(_finalize_item(item))
         ET.indent(trace, space='  ', level=1)
         parts.append('  ' + ET.tostring(trace, encoding='unicode'))
     parts.append('</log>')

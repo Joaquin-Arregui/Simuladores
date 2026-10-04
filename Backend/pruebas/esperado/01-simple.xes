@@ -3,6 +3,7 @@
   <extension name="Concept" prefix="concept" uri="http://www.xes-standard.org/concept.xesext"/>
   <extension name="Time" prefix="time" uri="http://www.xes-standard.org/time.xesext"/>
   <classifier name="Activity (by BPMN ID)" keys="bpmn:id" scope="event"/>
+  <classifier name="Case (by participant and instance)" keys="bpmn:participant bpmn:instance" scope="event"/>
   <global>
     <string key="type" value="bpmn:Process" />
     <string key="name" value="Proceso simple" />
@@ -18,8 +19,13 @@
     <container key="userWithRole" />
   </global>
   <int key="simulation:seed" value="20260101"/>
+  <string key="simulation:startDate" value="2026-01-01T00:00:00+00:00"/>
+  <string key="simulation:participants" value="Proceso_simple"/>
   <trace>
     <string key="concept:name" value="Instance 1" />
+    <string key="bpmn:participant" value="Proceso_simple" />
+    <int key="bpmn:instance" value="1" />
+    <int key="bpmn:convocatoria" value="1" />
     <event>
       <string key="concept:name" value="Inicio" />
       <string key="bpmn:type" value="bpmn:StartEvent" />
@@ -28,6 +34,9 @@
       <string key="bpmn:subTask" value="Preparar" />
       <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
       <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="1" />
+      <string key="bpmn:participant" value="Proceso_simple" />
+      <int key="bpmn:convocatoria" value="1" />
     </event>
     <event>
       <string key="concept:name" value="Preparar" />
@@ -39,7 +48,12 @@
       <int key="bpmn:time" value="49" />
       <string key="bpmn:subTask" value="Revisar" />
       <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:49.000+00:00" />
+      <float key="time:duration" value="49.0" />
       <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="2" />
+      <string key="bpmn:participant" value="Proceso_simple" />
+      <int key="bpmn:convocatoria" value="1" />
     </event>
     <event>
       <string key="concept:name" value="Revisar" />
@@ -51,7 +65,12 @@
       <int key="bpmn:time" value="37" />
       <string key="bpmn:subTask" value="Fin" />
       <date key="time:timestamp" value="2026-01-01T00:00:49.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:01:26.000+00:00" />
+      <float key="time:duration" value="37.0" />
       <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="3" />
+      <string key="bpmn:participant" value="Proceso_simple" />
+      <int key="bpmn:convocatoria" value="1" />
     </event>
     <event>
       <string key="concept:name" value="Fin" />
@@ -61,10 +80,16 @@
       <string key="bpmn:subTask" value="" />
       <date key="time:timestamp" value="2026-01-01T00:01:26.000+00:00" />
       <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="4" />
+      <string key="bpmn:participant" value="Proceso_simple" />
+      <int key="bpmn:convocatoria" value="1" />
     </event>
   </trace>
   <trace>
     <string key="concept:name" value="Instance 2" />
+    <string key="bpmn:participant" value="Proceso_simple" />
+    <int key="bpmn:instance" value="2" />
+    <int key="bpmn:convocatoria" value="1" />
     <event>
       <string key="concept:name" value="Inicio" />
       <string key="bpmn:type" value="bpmn:StartEvent" />
@@ -73,6 +98,9 @@
       <string key="bpmn:subTask" value="Preparar" />
       <date key="time:timestamp" value="2026-01-01T00:00:30.000+00:00" />
       <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="1" />
+      <string key="bpmn:participant" value="Proceso_simple" />
+      <int key="bpmn:convocatoria" value="1" />
     </event>
     <event>
       <string key="concept:name" value="StandBy · Preparar" />
@@ -83,6 +111,9 @@
       <date key="time:endTime" value="2026-01-01T00:00:49.000+00:00" />
       <float key="time:duration" value="19.0" />
       <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="2" />
+      <string key="bpmn:participant" value="Proceso_simple" />
+      <int key="bpmn:convocatoria" value="1" />
     </event>
     <event>
       <string key="concept:name" value="Preparar" />
@@ -94,7 +125,12 @@
       <int key="bpmn:time" value="46" />
       <string key="bpmn:subTask" value="Revisar" />
       <date key="time:timestamp" value="2026-01-01T00:00:49.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:01:35.000+00:00" />
+      <float key="time:duration" value="46.0" />
       <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="3" />
+      <string key="bpmn:participant" value="Proceso_simple" />
+      <int key="bpmn:convocatoria" value="1" />
     </event>
     <event>
       <string key="concept:name" value="Revisar" />
@@ -106,7 +142,12 @@
       <int key="bpmn:time" value="30" />
       <string key="bpmn:subTask" value="Fin" />
       <date key="time:timestamp" value="2026-01-01T00:01:35.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:02:05.000+00:00" />
+      <float key="time:duration" value="30.0" />
       <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="4" />
+      <string key="bpmn:participant" value="Proceso_simple" />
+      <int key="bpmn:convocatoria" value="1" />
     </event>
     <event>
       <string key="concept:name" value="Fin" />
@@ -116,6 +157,9 @@
       <string key="bpmn:subTask" value="" />
       <date key="time:timestamp" value="2026-01-01T00:02:05.000+00:00" />
       <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="5" />
+      <string key="bpmn:participant" value="Proceso_simple" />
+      <int key="bpmn:convocatoria" value="1" />
     </event>
   </trace>
 </log>

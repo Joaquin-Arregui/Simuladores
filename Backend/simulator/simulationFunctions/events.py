@@ -79,6 +79,10 @@ def timerIntermediateCatchEvent(elements, element, script):
     from simulator.simulationFunctions.generateFunction import generateFunction, function_name, xml_template
     functionStr = f"""
 def {function_name(element.id_bpmn)}(env, caso):
+    # Se registra al terminar la espera: el fin es el real, no el inicio mas la
+    # duracion nominal, que es lo que el contrato de la 1.6 prohibe deducir.
+    start_timer = env.now
+    yield env.timeout({element.time})
     simulationResults[caso].append(
 f'''
         <event>
@@ -87,10 +91,11 @@ f'''
             <string key="bpmn:id" value="{xml_template(element.id_bpmn)}"/>
             <{'int' if isinstance(element.time, int) else 'float'} key="bpmn:time" value="{xml_template(element.time)}"/>
             <string key="bpmn:subTask" value="{xml_template(element.subTask)}"/>
-            <date key="time:timestamp" value="{{xml_value(env.now)}}"/>
+            <date key="time:timestamp" value="{{xml_value(start_timer)}}"/>
+            <date key="time:endTime" value="{{xml_value(env.now)}}"/>
+            <date key="time:duration" value="{{xml_value(env.now-start_timer)}}"/>
             <int key="bpmn:instance" value="{{xml_value(caso.indice)}}"/>
         </event>''')
-    yield env.timeout({element.time})
     return {element.subTask!r}
 """
     return generateFunction(elements, element.subTask, script + functionStr)
