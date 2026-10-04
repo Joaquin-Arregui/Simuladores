@@ -54,6 +54,7 @@
       <string key="bpmn:name" value="Pedir el prestamo" />
       <string key="bpmn:id" value="Pedir_Prestamo" />
       <string key="bpmn:messageDestiny" value="Recibir_Solicitud" />
+      <string key="bpmn:messageTarget" value="Pool_Banco - 1" />
       <string key="bpmn:userTask" value="Carla" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="16" />
@@ -85,6 +86,7 @@
       <string key="bpmn:name" value="Esperar el resultado" />
       <string key="bpmn:id" value="Esperar_Resultado" />
       <string key="bpmn:messageOrigin" value="Enviar_Resultado" />
+      <string key="bpmn:messageSender" value="Pool_Banco - 1" />
       <string key="bpmn:userTask" value="Carla" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="7" />
@@ -146,6 +148,7 @@
       <string key="bpmn:name" value="Recibir la solicitud" />
       <string key="bpmn:id" value="Recibir_Solicitud" />
       <string key="bpmn:messageOrigin" value="Pedir_Prestamo" />
+      <string key="bpmn:messageSender" value="Pool_Cliente - 1" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="8" />
@@ -198,6 +201,7 @@
       <string key="bpmn:name" value="Enviar el resultado" />
       <string key="bpmn:id" value="Enviar_Resultado" />
       <string key="bpmn:messageDestiny" value="Esperar_Resultado" />
+      <string key="bpmn:messageTarget" value="Pool_Cliente - 1" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="14" />
@@ -246,6 +250,7 @@
       <string key="bpmn:name" value="Pedir el prestamo" />
       <string key="bpmn:id" value="Pedir_Prestamo" />
       <string key="bpmn:messageDestiny" value="Recibir_Solicitud" />
+      <string key="bpmn:messageTarget" value="Pool_Banco - 2" />
       <string key="bpmn:userTask" value="Carla" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="15" />
@@ -277,6 +282,7 @@
       <string key="bpmn:name" value="Esperar el resultado" />
       <string key="bpmn:id" value="Esperar_Resultado" />
       <string key="bpmn:messageOrigin" value="Enviar_Resultado" />
+      <string key="bpmn:messageSender" value="Pool_Banco - 2" />
       <string key="bpmn:userTask" value="Carla" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="8" />
@@ -338,6 +344,7 @@
       <string key="bpmn:name" value="Recibir la solicitud" />
       <string key="bpmn:id" value="Recibir_Solicitud" />
       <string key="bpmn:messageOrigin" value="Pedir_Prestamo" />
+      <string key="bpmn:messageSender" value="Pool_Cliente - 2" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="7" />
@@ -390,6 +397,7 @@
       <string key="bpmn:name" value="Enviar el resultado" />
       <string key="bpmn:id" value="Enviar_Resultado" />
       <string key="bpmn:messageDestiny" value="Esperar_Resultado" />
+      <string key="bpmn:messageTarget" value="Pool_Cliente - 2" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="15" />

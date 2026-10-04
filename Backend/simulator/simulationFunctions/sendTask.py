@@ -25,6 +25,9 @@ f'''
             # el nominal: una tarea cancelada no habria llegado hasta aqui.
             start_task = env.now
             yield env.timeout(time)
+            # El sobre sale antes de registrar el envio, para poder anotar a que
+            # caso va. No consume tiempo, asi que el instante no cambia.
+            destino = publish_message(TaskName, {element.messageDestiny!r}, execution, caso)
             simulationResults[caso].append(
 f'''
         <event>
@@ -32,6 +35,7 @@ f'''
             <string key="bpmn:name" value="{xml_template(element.name)}"/>
             <string key="bpmn:id" value="{{xml_value(TaskName)}}"/>
             <string key="bpmn:messageDestiny" value="{xml_template(element.messageDestiny)}"/>
+            <string key="bpmn:messageTarget" value="{{xml_value(etiqueta_de_caso(destino))}}"/>
             <string key="bpmn:userTask" value="{{xml_value(userTask)}}"/>
             <int key="bpmn:execution" value="{{xml_value(execution)}}"/>
             <int key="bpmn:time" value="{{xml_value(time)}}"/>
@@ -41,7 +45,6 @@ f'''
             <date key="time:duration" value="{{xml_value(env.now-start_task)}}"/>
             <int key="bpmn:instance" value="{{xml_value(caso.indice)}}"/>
         </event>''')
-            publish_message(TaskName, {element.messageDestiny!r}, execution, caso)
         finally:
             liberar_usuario(TaskName, userTask)
     TaskName = {element.id_bpmn!r}

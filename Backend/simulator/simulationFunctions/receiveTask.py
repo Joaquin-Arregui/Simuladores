@@ -4,7 +4,7 @@ def receiveTask(elements, element, script):
 def {function_name(element.id_bpmn)}(env, caso):
     def executeTask(env, TaskName, caso, execution):
         start_standby_message = env.now
-        yield env.process(wait_for_message(env, {element.messageOrigin!r}, TaskName, execution, caso))
+        remitente = yield env.process(wait_for_message(env, {element.messageOrigin!r}, TaskName, execution, caso))
         end_standby_message = env.now
         duration_standby_message = end_standby_message - start_standby_message
         if duration_standby_message > 0:
@@ -48,6 +48,7 @@ f'''
             <string key="bpmn:name" value="{xml_template(element.name)}"/>
             <string key="bpmn:id" value="{{xml_value(TaskName)}}"/>
             <string key="bpmn:messageOrigin" value="{xml_template(element.messageOrigin)}"/>
+            <string key="bpmn:messageSender" value="{{xml_value(remitente)}}"/>
             <string key="bpmn:userTask" value="{{xml_value(userTask)}}"/>
             <int key="bpmn:execution" value="{{xml_value(execution)}}"/>
             <int key="bpmn:time" value="{{xml_value(time)}}"/>

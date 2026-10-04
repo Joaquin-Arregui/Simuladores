@@ -1,0 +1,2 @@
+Comunicacion (bpmn:MessageFlow): el mensaje de Comunicar al pool Pool_Externo se envía, pero nadie lo recibe en la simulación.
+Pool_Externo (bpmn:Participant): el pool no tiene un proceso que simular y se ignora.

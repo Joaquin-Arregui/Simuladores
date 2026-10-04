@@ -21,8 +21,9 @@ class Caso(NamedTuple):
     """Quien ejecuta: participante, indice dentro de ese participante, convocatoria.
 
     Sustituye a la cadena 'Instance N', que hacia de clave de mensajes, datos,
-    tokens, uniones y traza a la vez. El indice se guarda aparte porque el
-    emparejamiento de mensajes sigue siendo 1:1 por indice hasta la tarea 2.4.
+    tokens, uniones y traza a la vez. La clave de un mensaje es ya el caso
+    entero; el indice se guarda aparte porque el registro lo necesita y porque
+    con el se encuentran por primera vez los dos pools de una colaboracion 1:1.
     """
     participante: str
     indice: int
@@ -58,6 +59,15 @@ def etiqueta_de_traza(caso):
     if len(participantesOrden) == 1:
         return f'Instance {caso.indice}'
     return f'{caso.participante} - {caso.indice}'
+
+
+def etiqueta_de_caso(caso):
+    """El caso, o vacio cuando no hay ninguno.
+
+    Un envio a un pool externo no tiene caso destino: el registro deja el
+    atributo en blanco en vez de inventarse uno.
+    """
+    return '' if caso is None else str(caso)
 
 
 def xml_value(value):
@@ -150,24 +160,73 @@ def liberar_usuario(taskName, user):
     cola_de(taskName).release(user)
 
 
+def destino_de(origin, target, caso):
+    """El caso al que va un mensaje, que es la clave con la que se guarda.
+
+    Una respuesta vuelve al caso que escribio: el sobre trae el remitente y la
+    recepcion lo anota, asi que basta consultarlo. De eso vive la clave por caso
+    destino el dia que los indices de los dos pools no coincidan, que es a donde
+    llevan las convocatorias sucesivas: el indice de un orquestado no se
+    reutiliza, asi que deja de parecerse al del orquestador.
+
+    En el primer mensaje de una conversacion no hay a quien responder, y el
+    destino se busca por indice entre los casos del pool de enfrente: es el
+    emparejamiento 1:1 que D2 conserva en una colaboracion sin marcadores. Lo
+    que cambia respecto de antes es que el indice ya no es la clave, solo la
+    forma de encontrarse. El encaminamiento 1 a N y N a 1 es la tarea 2.5.
+    """
+    participante = elementParticipant[target]
+    anotado = correspondientes.get((caso, participante))
+    if anotado is not None:
+        return anotado
+    for otro in casos_de(participante):
+        if otro.indice == caso.indice:
+            return otro
+    return None
+
+
 def publish_message(origin, target, execution, caso):
-    # La clave usa el indice, no el caso entero: el emparejamiento sigue siendo
-    # 1:1 entre pools hasta que la 2.4 lo cambie por caso destino.
-    key = (origin, target, execution, caso.indice)
+    """Deja el sobre en el buzon del caso destino y devuelve ese caso.
+
+    El sobre no lleva nada mas que el remitente: con el gateway de porcentajes
+    el veredicto del orquestador no decide la rama del orquestado, asi que no
+    viaja resultado, ni motivo, ni etapa, ni caracter.
+    """
+    if target in destinosExternos:
+        # El MessageFlow apunta al pool, no a un receptor: el mensaje sale de la
+        # simulacion y nadie lo recoge. validate_simulation ya lo avisa y el
+        # emisor sigue su camino, que es lo que hacia antes de la clave por caso
+        # destino. No es lo mismo que un receptor sin caso al que dirigirse.
+        return None
+    destino = destino_de(origin, target, caso)
+    if destino is None:
+        raise SimulationError(
+            f'El mensaje de {origin} a {target} no tiene caso destino: lo envia '
+            f'{caso} y el pool {elementParticipant[target]} no tiene ningun caso '
+            f'al que dirigirlo.')
+    key = (origin, target, execution, destino)
     if message_waiters[key]:
-        message_waiters[key].popleft().succeed()
+        message_waiters[key].popleft().succeed(caso)
     else:
-        messages[key] += 1
+        messages[key].append(caso)
+    return destino
 
 
 def wait_for_message(env, origin, target, execution, caso):
-    key = (origin, target, execution, caso.indice)
+    """Espera un sobre dirigido a este caso y devuelve el caso remitente."""
+    key = (origin, target, execution, caso)
     if messages[key]:
-        messages[key] -= 1
-        return
-    event = env.event()
-    message_waiters[key].append(event)
-    yield event
+        remitente = messages[key].popleft()
+    else:
+        event = env.event()
+        message_waiters[key].append(event)
+        remitente = yield event
+    # Anotado para que la respuesta sepa volver sin depender del indice. Hay una
+    # anotacion por pool, que es cuanto necesita una conversacion de dos: la
+    # recepcion multiinstancia, donde un caso recibe de varios a la vez, es la
+    # tarea 2.5.
+    correspondientes[(caso, remitente.participante)] = remitente
+    return remitente
 
 
 def publish_data(data_object, caso):
@@ -324,9 +383,10 @@ def _start_event(node, caso, delay):
     item = startEvents[node]
     yield env.timeout(delay)
     casosArrancados.add(caso)
+    remitente = None
     if item['origin'] is not None:
         start_wait = env.now
-        yield env.process(wait_for_message(env, item['origin'], node, 1, caso))
+        remitente = yield env.process(wait_for_message(env, item['origin'], node, 1, caso))
         if env.now > start_wait:
             _append_event(caso, [('string', 'bpmn:type', 'StandByMessage'),
                                 ('string', 'bpmn:id', node),
@@ -339,6 +399,7 @@ def _start_event(node, caso, delay):
               ('date', 'time:timestamp', env.now), ('int', 'bpmn:instance', caso.indice)]
     if item['origin'] is not None:
         values.append(('string', 'bpmn:messageOrigin', item['origin']))
+        values.append(('string', 'bpmn:messageSender', remitente))
     _append_event(caso, values)
     _release_token(caso, node)
     _route(node, caso, item['next'])
@@ -424,7 +485,8 @@ def _finalize_item(item):
 
 def _run_simulation():
     global env, simulationResults, colasPorParticipante
-    global messages, message_waiters, data, data_changed, active_tokens, pending_joins
+    global messages, message_waiters, correspondientes
+    global data, data_changed, active_tokens, pending_joins
     global reachability, completed, startDate, join_waits
     global casosPorParticipante, casosArrancados
     # Every draw (durations, gateways, loops) comes from this generator, so the
@@ -449,7 +511,9 @@ def _run_simulation():
     colasPorParticipante = {participante: UserQueue(usuariosPorParticipante[participante],
                                                     recursosInfinitos.get(participante, False))
                             for participante in participantesOrden}
-    messages, message_waiters = Counter(), defaultdict(deque)
+    # Un buzon por caso destino, y dentro de cada sobre su remitente.
+    messages, message_waiters = defaultdict(deque), defaultdict(deque)
+    correspondientes = {}
     data = {(item, caso) for item in defaultData for caso in simulationResults}
     data_changed = {}
     active_tokens, pending_joins = defaultdict(Counter), defaultdict(dict)

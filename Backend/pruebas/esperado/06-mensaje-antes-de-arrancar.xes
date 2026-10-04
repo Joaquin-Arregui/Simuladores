@@ -36,6 +36,7 @@
       <string key="bpmn:name" value="Enviar el aviso" />
       <string key="bpmn:id" value="Enviar" />
       <string key="bpmn:messageDestiny" value="Recibir" />
+      <string key="bpmn:messageTarget" value="Pool_Receptor - 1" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="4" />
@@ -97,6 +98,7 @@
       <string key="bpmn:name" value="Recibir el aviso" />
       <string key="bpmn:id" value="Recibir" />
       <string key="bpmn:messageOrigin" value="Enviar" />
+      <string key="bpmn:messageSender" value="Pool_Emisor - 1" />
       <string key="bpmn:userTask" value="Beto" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="4" />
@@ -158,6 +160,7 @@
       <string key="bpmn:name" value="Enviar el aviso" />
       <string key="bpmn:id" value="Enviar" />
       <string key="bpmn:messageDestiny" value="Recibir" />
+      <string key="bpmn:messageTarget" value="Pool_Receptor - 2" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="4" />
@@ -206,6 +209,7 @@
       <string key="bpmn:name" value="Recibir el aviso" />
       <string key="bpmn:id" value="Recibir" />
       <string key="bpmn:messageOrigin" value="Enviar" />
+      <string key="bpmn:messageSender" value="Pool_Emisor - 2" />
       <string key="bpmn:userTask" value="Beto" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="3" />
@@ -267,6 +271,7 @@
       <string key="bpmn:name" value="Enviar el aviso" />
       <string key="bpmn:id" value="Enviar" />
       <string key="bpmn:messageDestiny" value="Recibir" />
+      <string key="bpmn:messageTarget" value="Pool_Receptor - 3" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="4" />
@@ -315,6 +320,7 @@
       <string key="bpmn:name" value="Recibir el aviso" />
       <string key="bpmn:id" value="Recibir" />
       <string key="bpmn:messageOrigin" value="Enviar" />
+      <string key="bpmn:messageSender" value="Pool_Emisor - 3" />
       <string key="bpmn:userTask" value="Beto" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="3" />

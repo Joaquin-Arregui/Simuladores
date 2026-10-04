@@ -1,0 +1,17 @@
+# Un envio dirigido al pool, no a un receptor dentro de el.
+# El Modeler lo admite: el mensaje sale de la simulacion y nadie lo recoge, asi
+# que se avisa y la simulacion sigue. Al pasar la clave del mensaje al caso
+# destino (2.4) ese pool se quedaba asociado a la colaboracion, casos_de daba
+# KeyError y la API devolvia 500. El registro lo distingue de un envio normal
+# dejando bpmn:messageTarget en blanco: hay destino, pero no un caso destino.
+Element: [type=bpmn:Collaboration, id_bpmn='Colaboracion', name='Envio al exterior', instances=2]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Interno', name='Oficina', frequency=20, userWithoutRole=['Ana'], containedElements=['Ini', 'Tramitar', 'Comunicar', 'Fin', 'f1', 'f2', 'f3']]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Externo', name='Organismo externo', frequency=0, userWithoutRole=[], containedElements=[]]
+Element: [type=bpmn:StartEvent, id_bpmn='Ini', name='Inicio', subTask='Tramitar']
+Element: [type=bpmn:Task, id_bpmn='Tramitar', name='Tramitar la solicitud', userTask='Ana', numberOfExecutions=1, minimumTime=20, maximumTime=30, subTask='Comunicar']
+Element: [type=bpmn:SendTask, id_bpmn='Comunicar', name='Comunicar al organismo', userTask='Ana', numberOfExecutions=1, minimumTime=5, maximumTime=10, subTask='Fin']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin', name='Fin', subTask='']
+Element: [type=bpmn:SequenceFlow, id_bpmn='f1', name='', superElement='Ini', subElement='Tramitar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='f2', name='', superElement='Tramitar', subElement='Comunicar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='f3', name='', superElement='Comunicar', subElement='Fin']
+Element: [type=bpmn:MessageFlow, id_bpmn='Comunicacion', name='Comunicacion', superElement='Comunicar', subElement='Pool_Externo']

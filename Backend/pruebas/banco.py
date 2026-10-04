@@ -4,7 +4,7 @@
 Lo comparten `congelar.py` y `regresion.py`. Si cada uno descubriera los
 modelos por su cuenta, acabarian discrepando el dia que se anada una categoria.
 
-Hay dos categorias de modelo:
+Hay tres categorias de modelo:
 
 - `modelos/` — tienen que correr LIMPIOS. Cualquier aviso es un fallo, para que
   un aviso nuevo se note en vez de perderse entre otros diez.
@@ -12,6 +12,11 @@ Hay dos categorias de modelo:
   avisos declarados. Vigilan el camino "esto avisa pero no es un error", que es
   donde se colo el fallo del pool vacio: el motor le creaba casos y convertia un
   aviso en una simulacion bloqueada.
+- `modelos-con-error/` — tienen que FALLAR con el tipo y el mensaje congelados.
+  Un diagnostico es parte del contrato: si deja de salir, si cambia de texto o
+  si lo sustituye un error interno, el banco se pone en rojo. Solo se congelan
+  los errores previstos (ver ERRORES_PREVISTOS); un error interno es un fallo
+  del motor y no se congela nunca.
 """
 import os
 import sys
@@ -26,8 +31,19 @@ os.environ["SIMULATION_START_DATE"] = FECHA_INICIO
 
 MODELOS = AQUI / "modelos"
 MODELOS_CON_AVISOS = AQUI / "modelos-con-avisos"
+MODELOS_CON_ERROR = AQUI / "modelos-con-error"
 ESPERADO = AQUI / "esperado"
 ESPERADO_CON_AVISOS = ESPERADO / "con-avisos"
+ESPERADO_CON_ERROR = ESPERADO / "con-error"
+
+# Los errores que la API traduce a una respuesta con sentido para quien dibuja:
+# ValueError es el 400 de validacion y SimulationExecutionError el 422 de una
+# simulacion que no puede terminar. Cualquier otro tipo (KeyError, un error de
+# configuracion, un fallo del proceso hijo) es un fallo del motor, acaba en un
+# 500 y no se congela: el banco tiene que ponerse en rojo aunque el mensaje
+# coincida. No se incluye el 504 por tiempo porque depende del reloj real y no
+# seria reproducible.
+ERRORES_PREVISTOS = ("ValueError", "SimulationExecutionError")
 
 from simulator.main import processSimulation  # noqa: E402
 
@@ -40,8 +56,19 @@ def modelos():
     return encontrados
 
 
+def modelos_con_error():
+    """[ruta] de los modelos que TIENEN que fallar, en orden estable."""
+    if not MODELOS_CON_ERROR.is_dir():
+        return []
+    return sorted(MODELOS_CON_ERROR.glob("*.txt"))
+
+
 def etiqueta(ruta, admite_avisos):
     return ("con-avisos/" if admite_avisos else "") + ruta.name
+
+
+def etiqueta_error(ruta):
+    return "con-error/" + ruta.name
 
 
 def carpeta(admite_avisos):
@@ -71,13 +98,45 @@ def escribe_avisos(ruta, avisos):
     ruta_avisos(ruta).write_text("\n".join(avisos) + "\n", encoding="utf-8")
 
 
+def ruta_error(ruta):
+    return ESPERADO_CON_ERROR / (ruta.stem + ".error.txt")
+
+
+def lee_error(ruta):
+    fichero = ruta_error(ruta)
+    if not fichero.exists():
+        return None
+    return fichero.read_text(encoding="utf-8").strip()
+
+
+def escribe_error(ruta, texto):
+    ruta_error(ruta).write_text(texto + "\n", encoding="utf-8")
+
+
+def ejecuta_con_error(ruta):
+    """(texto, previsto) de un modelo que tiene que fallar.
+
+    `texto` es el "Tipo: mensaje" que se congela, o None si el modelo ha
+    terminado bien, que ya es un fallo del banco. `previsto` dice si el tipo es
+    uno de los diagnosticos del contrato: un error interno no se congela.
+    """
+    try:
+        ejecuta(ruta)
+    except Exception as error:
+        tipo = type(error).__name__
+        return "%s: %s" % (tipo, error), tipo in ERRORES_PREVISTOS
+    return None, False
+
+
 def referencias_huerfanas():
     """Ficheros congelados cuyo modelo ya no existe."""
     esperadas = {ruta_xes(r, a) for r, a in modelos()}
     esperadas |= {ruta_avisos(r) for r, a in modelos() if a}
+    esperadas |= {ruta_error(r) for r in modelos_con_error()}
     sueltas = set()
-    for carpeta_ in (ESPERADO, ESPERADO_CON_AVISOS):
+    for carpeta_ in (ESPERADO, ESPERADO_CON_AVISOS, ESPERADO_CON_ERROR):
         if carpeta_.is_dir():
             sueltas |= {p for p in carpeta_.glob("*.xes")}
             sueltas |= {p for p in carpeta_.glob("*.avisos.txt")}
+            sueltas |= {p for p in carpeta_.glob("*.error.txt")}
     return sorted(p.relative_to(ESPERADO) for p in sueltas - esperadas)

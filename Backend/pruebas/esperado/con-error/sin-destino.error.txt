@@ -1,0 +1,1 @@
+SimulationExecutionError: El mensaje de Solicitar a Recoger no tiene caso destino: lo envia Pool_Orquestado - 2 y el pool Pool_Orquestador no tiene ningun caso al que dirigirlo.

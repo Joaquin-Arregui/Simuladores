@@ -23,7 +23,7 @@ def messageIntermediateCatchEvent(elements, element, script):
 def {function_name(element.id_bpmn)}(env, caso):
     TaskName = {element.id_bpmn!r}
     start_standby_message = env.now
-    yield env.process(wait_for_message(env, {element.messageOrigin!r}, TaskName, 1, caso))
+    remitente = yield env.process(wait_for_message(env, {element.messageOrigin!r}, TaskName, 1, caso))
     end_standby_message = env.now
     duration_standby_message = end_standby_message - start_standby_message
     if duration_standby_message > 0:
@@ -45,6 +45,7 @@ f'''
             <string key="bpmn:name" value="{xml_template(element.name)}"/>
             <string key="bpmn:id" value="{xml_template(element.id_bpmn)}"/>
             <string key="bpmn:messageOrigin" value="{xml_template(element.messageOrigin)}"/>
+            <string key="bpmn:messageSender" value="{{xml_value(remitente)}}"/>
             <string key="bpmn:subTask" value="{xml_template(element.subTask)}"/>
             <date key="time:timestamp" value="{{xml_value(env.now)}}"/>
             <int key="bpmn:instance" value="{{xml_value(caso.indice)}}"/>
@@ -58,6 +59,9 @@ def messageIntermediateThrowEvent(elements, element, script):
     functionStr = f"""
 def {function_name(element.id_bpmn)}(env, caso):
     TaskName = {element.id_bpmn!r}
+    # Igual que en el envio por tarea: el sobre sale primero para poder anotar a
+    # que caso va, y no consume tiempo.
+    destino = publish_message(TaskName, {element.messageDestiny!r}, 1, caso)
     simulationResults[caso].append(
 f'''
         <event>
@@ -65,12 +69,12 @@ f'''
             <string key="bpmn:name" value="{xml_template(element.name)}"/>
             <string key="bpmn:id" value="{xml_template(element.id_bpmn)}"/>
             <string key="bpmn:messageDestiny" value="{xml_template(element.messageDestiny)}"/>
+            <string key="bpmn:messageTarget" value="{{xml_value(etiqueta_de_caso(destino))}}"/>
             <string key="bpmn:subTask" value="{xml_template(element.subTask)}"/>
             <date key="time:timestamp" value="{{xml_value(env.now)}}"/>
             <int key="bpmn:instance" value="{{xml_value(caso.indice)}}"/>
         </event>''')
     yield env.timeout(0)
-    publish_message(TaskName, {element.messageDestiny!r}, 1, caso)
     return {element.subTask!r}
     """
     return generateFunction(elements, element.subTask, script + functionStr)

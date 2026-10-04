@@ -36,6 +36,7 @@
       <string key="bpmn:name" value="Enviar la peticion" />
       <string key="bpmn:id" value="Enviar_Peticion" />
       <string key="bpmn:messageDestiny" value="Recibir_Peticion" />
+      <string key="bpmn:messageTarget" value="Pool_Servicio - 1" />
       <string key="bpmn:userTask" value="Carla" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="16" />
@@ -67,6 +68,7 @@
       <string key="bpmn:name" value="Esperar la respuesta" />
       <string key="bpmn:id" value="Esperar_Respuesta" />
       <string key="bpmn:messageOrigin" value="Enviar_Respuesta" />
+      <string key="bpmn:messageSender" value="Pool_Servicio - 1" />
       <string key="bpmn:userTask" value="Carla" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="7" />
@@ -128,6 +130,7 @@
       <string key="bpmn:name" value="Recibir la peticion" />
       <string key="bpmn:id" value="Recibir_Peticion" />
       <string key="bpmn:messageOrigin" value="Enviar_Peticion" />
+      <string key="bpmn:messageSender" value="Pool_Cliente - 1" />
       <string key="bpmn:userTask" value="Sara" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="8" />
@@ -163,6 +166,7 @@
       <string key="bpmn:name" value="Enviar la respuesta" />
       <string key="bpmn:id" value="Enviar_Respuesta" />
       <string key="bpmn:messageDestiny" value="Esperar_Respuesta" />
+      <string key="bpmn:messageTarget" value="Pool_Cliente - 1" />
       <string key="bpmn:userTask" value="Diego" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="14" />
@@ -211,6 +215,7 @@
       <string key="bpmn:name" value="Enviar la peticion" />
       <string key="bpmn:id" value="Enviar_Peticion" />
       <string key="bpmn:messageDestiny" value="Recibir_Peticion" />
+      <string key="bpmn:messageTarget" value="Pool_Servicio - 2" />
       <string key="bpmn:userTask" value="Carla" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="15" />
@@ -242,6 +247,7 @@
       <string key="bpmn:name" value="Esperar la respuesta" />
       <string key="bpmn:id" value="Esperar_Respuesta" />
       <string key="bpmn:messageOrigin" value="Enviar_Respuesta" />
+      <string key="bpmn:messageSender" value="Pool_Servicio - 2" />
       <string key="bpmn:userTask" value="Carla" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="7" />
@@ -303,6 +309,7 @@
       <string key="bpmn:name" value="Recibir la peticion" />
       <string key="bpmn:id" value="Recibir_Peticion" />
       <string key="bpmn:messageOrigin" value="Enviar_Peticion" />
+      <string key="bpmn:messageSender" value="Pool_Cliente - 2" />
       <string key="bpmn:userTask" value="Sara" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="8" />
@@ -338,6 +345,7 @@
       <string key="bpmn:name" value="Enviar la respuesta" />
       <string key="bpmn:id" value="Enviar_Respuesta" />
       <string key="bpmn:messageDestiny" value="Esperar_Respuesta" />
+      <string key="bpmn:messageTarget" value="Pool_Cliente - 2" />
       <string key="bpmn:userTask" value="Diego" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="15" />
@@ -386,6 +394,7 @@
       <string key="bpmn:name" value="Enviar la peticion" />
       <string key="bpmn:id" value="Enviar_Peticion" />
       <string key="bpmn:messageDestiny" value="Recibir_Peticion" />
+      <string key="bpmn:messageTarget" value="Pool_Servicio - 3" />
       <string key="bpmn:userTask" value="Carla" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="16" />
@@ -417,6 +426,7 @@
       <string key="bpmn:name" value="Esperar la respuesta" />
       <string key="bpmn:id" value="Esperar_Respuesta" />
       <string key="bpmn:messageOrigin" value="Enviar_Respuesta" />
+      <string key="bpmn:messageSender" value="Pool_Servicio - 3" />
       <string key="bpmn:userTask" value="Carla" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="8" />
@@ -491,6 +501,7 @@
       <string key="bpmn:name" value="Recibir la peticion" />
       <string key="bpmn:id" value="Recibir_Peticion" />
       <string key="bpmn:messageOrigin" value="Enviar_Peticion" />
+      <string key="bpmn:messageSender" value="Pool_Cliente - 3" />
       <string key="bpmn:userTask" value="Sara" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="7" />
@@ -526,6 +537,7 @@
       <string key="bpmn:name" value="Enviar la respuesta" />
       <string key="bpmn:id" value="Enviar_Respuesta" />
       <string key="bpmn:messageDestiny" value="Esperar_Respuesta" />
+      <string key="bpmn:messageTarget" value="Pool_Cliente - 3" />
       <string key="bpmn:userTask" value="Diego" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="18" />

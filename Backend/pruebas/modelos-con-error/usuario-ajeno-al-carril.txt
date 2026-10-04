@@ -1,0 +1,17 @@
+# Un error de validacion, no de ejecucion: la tarea de riesgos se asigna a
+# alguien que esta en el carril de caja. El motor no puede saber si sobra el
+# usuario o falta el carril, asi que lo rechaza nombrando el usuario, y la API
+# responde 400 en vez de simular algo que nadie ha dibujado.
+# Congelado tambien porque este mensaje depende de la resolucion de carriles,
+# que es lo que se arreglo al incluir sus usuarios en la cola del pool.
+Element: [type=bpmn:Collaboration, id_bpmn='Colaboracion', name='Usuario de otro carril', instances=1]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Banco', name='Banco', frequency=0, userWithoutRole=[], containedElements=['Ini', 'Revisar', 'Cobrar', 'Fin', 'f1', 'f2', 'f3']]
+Element: [type=bpmn:Lane, id_bpmn='Carril_Riesgos', name='Riesgos', userWithoutRole=['Clara'], containedElements=['Ini', 'Revisar']]
+Element: [type=bpmn:Lane, id_bpmn='Carril_Caja', name='Caja', userWithoutRole=['Ana'], containedElements=['Cobrar', 'Fin']]
+Element: [type=bpmn:StartEvent, id_bpmn='Ini', name='Entra el expediente', subTask='Revisar']
+Element: [type=bpmn:Task, id_bpmn='Revisar', name='Revisar el riesgo', userTask='Ana', numberOfExecutions=1, minimumTime=20, maximumTime=30, subTask='Cobrar']
+Element: [type=bpmn:Task, id_bpmn='Cobrar', name='Cobrar la comision', userTask='Ana', numberOfExecutions=1, minimumTime=5, maximumTime=10, subTask='Fin']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin', name='Expediente resuelto', subTask='']
+Element: [type=bpmn:SequenceFlow, id_bpmn='f1', name='', superElement='Ini', subElement='Revisar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='f2', name='', superElement='Revisar', subElement='Cobrar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='f3', name='', superElement='Cobrar', subElement='Fin']

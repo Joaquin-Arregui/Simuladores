@@ -15,6 +15,9 @@ Compara tres cosas, y conviene no confundirlas:
 - AVISOS: los de `modelos/` tienen que correr limpios; los de
   `modelos-con-avisos/` tienen que emitir exactamente los congelados. Un aviso
   que aparece, que desaparece o que cambia de texto es un fallo.
+- ERRORES: los de `modelos-con-error/` tienen que fallar con el tipo y el
+  mensaje congelados. Que dejen de fallar, que cambie el texto o que un error
+  interno sustituya al diagnostico son fallos los tres.
 
 La linea entre comportamiento y organizacion esta en el CASO, no en la traza.
 Los eventos se agrupan por caso ANTES de comparar, asi que si la respuesta del
@@ -193,7 +196,8 @@ def main():
         return 1
 
     modelos = banco.modelos()
-    if not modelos:
+    con_error = banco.modelos_con_error()
+    if not modelos and not con_error:
         print("No hay modelos que comparar.")
         return 1
 
@@ -243,6 +247,29 @@ def main():
         if not (problemas_aviso or comportamiento or organizacion):
             print("%-34s ok" % nombre)
 
+    for ruta in con_error:
+        nombre = banco.etiqueta_error(ruta)
+        esperado = banco.lee_error(ruta)
+        texto, previsto = banco.ejecuta_con_error(ruta)
+        if esperado is None:
+            print("%-34s SIN REFERENCIA  ejecuta congelar.py" % nombre)
+            fallos += 1
+        elif texto is None:
+            print("%-34s YA NO FALLA" % nombre)
+            print("         esperaba %s" % esperado)
+            fallos += 1
+        elif not previsto:
+            print("%-34s ERROR INTERNO  %s" % (nombre, texto))
+            print("         esperaba %s" % esperado)
+            fallos += 1
+        elif texto != esperado:
+            print("%-34s CAMBIA EL ERROR" % nombre)
+            print("         esperaba %s" % esperado)
+            print("         ha dado  %s" % texto)
+            fallos += 1
+        else:
+            print("%-34s ok" % nombre)
+
     for huerfana in banco.referencias_huerfanas():
         print("%-34s REFERENCIA HUERFANA  no existe su modelo" % str(huerfana))
         fallos += 1
@@ -252,7 +279,7 @@ def main():
         print("Regresion en rojo: %d problema(s)." % fallos)
         print("Si el cambio es intencionado, revisa el diff y vuelve a congelar.")
         return 1
-    print("Regresion en verde: %d modelos sin cambios." % len(modelos))
+    print("Regresion en verde: %d modelos sin cambios." % (len(modelos) + len(con_error)))
     return 0
 
 

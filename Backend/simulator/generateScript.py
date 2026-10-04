@@ -77,6 +77,14 @@ def generateScript(elements, process, starts, messageStarts, start_date=DEFAULT_
     for flow_id, (source, target) in flows.items():
         outgoing.setdefault(source, []).append(flow_id)
         incoming.setdefault(target, []).append(flow_id)
+    # Un MessageFlow puede apuntar al pool y no a un receptor ejecutable.
+    # validate_simulation lo admite con aviso, porque el mensaje sale de la
+    # simulacion y nadie lo recoge; el motor necesita distinguirlo de un
+    # receptor que se ha quedado sin caso destino, que si es un error.
+    external_targets = tuple(sorted(
+        {item.subElement for item in elements.values()
+         if type(item).__name__ == 'BPMNMessageFlow'
+         and getattr(elements.get(item.subElement), 'bpmn_type', '') == 'bpmn:Participant'}))
     joins = {node: ('parallel' if elements[node].bpmn_type == 'bpmn:ParallelGateway' else 'inclusive')
              for node, edges in incoming.items() if len(edges) > 1 and
              elements[node].bpmn_type in ('bpmn:ParallelGateway', 'bpmn:InclusiveGateway')}
@@ -166,6 +174,7 @@ def generateScript(elements, process, starts, messageStarts, start_date=DEFAULT_
         'dataInfo': elements['dataInfo'], 'defaultData': elements['defaultData'],
         'sequenceFlows': flows, 'outgoingFlows': outgoing, 'incomingFlows': incoming,
         'joinTypes': joins, 'startEvents': start_events,
+        'destinosExternos': external_targets,
         'endEvents': [item.id_bpmn for item in elements.values()
                       if type(item).__name__ == 'BPMNEndEvent'],
         'logMetadata': _metadata(element, elements),

@@ -1,0 +1,32 @@
+# Modelo de referencia 9 - mensajes por eventos intermedios, no por tareas.
+# Cubre messageIntermediateThrowEvent y messageIntermediateCatchEvent, que son
+# el otro camino de publish_message / wait_for_message y no los tocaba ningun
+# modelo. Dos parejas taller-dueno y una conversacion de ida y vuelta: el aviso
+# va por un evento de lanzamiento y la confirmacion vuelve por otro.
+# El taller arranca a la vez para sus dos casos, con un solo mecanico, asi que
+# la segunda reparacion espera a la primera; el dueno arranca cada 40 segundos.
+# Las dos parejas quedan desfasadas y ninguna confunde su aviso con el de la
+# otra, que es lo que se congela aqui.
+Element: [type=bpmn:Collaboration, id_bpmn='Colaboracion', name='Taller y dueno', instances=2]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Taller', name='Taller', frequency=0, userWithoutRole=['Ana'], containedElements=['Ini_T', 'Reparar', 'Avisar_Listo', 'Confirmar', 'Fin_T', 't1', 't2', 't3', 't4']]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Dueno', name='Dueno', frequency=40, userWithoutRole=['Beto'], containedElements=['Ini_D', 'Esperar_Aviso', 'Recoger', 'Avisar_Recogido', 'Fin_D', 'd1', 'd2', 'd3', 'd4']]
+Element: [type=bpmn:StartEvent, id_bpmn='Ini_T', name='Entra el coche', subTask='Reparar']
+Element: [type=bpmn:Task, id_bpmn='Reparar', name='Reparar el coche', userTask='Ana', numberOfExecutions=1, minimumTime=20, maximumTime=30, subTask='Avisar_Listo']
+Element: [type=bpmn:MessageIntermediateThrowEvent, id_bpmn='Avisar_Listo', name='Avisar de que esta listo', subTask='Confirmar']
+Element: [type=bpmn:MessageIntermediateCatchEvent, id_bpmn='Confirmar', name='Confirmar la recogida', subTask='Fin_T']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_T', name='Fin del taller', subTask='']
+Element: [type=bpmn:StartEvent, id_bpmn='Ini_D', name='Deja el coche', subTask='Esperar_Aviso']
+Element: [type=bpmn:MessageIntermediateCatchEvent, id_bpmn='Esperar_Aviso', name='Esperar el aviso', subTask='Recoger']
+Element: [type=bpmn:Task, id_bpmn='Recoger', name='Recoger el coche', userTask='Beto', numberOfExecutions=1, minimumTime=5, maximumTime=10, subTask='Avisar_Recogido']
+Element: [type=bpmn:MessageIntermediateThrowEvent, id_bpmn='Avisar_Recogido', name='Avisar de la recogida', subTask='Fin_D']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_D', name='Fin del dueno', subTask='']
+Element: [type=bpmn:SequenceFlow, id_bpmn='t1', name='', superElement='Ini_T', subElement='Reparar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='t2', name='', superElement='Reparar', subElement='Avisar_Listo']
+Element: [type=bpmn:SequenceFlow, id_bpmn='t3', name='', superElement='Avisar_Listo', subElement='Confirmar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='t4', name='', superElement='Confirmar', subElement='Fin_T']
+Element: [type=bpmn:SequenceFlow, id_bpmn='d1', name='', superElement='Ini_D', subElement='Esperar_Aviso']
+Element: [type=bpmn:SequenceFlow, id_bpmn='d2', name='', superElement='Esperar_Aviso', subElement='Recoger']
+Element: [type=bpmn:SequenceFlow, id_bpmn='d3', name='', superElement='Recoger', subElement='Avisar_Recogido']
+Element: [type=bpmn:SequenceFlow, id_bpmn='d4', name='', superElement='Avisar_Recogido', subElement='Fin_D']
+Element: [type=bpmn:MessageFlow, id_bpmn='Aviso', name='Listo', superElement='Avisar_Listo', subElement='Esperar_Aviso']
+Element: [type=bpmn:MessageFlow, id_bpmn='Recogido', name='Recogido', superElement='Avisar_Recogido', subElement='Confirmar']

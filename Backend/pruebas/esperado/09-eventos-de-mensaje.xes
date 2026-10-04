@@ -1,0 +1,381 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<log xes.version="1.0" xes.features="nested-attributes" openxes.version="1.0RC7" xmlns="http://www.xes-standard.org/">
+  <extension name="Concept" prefix="concept" uri="http://www.xes-standard.org/concept.xesext"/>
+  <extension name="Time" prefix="time" uri="http://www.xes-standard.org/time.xesext"/>
+  <classifier name="Activity (by BPMN ID)" keys="bpmn:id" scope="event"/>
+  <classifier name="Case (by participant and instance)" keys="bpmn:participant bpmn:instance" scope="event"/>
+  <global>
+    <string key="type" value="bpmn:Collaboration" />
+    <string key="name" value="Taller y dueno" />
+    <string key="id_bpmn" value="Colaboracion" />
+    <int key="instances" value="2" />
+  </global>
+  <int key="simulation:seed" value="20260101"/>
+  <string key="simulation:startDate" value="2026-01-01T00:00:00+00:00"/>
+  <string key="simulation:participants" value="Pool_Taller, Pool_Dueno"/>
+  <trace>
+    <string key="concept:name" value="Pool_Taller - 1" />
+    <string key="bpmn:participant" value="Pool_Taller" />
+    <int key="bpmn:instance" value="1" />
+    <int key="bpmn:convocatoria" value="1" />
+    <event>
+      <string key="concept:name" value="Ini_T" />
+      <string key="bpmn:type" value="bpmn:StartEvent" />
+      <string key="bpmn:name" value="Entra el coche" />
+      <string key="bpmn:id" value="Ini_T" />
+      <string key="bpmn:subTask" value="Reparar" />
+      <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="1" />
+      <string key="bpmn:participant" value="Pool_Taller" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Reparar" />
+      <string key="bpmn:type" value="bpmn:Task" />
+      <string key="bpmn:name" value="Reparar el coche" />
+      <string key="bpmn:id" value="Reparar" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="26" />
+      <string key="bpmn:subTask" value="Avisar_Listo" />
+      <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:26.000+00:00" />
+      <float key="time:duration" value="26.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="2" />
+      <string key="bpmn:participant" value="Pool_Taller" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Avisar_Listo" />
+      <string key="bpmn:type" value="bpmn:MessageIntermediateThrowEvent" />
+      <string key="bpmn:name" value="Avisar de que esta listo" />
+      <string key="bpmn:id" value="Avisar_Listo" />
+      <string key="bpmn:messageDestiny" value="Esperar_Aviso" />
+      <string key="bpmn:messageTarget" value="Pool_Dueno - 1" />
+      <string key="bpmn:subTask" value="Confirmar" />
+      <date key="time:timestamp" value="2026-01-01T00:00:26.000+00:00" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="3" />
+      <string key="bpmn:participant" value="Pool_Taller" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandByMessage · Confirmar" />
+      <string key="bpmn:type" value="StandByMessage" />
+      <string key="bpmn:id" value="Confirmar" />
+      <string key="bpmn:execution" value="1" />
+      <date key="time:timestamp" value="2026-01-01T00:00:26.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:35.000+00:00" />
+      <float key="time:duration" value="9.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="4" />
+      <string key="bpmn:participant" value="Pool_Taller" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Confirmar" />
+      <string key="bpmn:type" value="bpmn:MessageIntermediateCatchEvent" />
+      <string key="bpmn:name" value="Confirmar la recogida" />
+      <string key="bpmn:id" value="Confirmar" />
+      <string key="bpmn:messageOrigin" value="Avisar_Recogido" />
+      <string key="bpmn:messageSender" value="Pool_Dueno - 1" />
+      <string key="bpmn:subTask" value="Fin_T" />
+      <date key="time:timestamp" value="2026-01-01T00:00:35.000+00:00" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="5" />
+      <string key="bpmn:participant" value="Pool_Taller" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Fin_T" />
+      <string key="bpmn:type" value="bpmn:EndEvent" />
+      <string key="bpmn:name" value="Fin del taller" />
+      <string key="bpmn:id" value="Fin_T" />
+      <string key="bpmn:subTask" value="" />
+      <date key="time:timestamp" value="2026-01-01T00:00:35.000+00:00" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="6" />
+      <string key="bpmn:participant" value="Pool_Taller" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+  </trace>
+  <trace>
+    <string key="concept:name" value="Pool_Dueno - 1" />
+    <string key="bpmn:participant" value="Pool_Dueno" />
+    <int key="bpmn:instance" value="1" />
+    <int key="bpmn:convocatoria" value="1" />
+    <event>
+      <string key="concept:name" value="Ini_D" />
+      <string key="bpmn:type" value="bpmn:StartEvent" />
+      <string key="bpmn:name" value="Deja el coche" />
+      <string key="bpmn:id" value="Ini_D" />
+      <string key="bpmn:subTask" value="Esperar_Aviso" />
+      <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="1" />
+      <string key="bpmn:participant" value="Pool_Dueno" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandByMessage · Esperar_Aviso" />
+      <string key="bpmn:type" value="StandByMessage" />
+      <string key="bpmn:id" value="Esperar_Aviso" />
+      <string key="bpmn:execution" value="1" />
+      <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:26.000+00:00" />
+      <float key="time:duration" value="26.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="2" />
+      <string key="bpmn:participant" value="Pool_Dueno" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Esperar_Aviso" />
+      <string key="bpmn:type" value="bpmn:MessageIntermediateCatchEvent" />
+      <string key="bpmn:name" value="Esperar el aviso" />
+      <string key="bpmn:id" value="Esperar_Aviso" />
+      <string key="bpmn:messageOrigin" value="Avisar_Listo" />
+      <string key="bpmn:messageSender" value="Pool_Taller - 1" />
+      <string key="bpmn:subTask" value="Recoger" />
+      <date key="time:timestamp" value="2026-01-01T00:00:26.000+00:00" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="3" />
+      <string key="bpmn:participant" value="Pool_Dueno" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Recoger" />
+      <string key="bpmn:type" value="bpmn:Task" />
+      <string key="bpmn:name" value="Recoger el coche" />
+      <string key="bpmn:id" value="Recoger" />
+      <string key="bpmn:userTask" value="Beto" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="9" />
+      <string key="bpmn:subTask" value="Avisar_Recogido" />
+      <date key="time:timestamp" value="2026-01-01T00:00:26.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:35.000+00:00" />
+      <float key="time:duration" value="9.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="4" />
+      <string key="bpmn:participant" value="Pool_Dueno" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Avisar_Recogido" />
+      <string key="bpmn:type" value="bpmn:MessageIntermediateThrowEvent" />
+      <string key="bpmn:name" value="Avisar de la recogida" />
+      <string key="bpmn:id" value="Avisar_Recogido" />
+      <string key="bpmn:messageDestiny" value="Confirmar" />
+      <string key="bpmn:messageTarget" value="Pool_Taller - 1" />
+      <string key="bpmn:subTask" value="Fin_D" />
+      <date key="time:timestamp" value="2026-01-01T00:00:35.000+00:00" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="5" />
+      <string key="bpmn:participant" value="Pool_Dueno" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Fin_D" />
+      <string key="bpmn:type" value="bpmn:EndEvent" />
+      <string key="bpmn:name" value="Fin del dueno" />
+      <string key="bpmn:id" value="Fin_D" />
+      <string key="bpmn:subTask" value="" />
+      <date key="time:timestamp" value="2026-01-01T00:00:35.000+00:00" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="6" />
+      <string key="bpmn:participant" value="Pool_Dueno" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+  </trace>
+  <trace>
+    <string key="concept:name" value="Pool_Taller - 2" />
+    <string key="bpmn:participant" value="Pool_Taller" />
+    <int key="bpmn:instance" value="2" />
+    <int key="bpmn:convocatoria" value="1" />
+    <event>
+      <string key="concept:name" value="Ini_T" />
+      <string key="bpmn:type" value="bpmn:StartEvent" />
+      <string key="bpmn:name" value="Entra el coche" />
+      <string key="bpmn:id" value="Ini_T" />
+      <string key="bpmn:subTask" value="Reparar" />
+      <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="1" />
+      <string key="bpmn:participant" value="Pool_Taller" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandBy · Reparar" />
+      <string key="bpmn:type" value="StandBy" />
+      <string key="bpmn:id" value="Reparar" />
+      <string key="bpmn:execution" value="1" />
+      <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:26.000+00:00" />
+      <float key="time:duration" value="26.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="2" />
+      <string key="bpmn:participant" value="Pool_Taller" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Reparar" />
+      <string key="bpmn:type" value="bpmn:Task" />
+      <string key="bpmn:name" value="Reparar el coche" />
+      <string key="bpmn:id" value="Reparar" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="25" />
+      <string key="bpmn:subTask" value="Avisar_Listo" />
+      <date key="time:timestamp" value="2026-01-01T00:00:26.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:51.000+00:00" />
+      <float key="time:duration" value="25.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="3" />
+      <string key="bpmn:participant" value="Pool_Taller" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Avisar_Listo" />
+      <string key="bpmn:type" value="bpmn:MessageIntermediateThrowEvent" />
+      <string key="bpmn:name" value="Avisar de que esta listo" />
+      <string key="bpmn:id" value="Avisar_Listo" />
+      <string key="bpmn:messageDestiny" value="Esperar_Aviso" />
+      <string key="bpmn:messageTarget" value="Pool_Dueno - 2" />
+      <string key="bpmn:subTask" value="Confirmar" />
+      <date key="time:timestamp" value="2026-01-01T00:00:51.000+00:00" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="4" />
+      <string key="bpmn:participant" value="Pool_Taller" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandByMessage · Confirmar" />
+      <string key="bpmn:type" value="StandByMessage" />
+      <string key="bpmn:id" value="Confirmar" />
+      <string key="bpmn:execution" value="1" />
+      <date key="time:timestamp" value="2026-01-01T00:00:51.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:59.000+00:00" />
+      <float key="time:duration" value="8.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="5" />
+      <string key="bpmn:participant" value="Pool_Taller" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Confirmar" />
+      <string key="bpmn:type" value="bpmn:MessageIntermediateCatchEvent" />
+      <string key="bpmn:name" value="Confirmar la recogida" />
+      <string key="bpmn:id" value="Confirmar" />
+      <string key="bpmn:messageOrigin" value="Avisar_Recogido" />
+      <string key="bpmn:messageSender" value="Pool_Dueno - 2" />
+      <string key="bpmn:subTask" value="Fin_T" />
+      <date key="time:timestamp" value="2026-01-01T00:00:59.000+00:00" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="6" />
+      <string key="bpmn:participant" value="Pool_Taller" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Fin_T" />
+      <string key="bpmn:type" value="bpmn:EndEvent" />
+      <string key="bpmn:name" value="Fin del taller" />
+      <string key="bpmn:id" value="Fin_T" />
+      <string key="bpmn:subTask" value="" />
+      <date key="time:timestamp" value="2026-01-01T00:00:59.000+00:00" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="7" />
+      <string key="bpmn:participant" value="Pool_Taller" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+  </trace>
+  <trace>
+    <string key="concept:name" value="Pool_Dueno - 2" />
+    <string key="bpmn:participant" value="Pool_Dueno" />
+    <int key="bpmn:instance" value="2" />
+    <int key="bpmn:convocatoria" value="1" />
+    <event>
+      <string key="concept:name" value="Ini_D" />
+      <string key="bpmn:type" value="bpmn:StartEvent" />
+      <string key="bpmn:name" value="Deja el coche" />
+      <string key="bpmn:id" value="Ini_D" />
+      <string key="bpmn:subTask" value="Esperar_Aviso" />
+      <date key="time:timestamp" value="2026-01-01T00:00:40.000+00:00" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="1" />
+      <string key="bpmn:participant" value="Pool_Dueno" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandByMessage · Esperar_Aviso" />
+      <string key="bpmn:type" value="StandByMessage" />
+      <string key="bpmn:id" value="Esperar_Aviso" />
+      <string key="bpmn:execution" value="1" />
+      <date key="time:timestamp" value="2026-01-01T00:00:40.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:51.000+00:00" />
+      <float key="time:duration" value="11.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="2" />
+      <string key="bpmn:participant" value="Pool_Dueno" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Esperar_Aviso" />
+      <string key="bpmn:type" value="bpmn:MessageIntermediateCatchEvent" />
+      <string key="bpmn:name" value="Esperar el aviso" />
+      <string key="bpmn:id" value="Esperar_Aviso" />
+      <string key="bpmn:messageOrigin" value="Avisar_Listo" />
+      <string key="bpmn:messageSender" value="Pool_Taller - 2" />
+      <string key="bpmn:subTask" value="Recoger" />
+      <date key="time:timestamp" value="2026-01-01T00:00:51.000+00:00" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="3" />
+      <string key="bpmn:participant" value="Pool_Dueno" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Recoger" />
+      <string key="bpmn:type" value="bpmn:Task" />
+      <string key="bpmn:name" value="Recoger el coche" />
+      <string key="bpmn:id" value="Recoger" />
+      <string key="bpmn:userTask" value="Beto" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="8" />
+      <string key="bpmn:subTask" value="Avisar_Recogido" />
+      <date key="time:timestamp" value="2026-01-01T00:00:51.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:59.000+00:00" />
+      <float key="time:duration" value="8.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="4" />
+      <string key="bpmn:participant" value="Pool_Dueno" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Avisar_Recogido" />
+      <string key="bpmn:type" value="bpmn:MessageIntermediateThrowEvent" />
+      <string key="bpmn:name" value="Avisar de la recogida" />
+      <string key="bpmn:id" value="Avisar_Recogido" />
+      <string key="bpmn:messageDestiny" value="Confirmar" />
+      <string key="bpmn:messageTarget" value="Pool_Taller - 2" />
+      <string key="bpmn:subTask" value="Fin_D" />
+      <date key="time:timestamp" value="2026-01-01T00:00:59.000+00:00" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="5" />
+      <string key="bpmn:participant" value="Pool_Dueno" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Fin_D" />
+      <string key="bpmn:type" value="bpmn:EndEvent" />
+      <string key="bpmn:name" value="Fin del dueno" />
+      <string key="bpmn:id" value="Fin_D" />
+      <string key="bpmn:subTask" value="" />
+      <date key="time:timestamp" value="2026-01-01T00:00:59.000+00:00" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="6" />
+      <string key="bpmn:participant" value="Pool_Dueno" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+  </trace>
+</log>
