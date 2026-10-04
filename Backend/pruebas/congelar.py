@@ -3,82 +3,73 @@
 
     python3 pruebas/congelar.py
 
-La semilla y la fecha de inicio van fijas aqui: sin las dos, el XES no es
-reproducible y los ficheros congelados no valdrian como referencia. La
-regresion de la tarea 1.4 compara contra lo que deja este script.
+Dos fases, y el orden importa: primero ejecuta TODOS los modelos en memoria, y
+solo escribe si todos han pasado. Un congelado a medias es peor que ninguno,
+porque la regresion compararia contra una mezcla de referencias viejas y nuevas
+sin que nadie se entere.
 
-Funciona en dos fases, y el orden importa: primero ejecuta TODOS los modelos
-en memoria, y solo escribe si todos han terminado sin errores y sin avisos. Un
-congelado a medias es peor que ninguno, porque la regresion compararia contra
-una mezcla de referencias viejas y nuevas sin que nadie se entere. Un aviso del
-validador cuenta como fallo: los modelos de referencia tienen que correr
-limpios, para que un aviso nuevo se note en vez de pasar inadvertido.
+Que cuenta como pasar depende de la categoria (ver banco.py): un modelo de
+`modelos/` tiene que correr sin un solo aviso; uno de `modelos-con-avisos/`
+tiene que correr emitiendo alguno, y sus avisos se congelan junto al XES.
 """
-import os
-import sys
-from pathlib import Path
-
-AQUI = Path(__file__).resolve().parent
-sys.path.insert(0, str(AQUI.parent))
-os.environ["SIMULATION_START_DATE"] = "2026-01-01T00:00:00+00:00"
-
-from simulator.main import processSimulation  # noqa: E402
-
-SEMILLA = 20260101
-MODELOS = AQUI / "modelos"
-ESPERADO = AQUI / "esperado"
+import banco
 
 
 def ejecuta_todos():
-    """Ejecuta cada modelo sin tocar el disco.
-
-    Devuelve (resultados, problemas): los XES listos para escribir y los
-    nombres de los modelos que han fallado o han avisado.
-    """
+    """Devuelve (resultados, problemas) sin tocar el disco."""
     resultados, problemas = [], []
-    for ruta in sorted(MODELOS.glob("*.txt")):
+    for ruta, admite_avisos in banco.modelos():
+        nombre = banco.etiqueta(ruta, admite_avisos)
         try:
-            resultado = processSimulation(ruta.read_text(encoding="utf-8"), seed=SEMILLA)
+            resultado = banco.ejecuta(ruta)
         except Exception as error:
-            print("%-24s ERROR   %s: %s" % (ruta.name, type(error).__name__, error))
-            problemas.append(ruta.name)
+            print("%-34s ERROR   %s: %s" % (nombre, type(error).__name__, error))
+            problemas.append(nombre)
             continue
-        if resultado.warnings:
-            print("%-24s AVISOS" % ruta.name)
+        if resultado.warnings and not admite_avisos:
+            print("%-34s AVISOS INESPERADOS" % nombre)
             for aviso in resultado.warnings:
                 print("         %s" % aviso)
-            problemas.append(ruta.name)
+            problemas.append(nombre)
             continue
-        print("%-24s ok      %d trazas, %d eventos" %
-              (ruta.name,
-               resultado.simulation.count("<trace>"),
-               resultado.simulation.count("<event>")))
-        resultados.append((ruta.stem, resultado.simulation))
+        if admite_avisos and not resultado.warnings:
+            print("%-34s NO AVISA   esta en modelos-con-avisos pero no emite ninguno" % nombre)
+            problemas.append(nombre)
+            continue
+        print("%-34s ok      %d trazas, %d eventos%s" %
+              (nombre, resultado.simulation.count("<trace>"), resultado.simulation.count("<event>"),
+               ", %d aviso(s)" % len(resultado.warnings) if admite_avisos else ""))
+        resultados.append((ruta, admite_avisos, resultado))
     return resultados, problemas
 
 
 def main():
-    if not MODELOS.is_dir():
-        print("No existe la carpeta de modelos: %s" % MODELOS)
+    if not banco.MODELOS.is_dir():
+        print("No existe la carpeta de modelos: %s" % banco.MODELOS)
         return 1
 
     resultados, problemas = ejecuta_todos()
-
     if not resultados and not problemas:
-        print("No hay ningun modelo que congelar en %s." % MODELOS)
+        print("No hay ningun modelo que congelar.")
         return 1
-
     if problemas:
         print()
         print("No se ha escrito nada. Han fallado: %s." % ", ".join(problemas))
-        print("Las referencias de %s se quedan como estaban." % ESPERADO.name)
+        print("Las referencias de esperado/ se quedan como estaban.")
         return 1
 
-    ESPERADO.mkdir(exist_ok=True)
-    for nombre, xes in resultados:
-        (ESPERADO / (nombre + ".xes")).write_text(xes, encoding="utf-8")
+    banco.ESPERADO.mkdir(exist_ok=True)
+    banco.ESPERADO_CON_AVISOS.mkdir(parents=True, exist_ok=True)
+    for ruta, admite_avisos, resultado in resultados:
+        banco.ruta_xes(ruta, admite_avisos).write_text(resultado.simulation, encoding="utf-8")
+        if admite_avisos:
+            banco.escribe_avisos(ruta, resultado.warnings)
     print()
-    print("Congeladas %d referencias en %s/." % (len(resultados), ESPERADO.name))
+    print("Congeladas %d referencias." % len(resultados))
+    huerfanas = banco.referencias_huerfanas()
+    if huerfanas:
+        print("Quedan referencias sin modelo (borralas a mano): %s"
+              % ", ".join(str(p) for p in huerfanas))
     return 0
 
 

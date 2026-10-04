@@ -1,0 +1,12 @@
+# Un pool que trabaja y otro vacio.
+# El vacio debe ignorarse CON UN AVISO, no romper la simulacion. El motor
+# llego a crearle casos sin evento de inicio ni de fin, y _assert_complete
+# convertia ese aviso en una simulacion bloqueada.
+Element: [type=bpmn:Collaboration, id_bpmn='Colaboracion', name='Con pool externo', instances=2]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Interno', name='Oficina', frequency=20, userWithoutRole=['Ana'], containedElements=['Ini', 'Tramitar', 'Fin', 'f1', 'f2']]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Externo', name='Organismo externo', frequency=0, userWithoutRole=[], containedElements=[]]
+Element: [type=bpmn:StartEvent, id_bpmn='Ini', name='Inicio', subTask='Tramitar']
+Element: [type=bpmn:Task, id_bpmn='Tramitar', name='Tramitar la solicitud', userTask='Ana', numberOfExecutions=1, minimumTime=20, maximumTime=30, subTask='Fin']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin', name='Fin', subTask='']
+Element: [type=bpmn:SequenceFlow, id_bpmn='f1', name='', superElement='Ini', subElement='Tramitar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='f2', name='', superElement='Tramitar', subElement='Fin']

@@ -1,0 +1,30 @@
+# Modelo de referencia 4 - objetos de datos y arranque por mensaje.
+# Cubre los dos caminos que el refactor del caso (1.5) reindexo y que ningun
+# otro modelo toca: publish_data / wait_for_data, y un evento de inicio que
+# espera un mensaje en vez de arrancar solo.
+# Emisor: avisa y termina.  Receptor: arranca AL RECIBIR el aviso, abre dos
+# ramas, una produce el expediente y la otra lo espera para poder seguir.
+Element: [type=bpmn:Collaboration, id_bpmn='Colaboracion', name='Datos y mensajes', instances=2]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Emisor', name='Emisor', frequency=50, userWithoutRole=['Ana'], containedElements=['Ini_E', 'Avisar', 'Fin_E', 'e1', 'e2']]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Receptor', name='Receptor', frequency=0, userWithoutRole=['Beto', 'Clara'], containedElements=['Ini_R', 'Bifurca', 'Produce', 'Consume', 'Une', 'Fin_R', 'Expediente', 'r1', 'r2', 'r3', 'r4', 'r5', 'r6']]
+Element: [type=bpmn:StartEvent, id_bpmn='Ini_E', name='Arranca el emisor', subTask='Avisar']
+Element: [type=bpmn:SendTask, id_bpmn='Avisar', name='Avisar al receptor', userTask='Ana', numberOfExecutions=1, minimumTime=5, maximumTime=9, subTask='Fin_E']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_E', name='Fin del emisor', subTask='']
+Element: [type=bpmn:MessageStartEvent, id_bpmn='Ini_R', name='Arranca al recibir el aviso', subTask='Bifurca']
+Element: [type=bpmn:ParallelGateway, id_bpmn='Bifurca', name='Abrir las dos ramas', subTask='Produce,Consume']
+Element: [type=bpmn:Task, id_bpmn='Produce', name='Preparar el expediente', userTask='Beto', numberOfExecutions=1, minimumTime=30, maximumTime=40, subTask='Une']
+Element: [type=bpmn:Task, id_bpmn='Consume', name='Revisar el expediente', userTask='Clara', numberOfExecutions=1, minimumTime=5, maximumTime=8, subTask='Une']
+Element: [type=bpmn:ParallelGateway, id_bpmn='Une', name='Esperar a las dos', subTask='Fin_R']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_R', name='Fin del receptor', subTask='']
+Element: [type=bpmn:DataObjectReference, id_bpmn='Expediente', name='Expediente']
+Element: [type=bpmn:DataOutputAssociation, id_bpmn='Dato_sale', name='', superElement='Produce', subElement='Expediente']
+Element: [type=bpmn:DataInputAssociation, id_bpmn='Dato_entra', name='', superElement='Expediente', subElement='Consume']
+Element: [type=bpmn:SequenceFlow, id_bpmn='e1', name='', superElement='Ini_E', subElement='Avisar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='e2', name='', superElement='Avisar', subElement='Fin_E']
+Element: [type=bpmn:SequenceFlow, id_bpmn='r1', name='', superElement='Ini_R', subElement='Bifurca']
+Element: [type=bpmn:SequenceFlow, id_bpmn='r2', name='', superElement='Bifurca', subElement='Produce']
+Element: [type=bpmn:SequenceFlow, id_bpmn='r3', name='', superElement='Bifurca', subElement='Consume']
+Element: [type=bpmn:SequenceFlow, id_bpmn='r4', name='', superElement='Produce', subElement='Une']
+Element: [type=bpmn:SequenceFlow, id_bpmn='r5', name='', superElement='Consume', subElement='Une']
+Element: [type=bpmn:SequenceFlow, id_bpmn='r6', name='', superElement='Une', subElement='Fin_R']
+Element: [type=bpmn:MessageFlow, id_bpmn='Aviso', name='Aviso', superElement='Avisar', subElement='Ini_R']

@@ -5,21 +5,21 @@
     python3 pruebas/regresion.py --acepta-reorganizacion
     python3 pruebas/regresion.py --acepta-reorganizacion --correspondencia pruebas/correspondencia.json
 
-Separa dos cosas que no conviene confundir:
+Compara tres cosas, y conviene no confundirlas:
 
 - COMPORTAMIENTO: que le ocurre a CADA CASO. Que eventos tiene, cuando, con que
-  recurso y que rama elige cada compuerta. Esto no puede cambiar mientras no se
-  cambie el motor a proposito: cualquier diferencia es un fallo.
+  recurso y que rama elige cada compuerta. Cualquier diferencia es un fallo.
 - ORGANIZACION: en cuantas trazas se reparten los eventos de un caso y como se
-  llaman esas trazas. Las tareas 1.5 y 1.6 van a separar las trazas por
-  participante, y eso es legitimo: se informa aparte y se acepta con
-  --acepta-reorganizacion.
+  llaman. Las tareas 1.5 y 1.6 las separaron por participante, y eso es
+  legitimo: se informa aparte y se acepta con --acepta-reorganizacion.
+- AVISOS: los de `modelos/` tienen que correr limpios; los de
+  `modelos-con-avisos/` tienen que emitir exactamente los congelados. Un aviso
+  que aparece, que desaparece o que cambia de texto es un fallo.
 
-La linea entre las dos esta en el CASO, no en la traza. Aceptar la
-reorganizacion no es ignorar a quien pertenece cada evento: los eventos se
-agrupan por caso antes de comparar, asi que si la respuesta del cliente 1
-acabara en el cliente 2 seguiria siendo un fallo aunque las trazas se hayan
-reorganizado. Esa es justo la rotura que vigila el modelo 02.
+La linea entre comportamiento y organizacion esta en el CASO, no en la traza.
+Los eventos se agrupan por caso ANTES de comparar, asi que si la respuesta del
+cliente 1 acabara en el cliente 2 seguiria siendo un fallo aunque las trazas se
+hayan reorganizado.
 
 Si la reorganizacion ademas renumera los casos, la correspondencia explicita
 (--correspondencia, un JSON {"caso nuevo": "caso de referencia"}) dice como se
@@ -27,24 +27,12 @@ leen los nuevos identificadores. Sin ella se asume que no cambian.
 """
 import argparse
 import json
-import os
-import sys
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
-AQUI = Path(__file__).resolve().parent
-sys.path.insert(0, str(AQUI.parent))
-os.environ["SIMULATION_START_DATE"] = "2026-01-01T00:00:00+00:00"
+import banco
 
-from simulator.main import processSimulation  # noqa: E402
-
-SEMILLA = 20260101
-MODELOS = AQUI / "modelos"
-ESPERADO = AQUI / "esperado"
-
-# Atributos que dicen a que caso pertenece un evento. Hoy solo esta la
-# instancia; cuando la 1.6 anada el participante, se anade aqui y la clave de
-# caso pasa a ser el par, sin tocar nada mas.
+# Atributos que dicen a que caso pertenece un evento.
 IDENTIDAD = ("bpmn:participant", "bpmn:instance")
 
 
@@ -180,6 +168,16 @@ def carga_correspondencia(ruta):
     return datos
 
 
+def compara_avisos(esperados, obtenidos):
+    """Diferencias entre los avisos congelados y los de ahora."""
+    if esperados is None:
+        return ["no hay avisos congelados; ejecuta congelar.py"]
+    faltan = [a for a in esperados if a not in obtenidos]
+    sobran = [a for a in obtenidos if a not in esperados]
+    return (["ya no se emite este aviso: %s" % a for a in faltan] +
+            ["aviso nuevo: %s" % a for a in sobran])
+
+
 def main():
     opciones = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     opciones.add_argument("--acepta-reorganizacion", action="store_true",
@@ -194,35 +192,42 @@ def main():
         print("No se pudo leer la correspondencia: %s" % error)
         return 1
 
-    modelos = sorted(MODELOS.glob("*.txt"))
+    modelos = banco.modelos()
     if not modelos:
-        print("No hay modelos en %s." % MODELOS)
+        print("No hay modelos que comparar.")
         return 1
 
     fallos = 0
-    for ruta in modelos:
-        referencia = ESPERADO / (ruta.stem + ".xes")
+    for ruta, admite_avisos in modelos:
+        nombre = banco.etiqueta(ruta, admite_avisos)
+        referencia = banco.ruta_xes(ruta, admite_avisos)
         if not referencia.exists():
-            print("%-24s SIN REFERENCIA  ejecuta congelar.py" % ruta.name)
+            print("%-34s SIN REFERENCIA  ejecuta congelar.py" % nombre)
             fallos += 1
             continue
         try:
-            resultado = processSimulation(ruta.read_text(encoding="utf-8"), seed=SEMILLA)
+            resultado = banco.ejecuta(ruta)
         except Exception as error:
-            print("%-24s ERROR   %s: %s" % (ruta.name, type(error).__name__, error))
+            print("%-34s ERROR   %s: %s" % (nombre, type(error).__name__, error))
             fallos += 1
             continue
+
+        problemas_aviso = []
+        if admite_avisos:
+            problemas_aviso = compara_avisos(banco.lee_avisos(ruta), resultado.warnings)
+        elif resultado.warnings:
+            problemas_aviso = ["aviso inesperado: %s" % a for a in resultado.warnings]
 
         comportamiento, organizacion = revisa(
             referencia.read_text(encoding="utf-8"), resultado.simulation, correspondencia)
 
-        if resultado.warnings:
-            print("%-24s AVISOS" % ruta.name)
-            for aviso in resultado.warnings:
-                print("         %s" % aviso)
+        if problemas_aviso:
+            print("%-34s CAMBIAN LOS AVISOS" % nombre)
+            for linea in problemas_aviso:
+                print("         %s" % linea)
             fallos += 1
         if comportamiento:
-            print("%-24s CAMBIA EL COMPORTAMIENTO" % ruta.name)
+            print("%-34s CAMBIA EL COMPORTAMIENTO" % nombre)
             for linea in comportamiento[:12]:
                 print("         %s" % linea)
             if len(comportamiento) > 12:
@@ -230,23 +235,22 @@ def main():
             fallos += 1
         if organizacion:
             etiqueta = "reorganizacion aceptada" if argumentos.acepta_reorganizacion else "CAMBIA LA ORGANIZACION"
-            print("%-24s %s" % (ruta.name, etiqueta))
+            print("%-34s %s" % (nombre, etiqueta))
             for linea in organizacion[:6]:
                 print("         %s" % linea)
             if not argumentos.acepta_reorganizacion:
                 fallos += 1
-        if not (resultado.warnings or comportamiento or organizacion):
-            print("%-24s ok" % ruta.name)
+        if not (problemas_aviso or comportamiento or organizacion):
+            print("%-34s ok" % nombre)
 
-    huerfanas = ({p.stem for p in ESPERADO.glob("*.xes")} - {p.stem for p in modelos}) if ESPERADO.is_dir() else set()
-    for nombre in sorted(huerfanas):
-        print("%-24s REFERENCIA HUERFANA  no existe su modelo" % (nombre + ".xes"))
+    for huerfana in banco.referencias_huerfanas():
+        print("%-34s REFERENCIA HUERFANA  no existe su modelo" % str(huerfana))
         fallos += 1
 
     print()
     if fallos:
         print("Regresion en rojo: %d problema(s)." % fallos)
-        print("Si el cambio de comportamiento es intencionado, revisa el diff y vuelve a congelar.")
+        print("Si el cambio es intencionado, revisa el diff y vuelve a congelar.")
         return 1
     print("Regresion en verde: %d modelos sin cambios." % len(modelos))
     return 0

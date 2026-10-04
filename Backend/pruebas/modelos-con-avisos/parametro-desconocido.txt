@@ -1,0 +1,9 @@
+# Una tarea con un parametro que el simulador no conoce.
+# Debe avisarse y seguir, ignorando ese parametro: es el camino por el que
+# llegan los modelos exportados por una version mas nueva del Modeler.
+Element: [type=bpmn:Process, id_bpmn='Proceso', name='Con parametro desconocido', instances=1, frequency=0, userWithoutRole=['Ana'], userWithRole={}]
+Element: [type=bpmn:StartEvent, id_bpmn='Ini', name='Inicio', subTask='Tarea']
+Element: [type=bpmn:Task, id_bpmn='Tarea', name='Una tarea', userTask='Ana', prioridad=5, numberOfExecutions=1, minimumTime=10, maximumTime=20, subTask='Fin']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin', name='Fin', subTask='']
+Element: [type=bpmn:SequenceFlow, id_bpmn='f1', name='', superElement='Ini', subElement='Tarea']
+Element: [type=bpmn:SequenceFlow, id_bpmn='f2', name='', superElement='Tarea', subElement='Fin']

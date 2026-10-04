@@ -1,0 +1,1 @@
+Pool_Externo (bpmn:Participant): el pool no tiene un proceso que simular y se ignora.

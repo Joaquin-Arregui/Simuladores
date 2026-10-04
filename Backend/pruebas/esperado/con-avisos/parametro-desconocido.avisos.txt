@@ -1,0 +1,1 @@
+Tarea (bpmn:Task): se ignoran parámetros desconocidos: prioridad.
