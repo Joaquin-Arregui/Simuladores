@@ -1,6 +1,7 @@
 """The executable BPMN subset and preflight checks for simulation inputs."""
 
-from collections import defaultdict
+from collections import Counter, defaultdict, deque
+import itertools
 import math
 import re
 import xml.etree.ElementTree as ET
@@ -23,6 +24,14 @@ SUPPORTED_TYPES = NODE_TYPES | FLOW_TYPES | {
 }
 SEND_TYPES = frozenset({"SendTask", "MessageIntermediateThrowEvent"})
 RECEIVE_TYPES = frozenset({"ReceiveTask", "MessageIntermediateCatchEvent", "MessageStartEvent"})
+# Cuanto trabajo se gasta, como mucho, en decidir si una union inclusiva
+# garantiza el lote de una evaluacion, contado en tokens tocados
+# (_juega_el_caso). Acota tiempo y memoria antes de que empiece el plazo de la
+# simulacion, que solo cubre la ejecucion.
+PASOS_MAXIMOS = 500_000
+# Lo que cuesta guardar un estado ademas de sus tokens: la entrada del
+# diccionario y la tupla vacia ocupan lo que unos ocho tokens.
+COSTE_DE_GUARDAR = 8
 METADATA_KEYS = frozenset({
     "lanes", "users", "generatedData", "requiredData", "defaultData", "dataInfo",
     "participants", "elementsContainer", "startsParticipant", "gatewayConnections",
@@ -274,6 +283,496 @@ def resolve_participant_instances(elements, root):
             for p in participants}
 
 
+def _pesos_de_las_ramas(flows):
+    """El peso de cada flujo de salida, calculado como gateways.getPercentOfBranches."""
+    asignados = [flow.percentageOfBranches / 100 for flow in flows if flow.percentageOfBranches is not None]
+    sin_porcentaje = [flow for flow in flows if flow.percentageOfBranches is None]
+    reparto = max(1 - sum(asignados), 0) / len(sin_porcentaje) if sin_porcentaje else 0
+    return [flow.percentageOfBranches / 100 if flow.percentageOfBranches is not None else reparto
+            for flow in flows]
+
+
+def _reparto_de_salidas(element, flows):
+    """Que flujos de salida toma el motor siempre y cuales solo a veces.
+
+    Como las plantillas de gateways.py: la exclusiva elige uno de los que
+    tienen peso positivo; la inclusiva sortea cada uno con su probabilidad y,
+    si no sale ninguno, elige uno por peso, asi que toma cualquier grupo no
+    vacio de los que tienen peso, siempre con los del 100 % dentro. La paralela
+    y cualquier otro nodo los toman todos. Es lineal en el numero de flujos: las
+    combinaciones no se enumeran aqui.
+    """
+    ids = [flow.id_bpmn for flow in flows]
+    kind = _kind(element)
+    if kind not in {"ExclusiveGateway", "InclusiveGateway"}:
+        return tuple(ids), ()
+    pesos = _pesos_de_las_ramas(flows)
+    con_peso = [flujo for flujo, peso in zip(ids, pesos) if peso > 0]
+    if kind == "ExclusiveGateway":
+        return (), tuple(con_peso)
+    siempre = tuple(flujo for flujo, peso in zip(ids, pesos) if peso >= 1)
+    return siempre, tuple(flujo for flujo in con_peso if flujo not in siempre)
+
+
+def _cuantas_salidas(element, flows):
+    """Cuantas combinaciones de salida tiene un nodo, sin enumerarlas."""
+    siempre, a_veces = _reparto_de_salidas(element, flows)
+    kind = _kind(element)
+    if kind == "ExclusiveGateway":
+        return len(a_veces)
+    if kind == "InclusiveGateway":
+        return 2 ** len(a_veces) - (0 if siempre else 1)
+    return 1
+
+
+def _salidas_posibles(element, flows):
+    """Cada combinacion de flujos que el motor puede tomar de una vez, una a una.
+
+    Es un generador: en una inclusiva ancha hay 2^n combinaciones, y quien lo
+    recorre tiene que ir descontandolas de un presupuesto (_juega_el_caso).
+    """
+    siempre, a_veces = _reparto_de_salidas(element, flows)
+    kind = _kind(element)
+    if kind == "ExclusiveGateway":
+        for flujo in a_veces:
+            yield (flujo,)
+    elif kind == "InclusiveGateway":
+        for cuantos in range(len(a_veces) + 1):
+            for extra in itertools.combinations(a_veces, cuantos):
+                if siempre or extra:
+                    yield siempre + extra
+    else:
+        # Todos sus flujos; en un evento de fin, ninguno: el token se consume.
+        yield siempre
+
+
+def _trae_lote(element):
+    return _kind(element) == "ReceiveTask" and element.multiInstanceType is not None
+
+
+def _llegadas_sin_lote(nodes, adjacency, reverse):
+    """Los nodos a los que un token puede llegar sin haber pasado por una
+    recepcion multiinstancia, cada uno con el nodo desde el que llega (D8).
+
+    Se parte de los eventos de inicio, que no traen lote, y se avanza por los
+    flujos de secuencia que el motor puede tomar. Una recepcion multiinstancia
+    corta el avance: lo que sale de ella lleva su lote. Una union paralela
+    espera un token de cada entrada, asi que solo llega sin lote si ninguna de
+    sus entradas lo trae; con que una pase por la recepcion, el lote esta
+    garantizado. Cualquier otro nodo se activa con cada token que le llega -una
+    union exclusiva, un nodo con varias entradas sin compuerta- y basta una
+    entrada sin lote para que alguna activacion no lo tenga.
+
+    La union inclusiva se cuenta aqui como la exclusiva, que es lo prudente: a
+    que espera depende de que tokens estan vivos cuando le llega uno, y eso no
+    se ve recorriendo el grafo. Si el veredicto depende de ella, lo decide
+    _juega_el_caso.
+
+    Es un punto fijo minimo, y por eso los ciclos no confunden: un nodo de un
+    bucle solo queda sin lote si se llega a el desde un inicio sin pasar por la
+    recepcion, no por el mero hecho de estar en un ciclo. Recorre cada flujo una
+    vez: no depende de cuantas combinaciones de salida tenga una compuerta.
+    """
+    def espera_a_todas(nodo):
+        return _kind(nodes[nodo]) == "ParallelGateway" and len(reverse.get(nodo, ())) > 1
+
+    desde = {nodo: None for nodo, elemento in nodes.items() if _kind(elemento) in START_TYPES}
+    pendientes = deque(desde)
+    while pendientes:
+        nodo = pendientes.popleft()
+        for siguiente in adjacency.get(nodo, ()):
+            if siguiente in desde or _trae_lote(nodes[siguiente]):
+                continue
+            if espera_a_todas(siguiente) and not all(previo in desde for previo in reverse[siguiente]):
+                continue
+            desde[siguiente] = nodo
+            pendientes.append(siguiente)
+    return desde
+
+
+class _SinPresupuesto(Exception):
+    """La partida de _juega_el_caso ha gastado PASOS_MAXIMOS."""
+
+
+def _juega_el_caso(componente, nodes, outgoing, flujos, todas, entradas, evaluaciones):
+    """Juega con los tokens de un caso todas las intercalaciones posibles, con
+    las mismas reglas que el motor, y dice que evaluaciones se activan sin lote.
+
+    Hace falta para la union inclusiva. Dispara cuando ningun token vivo del
+    caso puede llegar a una entrada vacia sin poder llegar tambien a una ocupada
+    (runtime._join_ready, tabla 13.3 de BPMN 2.0.2): despues de una bifurcacion
+    paralela espera a la rama de la recepcion, porque su token sigue vivo, y
+    despues de una inclusiva que no la abrio, no. Eso depende de que tokens hay
+    a la vez, asi que se recorren los estados de un caso: que tokens hay en cada
+    nodo y en cada entrada de union, y si traen lote.
+
+    Cada paso termina un token cualquiera -las duraciones y las esperas de
+    mensajes pueden ordenarlos de cualquier manera-, lo encamina por cada
+    combinacion de salidas que el motor puede elegir y dispara las uniones
+    listas hasta que no quede ninguna, en cualquier orden, como _flush_joins.
+    Un token que sale de una recepcion multiinstancia lleva lote, y una union
+    lo lleva si lo trae alguno de los que junta.
+
+    Una cadena de tareas o eventos con una sola entrada y una sola salida se
+    recorre de un paso: un token en cualquiera de sus nodos llega a los mismos
+    sitios, asi que ninguna union lo ve distinto, y contar cada posicion solo
+    multiplicaria los estados. No entran en una cadena las recepciones
+    multiinstancia, que cambian el lote, ni las evaluaciones, cuya activacion es
+    lo que se busca.
+
+    Todo lo que crece con el modelo se paga de un presupuesto, PASOS_MAXIMOS,
+    en tokens tocados: cada combinacion de salidas que se prueba y cada manera
+    de disparar una union cuestan tantos pasos como tokens tiene el estado del
+    que salen, porque los copian, y guardar un estado nuevo cuesta tantos como
+    tokens guarda mas COSTE_DE_GUARDAR, lo que ocupa guardarlo aunque tenga un
+    solo token. Asi el presupuesto acota a la vez el tiempo y la memoria, sean
+    los estados grandes o pequeños. Las combinaciones se generan de una
+    en una, y antes de empezar se cuentan sin enumerarlas: si una sola compuerta
+    ya tiene mas que el presupuesto, no se juega.
+
+    Devuelve, por evaluacion, el camino de una activacion sin lote, y si se ha
+    terminado la partida; si se acaba el presupuesto, lo que no se haya visto
+    queda sin comprobar.
+    """
+    if any(_cuantas_salidas(nodes[nodo], outgoing[nodo]) > PASOS_MAXIMOS for nodo in componente):
+        return {}, False
+    uniones = {nodo: _kind(nodes[nodo]) for nodo in componente
+               if _kind(nodes[nodo]) in {"ParallelGateway", "InclusiveGateway"} and len(entradas[nodo]) > 1}
+
+    def encadenable(nodo):
+        kind = _kind(nodes[nodo])
+        return (kind not in GATEWAY_TYPES | START_TYPES | {"EndEvent"}
+                and len(entradas[nodo]) == 1 and len(todas[nodo]) == 1
+                and not _trae_lote(nodes[nodo]) and nodo not in evaluaciones)
+
+    # Los nodos que recorre un token de un paso, desde cada nodo en el que
+    # puede entrar; el ultimo es el que lo encamina.
+    cadena = {}
+    for nodo in componente:
+        tramo = [nodo]
+        while encadenable(tramo[-1]):
+            siguiente = flujos[todas[tramo[-1]][0]][1]
+            if not encadenable(siguiente) or siguiente in tramo:
+                break
+            tramo.append(siguiente)
+        cadena[nodo] = tuple(tramo)
+    alcance = {}
+    pasos = 0
+    # Cada token distinto -un nodo activo, o una entrada de union, con o sin
+    # lote- tiene un numero, y un estado es una tupla de numeros: ocupa poco y
+    # se compara rapido, que es lo que pagan los estados guardados.
+    ids, fichas = {}, []
+
+    def ficha(*token):
+        numero = ids.get(token)
+        if numero is None:
+            numero = ids[token] = len(fichas)
+            fichas.append(token)
+        return numero
+
+    def cuantos(cuenta, *token):
+        numero = ids.get(token)
+        return cuenta.get(numero, 0) if numero is not None else 0
+
+    def gasta(cuenta_pasos, cantidad):
+        nonlocal pasos
+        if cuenta_pasos:
+            pasos += cantidad
+            if pasos > PASOS_MAXIMOS:
+                raise _SinPresupuesto
+
+    def alcanza(vivo, flujo, union):
+        # Lo mismo que runtime._reachable: llegar al origen de la entrada sin
+        # pasar antes por esta union.
+        clave = (vivo, flujo, union)
+        if clave not in alcance:
+            origen, encontrado = flujos[flujo][0], False
+            vistos, pendientes = {union}, [vivo]
+            while pendientes:
+                actual = pendientes.pop()
+                if actual in vistos:
+                    continue
+                if actual == origen:
+                    encontrado = True
+                    break
+                vistos.add(actual)
+                pendientes.extend(flujos[salida][1] for salida in todas[actual])
+            alcance[clave] = encontrado
+        return alcance[clave]
+
+    def lista(union, cuenta):
+        ocupadas = [flujo for flujo in entradas[union]
+                    if cuantos(cuenta, "espera", union, flujo, False) or cuantos(cuenta, "espera", union, flujo, True)]
+        if uniones[union] == "ParallelGateway":
+            return len(ocupadas) == len(entradas[union])
+        if not ocupadas:
+            return False
+        vacias = [flujo for flujo in entradas[union] if flujo not in ocupadas]
+        vivos = set()
+        for numero, veces in cuenta.items():
+            token = fichas[numero]
+            if veces > 0 and (token[0] == "activo" or token[1] != union):
+                vivos.add(token[1])
+        return not any(any(alcanza(vivo, flujo, union) for flujo in vacias)
+                       and not any(alcanza(vivo, flujo, union) for flujo in ocupadas)
+                       for vivo in sorted(vivos))
+
+    def dispara_listas(cuenta, eventos, cuenta_pasos):
+        listas = [union for union in sorted(uniones) if lista(union, cuenta)]
+        if not listas:
+            yield cuenta, eventos
+            return
+        for union in listas:
+            opciones = [[(flujo, lote) for lote in (False, True) if cuantos(cuenta, "espera", union, flujo, lote)]
+                        for flujo in entradas[union]]
+            for consumo in itertools.product(*[opcion for opcion in opciones if opcion]):
+                gasta(cuenta_pasos, len(cuenta))
+                nueva = Counter(cuenta)
+                for flujo, lote in consumo:
+                    nueva[ids[("espera", union, flujo, lote)]] -= 1
+                lote = any(lote for _, lote in consumo)
+                nueva[ficha("activo", union, lote)] += 1
+                yield from dispara_listas(nueva, eventos + (("dispara", union, consumo, lote),), cuenta_pasos)
+
+    def congela(cuenta):
+        return tuple(numero for par in sorted(cuenta.items()) if par[1] > 0 for numero in par)
+
+    def sucesores(estado, cuenta_pasos=True):
+        """Cada estado al que se pasa terminando un token, con lo que ha pasado."""
+        cuenta = Counter(dict(zip(estado[::2], estado[1::2])))
+        for numero in estado[::2]:
+            tipo, nodo, *resto = fichas[numero]
+            if tipo != "activo":
+                continue
+            lote_entrada = resto[0]
+            lote = lote_entrada or _trae_lote(nodes[nodo])
+            ultimo = cadena[nodo][-1]
+            for combinacion in _salidas_posibles(nodes[ultimo], outgoing[ultimo]):
+                gasta(cuenta_pasos, len(cuenta))
+                nueva = Counter(cuenta)
+                nueva[numero] -= 1
+                producidos = []
+                for flujo in combinacion:
+                    destino = flujos[flujo][1]
+                    token = (("espera", destino, flujo, lote) if destino in uniones
+                             else ("activo", destino, lote))
+                    nueva[ficha(*token)] += 1
+                    producidos.append(token)
+                paso = ("completa", cadena[nodo], lote_entrada, tuple(producidos))
+                for final, eventos in dispara_listas(nueva, (paso,), cuenta_pasos):
+                    yield congela(final), eventos
+
+    def camino_del_token(estado, ultimos, evaluacion):
+        """El camino que siguio el token sin lote que activo la evaluacion.
+
+        Los estados guardan solo de donde vienen; lo que paso en cada paso se
+        vuelve a jugar aqui, sin gastar presupuesto, solo para los estados del
+        camino. Luego se rehace hacia atras: quien produjo el token que llego a
+        la evaluacion, quien produjo el que ese nodo termino, y asi hasta un
+        inicio. Los tokens no tienen nombre, y se toma el ultimo que encaja;
+        cualquiera que encaje es un camino por el que se llega sin lote.
+        """
+        cadena_de_estados = [estado]
+        while padre[cadena_de_estados[-1]] is not None:
+            cadena_de_estados.append(padre[cadena_de_estados[-1]])
+        cadena_de_estados.reverse()
+        eventos = []
+        for anterior, siguiente in zip(cadena_de_estados, cadena_de_estados[1:]):
+            eventos.extend(next(pasado for alcanzado, pasado in sucesores(anterior, False)
+                                if alcanzado == siguiente))
+        eventos.extend(ultimos)
+        recorrido, buscado, indice = [evaluacion], ("activo", evaluacion, False), len(eventos)
+        while True:
+            indice -= 1
+            while indice >= 0:
+                evento = eventos[indice]
+                if evento[0] == "completa" and buscado in evento[3]:
+                    break
+                if evento[0] == "dispara" and buscado == ("activo", evento[1], evento[3]):
+                    break
+                indice -= 1
+            if indice < 0:
+                break
+            if evento[0] == "completa":
+                recorrido.extend(reversed(evento[1]))
+                buscado = ("activo", evento[1][0], evento[2])
+            else:
+                flujo, lote = next(par for par in evento[2] if not par[1])
+                buscado = ("espera", evento[1], flujo, lote)
+        return recorrido[::-1]
+
+    def caminos():
+        return {evaluacion: camino_del_token(estado, ultimos, evaluacion)
+                for evaluacion, (estado, ultimos) in sin_lote.items()}
+
+    inicio = congela(Counter({ficha("activo", nodo, False): 1 for nodo in sorted(componente)
+                              if _kind(nodes[nodo]) in START_TYPES}))
+    padre, cola, sin_lote = {inicio: None}, deque([inicio]), {}
+    try:
+        while cola and len(sin_lote) < len(evaluaciones):
+            estado = cola.popleft()
+            for siguiente, eventos in sucesores(estado):
+                for token in eventos[0][3]:
+                    if token[0] == "activo" and token[1] in evaluaciones and not token[2]:
+                        sin_lote.setdefault(token[1], (estado, eventos[:1]))
+                if siguiente not in padre:
+                    gasta(True, COSTE_DE_GUARDAR + len(siguiente) // 2)
+                    padre[siguiente] = estado
+                    cola.append(siguiente)
+    except _SinPresupuesto:
+        return caminos(), False
+    return caminos(), True
+
+
+class _SinComprobar(tuple):
+    """Las uniones inclusivas que no se han podido descartar."""
+
+
+def _caminos_sin_lote(nodes, outgoing, incoming, reverse):
+    """Para cada evaluacion, el camino de una activacion que llega sin lote.
+
+    Primero el recorrido del grafo, que es rapido y no se equivoca hacia el lado
+    bueno: si dice que el lote esta garantizado, lo esta. Si dice que no y en el
+    proceso hay una union inclusiva, el recorrido puede estar siendo prudente de
+    mas, y decide _juega_el_caso. Devuelve una funcion: None si toda activacion
+    trae lote, el camino si alguna no, o _SinComprobar con las uniones si la
+    partida no cabe en el presupuesto.
+
+    No se prepara nada hasta la primera pregunta: un modelo sin evaluaciones
+    multiinstancia no paga ni el recorrido.
+    """
+    preparado, partidas = {}, {}
+
+    def prepara():
+        flujos = {flow.id_bpmn: (flow.superElement, flow.subElement)
+                  for flows in outgoing.values() for flow in flows}
+        posibles = {}
+        for nodo in nodes:
+            siempre, a_veces = _reparto_de_salidas(nodes[nodo], outgoing[nodo])
+            tomados = set(siempre) | set(a_veces)
+            posibles[nodo] = [flow.subElement for flow in outgoing[nodo] if flow.id_bpmn in tomados]
+        todas = {nodo: [flow.id_bpmn for flow in outgoing[nodo]] for nodo in nodes}
+        entradas = {nodo: [flow.id_bpmn for flow in incoming[nodo]] for nodo in nodes}
+        # Los nodos de un mismo proceso: solo sus tokens pueden hacer esperar a
+        # una union, porque el motor lleva las uniones por caso.
+        componente_de = {}
+        for nodo in nodes:
+            if nodo in componente_de:
+                continue
+            componente, pendientes = set(), [nodo]
+            while pendientes:
+                actual = pendientes.pop()
+                if actual in componente:
+                    continue
+                componente.add(actual)
+                pendientes.extend(flujos[flujo][1] for flujo in todas[actual])
+                pendientes.extend(flujos[flujo][0] for flujo in entradas[actual])
+            componente = frozenset(componente)
+            for miembro in componente:
+                componente_de[miembro] = componente
+        preparado.update(desde=_llegadas_sin_lote(nodes, posibles, reverse), flujos=flujos,
+                         todas=todas, entradas=entradas, componente_de=componente_de)
+
+    def camino(evaluacion):
+        if not preparado:
+            prepara()
+        desde, entradas = preparado["desde"], preparado["entradas"]
+        if evaluacion not in desde:
+            return None
+        componente = preparado["componente_de"][evaluacion]
+        inclusivas = tuple(sorted(nodo for nodo in componente
+                                  if _kind(nodes[nodo]) == "InclusiveGateway" and len(entradas[nodo]) > 1))
+        if not inclusivas:
+            recorrido, nodo = [], evaluacion
+            while nodo is not None:
+                recorrido.append(nodo)
+                nodo = desde[nodo]
+            return recorrido[::-1]
+        if componente not in partidas:
+            evaluaciones = {nodo for nodo in componente if nodo in desde
+                            and _kind(nodes[nodo]) in TASK_TYPES - {"SendTask", "ReceiveTask"}
+                            and nodes[nodo].multiInstanceType is not None}
+            partidas[componente] = _juega_el_caso(componente, nodes, outgoing, preparado["flujos"],
+                                                  preparado["todas"], entradas, evaluaciones)
+        caminos, completo = partidas[componente]
+        if evaluacion in caminos:
+            return caminos[evaluacion]
+        return None if completo else _SinComprobar(inclusivas)
+
+    return camino
+
+
+def _origen_de_la_cardinalidad(element, nodes, model, reverse, caminos_sin_lote):
+    """De donde sale cuantas ejecuciones lanza una tarea multiinstancia (D8).
+
+    Enviar a N, recoger de N y evaluar N. En un envio, N son los casos del pool
+    al que escribe; en una recepcion, los mensajes que llegan; y en cualquier
+    otra tarea -una evaluacion- los que llegaron a la recepcion multiinstancia
+    que tiene antes en su camino. Hoy el motor aun usa numberOfExecutions; la
+    3.2 calcula N de estas fuentes, y una marca que no tenga ninguna no tendria
+    cardinalidad: se rechaza ya, en vez de inventarse un numero.
+
+    La recepcion de una evaluacion se busca en TODOS los caminos hacia atras,
+    hasta la primera recepcion multiinstancia de cada uno: si aparecen dos, el
+    lote es ambiguo, igual que en resolve_reply_contexts. Y no basta con que
+    aparezca en alguno: cada activacion de la evaluacion tiene que traer el
+    lote, y eso lo dice _caminos_sin_lote.
+    """
+    kind = _kind(element)
+    if kind == "SendTask":
+        destino = model.get(element.messageDestiny)
+        if destino is not None and _kind(destino) == "Participant":
+            _fail(element, f"es multiinstancia y escribe al pool {destino.id_bpmn}, que no tiene casos: "
+                           "no hay de dónde sacar cuántas ejecuciones lanzar.")
+        return
+    if kind == "ReceiveTask":
+        return
+    candidatos, vistos, frontera = [], {element.id_bpmn}, [element.id_bpmn]
+    while frontera:
+        siguiente = []
+        for nodo in frontera:
+            for previo in reverse[nodo]:
+                if previo in vistos:
+                    continue
+                vistos.add(previo)
+                anterior = nodes[previo]
+                if _kind(anterior) == "ReceiveTask" and anterior.multiInstanceType is not None:
+                    candidatos.append(previo)
+                else:
+                    siguiente.append(previo)
+        frontera = siguiente
+    if not candidatos:
+        _fail(element, "es multiinstancia y no tiene de dónde sacar cuántas ejecuciones lanzar: "
+                       "tiene que enviar o recibir un mensaje, o tener antes en su camino una "
+                       "recepción multiinstancia cuyo lote evaluar.")
+    if len(candidatos) > 1:
+        _fail(element, "es multiinstancia y le llegan los lotes de varias recepciones (%s); no se "
+                       "sabe cuántas ejecuciones lanzar." % ", ".join(sorted(candidatos)))
+    camino = caminos_sin_lote(element.id_bpmn)
+    if isinstance(camino, _SinComprobar):
+        _fail(element, "es multiinstancia y no se ha podido comprobar que todas sus activaciones "
+                       "traigan el lote de %s: depende de a qué esperan las uniones inclusivas %s, "
+                       "y comprobarlo en un caso de su proceso pasa de %d pasos. Si tienen que "
+                       "esperar a la recepción, usa una unión paralela."
+                       % (candidatos[0], ", ".join(camino), PASOS_MAXIMOS))
+    if camino is not None:
+        recepcion = candidatos[0]
+        # Si el camino cruza una union inclusiva, decirlo: quien dibuja suele
+        # pensar que esa union espera a la recepcion, y es justo lo que falla.
+        # El porque cambia de un modelo a otro -la rama no se abrio, se fue por
+        # otro lado, o la union no la cuenta- y lo cuentan los modelos del banco.
+        inclusivas = [nodo for nodo in camino
+                      if _kind(nodes[nodo]) == "InclusiveGateway" and len(reverse[nodo]) > 1]
+        porque = ("" if not inclusivas else
+                  " La unión inclusiva %s puede disparar sin la rama de %s."
+                  % (", ".join(inclusivas), recepcion))
+        _fail(element, "es multiinstancia y se puede llegar a ella sin lote: el camino %s no pasa "
+                       "por la recepción multiinstancia %s, y esa activación no tiene de dónde "
+                       "sacar cuántas ejecuciones lanzar.%s Todos los caminos tienen que pasar por "
+                       "la recepción, o esperarla en una unión paralela."
+                       % (" -> ".join(camino), recepcion, porque))
+
+
 def validate_simulation(elements, process, starts, message_starts, warnings=None):
     """Reject invalid rules before generating or executing Python code."""
     validate_references(elements, warnings)
@@ -434,6 +933,7 @@ def validate_simulation(elements, process, starts, message_starts, warnings=None
                 _fail(element, f"el mensaje no sale del pool {emisor}; dentro de un participante se "
                                "usan flujos de secuencia, no mensajes.")
 
+    caminos_sin_lote = _caminos_sin_lote(nodes, outgoing, incoming, reverse)
     for element in nodes.values():
         if _kind(element) not in TASK_TYPES:
             continue
@@ -457,6 +957,8 @@ def validate_simulation(elements, process, starts, message_starts, warnings=None
                 _fail(element, "un bucle por tiempo necesita minimumTime de al menos 1 para avanzar el reloj.")
             if element.multiInstanceType is not None:
                 _fail(element, "configura un bucle o multiinstancia, pero no ambos a la vez.")
+        if element.multiInstanceType is not None:
+            _origen_de_la_cardinalidad(element, nodes, model, reverse, caminos_sin_lote)
         assignment = element.userTask
         base = task_base_users(elements, element.id_bpmn, is_process)
         if is_process:
@@ -702,10 +1204,9 @@ def validate_diagram_correspondence(elements, root, process):
             if dibujado != simulado:
                 raise ValueError(f"{element_id} (bpmn:{kind}): en el diagrama va de {dibujado[0]} "
                                  f"a {dibujado[1]} y en las reglas de {simulado[0]} a {simulado[1]}.")
-        # Los dos marcadores estandar que cambian la simulacion. El del pool
-        # decide cuantos casos hay; el de la tarea, si sus ejecuciones van en
-        # paralelo o en serie. Si el dibujo y las reglas no coinciden, se
-        # simularia otra cardinalidad que la dibujada.
+        # El marcador del pool decide cuantos casos hay: si el dibujo y las
+        # reglas no coinciden, se simularia otra cardinalidad que la dibujada.
+        # El de la tarea ya no se cruza aqui: lo lee aplica_marcas_del_diagrama.
         if kind == "Participant":
             dibujado = element.find(prefix + "participantMultiplicity") is not None
             simulado = bool(getattr(regla, "multiplicity", False))
@@ -714,15 +1215,6 @@ def validate_diagram_correspondence(elements, root, process):
                                  + ("el diagrama tiene el marcador de multiplicidad y las reglas no."
                                     if dibujado else
                                     "las reglas tienen el marcador de multiplicidad y el diagrama no."))
-        if kind in TASK_TYPES:
-            marcador = element.find(prefix + "multiInstanceLoopCharacteristics")
-            dibujado = None if marcador is None else marcador.get("isSequential") in {"true", "1"}
-            simulado = getattr(regla, "multiInstanceType", None)
-            if dibujado != simulado:
-                estado = {None: "no hay multiinstancia", False: "la multiinstancia es paralela",
-                          True: "la multiinstancia es secuencial"}
-                raise ValueError(f"{element_id} ({regla.bpmn_type}): en el diagrama {estado[dibujado]} "
-                                 f"y en las reglas {estado[simulado]}.")
     for element_id, regla in en_reglas.items():
         if element_id not in en_xml:
             raise ValueError(f"{element_id} ({regla.bpmn_type}): está en las reglas pero no en el diagrama.")

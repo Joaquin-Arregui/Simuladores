@@ -21,7 +21,7 @@ from simulator.models.intermediateEventModels import (
     BPMNIntermediateThrowEvent, BPMNMessageIntermediateCatchEvent,
     BPMNMessageIntermediateThrowEvent, BPMNTimerIntermediateCatchEvent,
 )
-from simulator.validation import SUPPORTED_TYPES, add_warning, validate_references
+from simulator.validation import BPMN_NAMESPACE, SUPPORTED_TYPES, add_warning, validate_references
 
 
 TASK_CLASSES = {
@@ -285,3 +285,35 @@ def parse_bpmn_elements(file_content: str, warnings=None):
         "startsParticipant": start_participants, "gatewayConnections": joins,
     })
     return elements, process, starts, message_starts
+
+
+def aplica_marcas_del_diagrama(elements, diagram_root):
+    """La marca de multiinstancia de cada tarea, leida del diagrama (3.1).
+
+    El dibujo manda: una tarea marcada en el lienzo con la marca estandar
+    -multiInstanceLoopCharacteristics- llega al motor como multiinstancia
+    aunque las reglas no digan nada, paralela o secuencial segun su isSequential,
+    y sin escribir nada a mano. Si las reglas SI lo dicen y no coincide con el
+    dibujo, reglas y diagrama cuentan modelos distintos: se rechaza nombrando la
+    tarea y los dos estados, en vez de quedarse con uno de los dos.
+
+    Del dibujo solo sale la marca, no cuantas ejecuciones lanzar: loopCardinality
+    y loopDataInputRef los rechaza validate_diagram_xml, y de donde sale la
+    cardinalidad lo comprueba validate_simulation.
+    """
+    prefix = "{" + BPMN_NAMESPACE + "}"
+    estado = {None: "no hay multiinstancia", False: "la multiinstancia es paralela",
+              True: "la multiinstancia es secuencial"}
+    for nodo in diagram_root.iter():
+        if not isinstance(nodo.tag, str) or not nodo.tag.startswith(prefix):
+            continue
+        tarea = elements.get(nodo.get("id"))
+        if not hasattr(tarea, "bpmn_type") or tarea.bpmn_type.removeprefix("bpmn:") not in TASK_CLASSES:
+            continue
+        marca = nodo.find(prefix + "multiInstanceLoopCharacteristics")
+        dibujado = None if marca is None else marca.get("isSequential") in {"true", "1"}
+        if tarea.multiInstanceType is None:
+            tarea.multiInstanceType = dibujado
+        elif tarea.multiInstanceType != dibujado:
+            raise ValueError(f"{tarea.id_bpmn} ({tarea.bpmn_type}): en el diagrama {estado[dibujado]} "
+                             f"y en las reglas {estado[tarea.multiInstanceType]}.")

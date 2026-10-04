@@ -13,6 +13,12 @@
 //    que alguien abre un diagrama y lo vuelve a guardar, y es donde se ve que
 //    una propiedad esta mal escrita: una lista de usuarios escrita como
 //    atributo se abre como una cadena y se guarda letra a letra.
+// 4. Que abre en otra herramienta (3.1): con bpmn-moddle SIN los descriptores
+//    del Modeler, que es como lo ve cualquier otra herramienta, tienen que
+//    seguir ahi todos los elementos BPMN y todas las marcas -multiinstancia y
+//    multiplicidad-, que son las que el motor lee del dibujo. Lo unico que se
+//    tolera que no entienda son los elementos propios del Modeler, y se cuentan:
+//    que otra herramienta los abra sin avisos es la 5.2.
 //
 // Es independiente de validation.py a proposito: si el generador y la
 // validacion del Backend compartieran un malentendido sobre el BPMN, aqui
@@ -35,6 +41,8 @@ const moddle = new BpmnModdle({
   participantWithoutLane: descriptor('participantWithoutLane')
 });
 
+const otraHerramienta = new BpmnModdle();
+const PREFIJOS_DEL_MODELER = ['user', 'participantWithoutLane', 'lane', 'model', 'collab', 'sequenceFlow'];
 const DIBUJABLES = new Set(['bpmn:Participant', 'bpmn:Lane', 'bpmn:SequenceFlow', 'bpmn:MessageFlow']);
 
 function recorre(e, visita, vistos = new Set()) {
@@ -104,7 +112,7 @@ let fallos = 0;
 for (const fichero of ficheros) {
   const xml = readFileSync(join(carpeta, fichero), 'utf8');
   const { rootElement, warnings } = await moddle.fromXML(xml);
-  const problemas = warnings.map(w => `bpmn-moddle: ${w.message}`);
+  const problemas = warnings.map(w => `bpmn-moddle: ${w.message.split('\n')[0]}`);
 
   const conForma = new Set();
   for (const diagrama of rootElement.diagrams || []) {
@@ -124,6 +132,25 @@ for (const fichero of ficheros) {
   const { rootElement: reabierto } = await moddle.fromXML(guardado);
   problemas.push(...cambiosAlGuardar(instantanea(rootElement), instantanea(reabierto)));
 
+  const ajeno = await otraHerramienta.fromXML(xml);
+  const propios = ajeno.warnings.filter(w => PREFIJOS_DEL_MODELER.some(p => w.message.includes(`<${p}:`)));
+  for (const w of ajeno.warnings.filter(w => !propios.includes(w))) {
+    problemas.push(`otra herramienta: ${w.message.split('\n')[0]}`);
+  }
+  const conModeler = instantanea(rootElement), sinModeler = instantanea(ajeno.rootElement);
+  let marcas = 0;
+  for (const [clave, { tipo, props }] of Object.entries(conModeler)) {
+    if (!tipo.startsWith('bpmn:')) continue;
+    const visto = sinModeler[clave];
+    const esMarca = tipo === 'bpmn:MultiInstanceLoopCharacteristics' || tipo === 'bpmn:ParticipantMultiplicity';
+    if (esMarca) marcas += 1;
+    if (!visto || visto.tipo !== tipo) {
+      problemas.push(`otra herramienta: no ve ${clave} (${tipo})`);
+    } else if (esMarca && JSON.stringify(visto.props.isSequential) !== JSON.stringify(props.isSequential)) {
+      problemas.push(`otra herramienta: lee ${clave} con otro isSequential`);
+    }
+  }
+
   if (problemas.length) {
     fallos += 1;
     console.log(`${fichero.padEnd(34)} PROBLEMAS`);
@@ -131,6 +158,7 @@ for (const fichero of ficheros) {
     if (problemas.length > 12) console.log(`         ... y ${problemas.length - 12} mas`);
   } else {
     console.log(`${fichero.padEnd(34)} ok      ${elementos} elementos con forma, igual tras abrir y guardar`);
+    console.log(`${''.padEnd(34)}         otra herramienta: ve las ${marcas} marcas; no entiende ${propios.length} elementos propios del Modeler (5.2)`);
   }
 }
 console.log(fallos ? `\n${fallos} diagrama(s) con problemas.` : `\n${ficheros.length} diagramas validos para bpmn-moddle.`);

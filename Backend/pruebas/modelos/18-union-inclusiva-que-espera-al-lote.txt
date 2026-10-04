@@ -1,0 +1,48 @@
+# Modelo de referencia 18 - la union del 17, inclusiva (D8).
+# Es el modelo 17 cambiando solo Une_O de paralela a inclusiva. La bifurcacion
+# sigue siendo paralela y abre siempre las dos ramas, asi que mientras Recoger
+# espera sus mensajes su token esta vivo y la union inclusiva lo espera, igual
+# que la paralela: toda evaluacion tiene su lote. Recorrer el grafo no basta
+# para verlo, porque a que espera una union inclusiva depende de que tokens
+# hay a la vez; la validacion lo decide jugando con los tokens del caso.
+# Los modelos con error evaluacion-sin-lote-por-union-inclusiva y
+# evaluacion-sin-lote-si-la-recepcion-se-desvia son las dos maneras de que esa
+# misma union dispare sin la rama de Recoger.
+Element: [type=bpmn:Collaboration, id_bpmn='Colaboracion', name='Union inclusiva que espera al lote', instances=1]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Orquestador', name='Orquestador', frequency=0, userWithoutRole=['Ana'], instances=1, participantMultiplicity='true', orchestrationRole='orchestrator', containedElements=['Ini_O', 'Convocar', 'Bifurca_O', 'Recoger', 'Preparar', 'Une_O', 'Vuelve_O', 'Evaluar', 'Revisa_O', 'Responder', 'Fin_O', 'o1', 'o2', 'o3', 'o4', 'o5', 'o6', 'o7', 'o8', 'o9', 'o10', 'o11', 'o12']]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Orquestado', name='Orquestado', frequency=15, userWithoutRole=['Beto'], instances=3, participantMultiplicity='true', orchestrationRole='orchestrated', infiniteResources='true', containedElements=['Ini_R', 'Esperar_Convocatoria', 'Solicitar', 'Esperar_Resultado', 'Fin_R', 'r1', 'r2', 'r3', 'r4']]
+Element: [type=bpmn:StartEvent, id_bpmn='Ini_O', name='Abre la convocatoria', subTask='Convocar']
+Element: [type=bpmn:SendTask, id_bpmn='Convocar', name='Publicar la convocatoria', userTask='Ana', numberOfExecutions=3, multiInstanceType='false', minimumTime=2, maximumTime=2, subTask='Bifurca_O']
+Element: [type=bpmn:ParallelGateway, id_bpmn='Bifurca_O', name='Recoger y preparar', subTask='Recoger,Preparar']
+Element: [type=bpmn:ReceiveTask, id_bpmn='Recoger', name='Recoger una solicitud', userTask='Ana', numberOfExecutions=3, multiInstanceType='false', minimumTime=1, maximumTime=1, subTask='Une_O']
+Element: [type=bpmn:Task, id_bpmn='Preparar', name='Preparar el tribunal', userTask='Ana', numberOfExecutions=1, minimumTime=8, maximumTime=8, subTask='Une_O']
+Element: [type=bpmn:InclusiveGateway, id_bpmn='Une_O', name='Esperar a las dos', subTask='Vuelve_O']
+Element: [type=bpmn:ExclusiveGateway, id_bpmn='Vuelve_O', name='Otra ronda', subTask='Evaluar']
+Element: [type=bpmn:Task, id_bpmn='Evaluar', name='Evaluar una solicitud', userTask='Ana', numberOfExecutions=3, multiInstanceType='false', minimumTime=10, maximumTime=20, subTask='Revisa_O']
+Element: [type=bpmn:ExclusiveGateway, id_bpmn='Revisa_O', name='Hay que repetir la evaluacion?', subTask='Vuelve_O,Responder']
+Element: [type=bpmn:SendTask, id_bpmn='Responder', name='Responder a una solicitud', userTask='Ana', numberOfExecutions=3, multiInstanceType='false', minimumTime=1, maximumTime=1, subTask='Fin_O']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_O', name='Cierra la convocatoria', subTask='']
+Element: [type=bpmn:StartEvent, id_bpmn='Ini_R', name='Entra el solicitante', subTask='Esperar_Convocatoria']
+Element: [type=bpmn:ReceiveTask, id_bpmn='Esperar_Convocatoria', name='Esperar la convocatoria', userTask='Beto', numberOfExecutions=1, minimumTime=2, maximumTime=2, subTask='Solicitar']
+Element: [type=bpmn:SendTask, id_bpmn='Solicitar', name='Enviar la solicitud', userTask='Beto', numberOfExecutions=1, minimumTime=4, maximumTime=4, subTask='Esperar_Resultado']
+Element: [type=bpmn:ReceiveTask, id_bpmn='Esperar_Resultado', name='Esperar el resultado', userTask='Beto', numberOfExecutions=1, minimumTime=2, maximumTime=2, subTask='Fin_R']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_R', name='Fin del solicitante', subTask='']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o1', name='', superElement='Ini_O', subElement='Convocar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o2', name='', superElement='Convocar', subElement='Bifurca_O']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o3', name='', superElement='Bifurca_O', subElement='Recoger']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o4', name='', superElement='Bifurca_O', subElement='Preparar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o5', name='', superElement='Recoger', subElement='Une_O']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o6', name='', superElement='Preparar', subElement='Une_O']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o7', name='', superElement='Une_O', subElement='Vuelve_O']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o8', name='', superElement='Vuelve_O', subElement='Evaluar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o9', name='', superElement='Evaluar', subElement='Revisa_O']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o10', name='Repetir', superElement='Revisa_O', subElement='Vuelve_O', percentageOfBranches=30]
+Element: [type=bpmn:SequenceFlow, id_bpmn='o11', name='Dar el resultado', superElement='Revisa_O', subElement='Responder', percentageOfBranches=70]
+Element: [type=bpmn:SequenceFlow, id_bpmn='o12', name='', superElement='Responder', subElement='Fin_O']
+Element: [type=bpmn:SequenceFlow, id_bpmn='r1', name='', superElement='Ini_R', subElement='Esperar_Convocatoria']
+Element: [type=bpmn:SequenceFlow, id_bpmn='r2', name='', superElement='Esperar_Convocatoria', subElement='Solicitar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='r3', name='', superElement='Solicitar', subElement='Esperar_Resultado']
+Element: [type=bpmn:SequenceFlow, id_bpmn='r4', name='', superElement='Esperar_Resultado', subElement='Fin_R']
+Element: [type=bpmn:MessageFlow, id_bpmn='Convocatoria', name='Convocatoria', superElement='Convocar', subElement='Esperar_Convocatoria']
+Element: [type=bpmn:MessageFlow, id_bpmn='Solicitud', name='Solicitud', superElement='Solicitar', subElement='Recoger']
+Element: [type=bpmn:MessageFlow, id_bpmn='Resultado', name='Resultado', superElement='Responder', subElement='Esperar_Resultado']

@@ -20,6 +20,7 @@ Hay tres categorias de modelo:
 """
 import os
 import sys
+import tracemalloc
 from pathlib import Path
 
 AQUI = Path(__file__).resolve().parent
@@ -44,6 +45,18 @@ ESPERADO_CON_ERROR = ESPERADO / "con-error"
 # coincida. No se incluye el 504 por tiempo porque depende del reloj real y no
 # seria reproducible.
 ERRORES_PREVISTOS = ("ValueError", "SimulationExecutionError")
+
+# Lo que un modelo puede hacer gastar al proceso principal: leer, validar,
+# generar el script y recoger el XES. La validacion corre antes del plazo de la
+# simulacion, asi que nada mas la frena si crece sin limite; una bifurcacion
+# inclusiva de 18 salidas llego a gastar 30 MiB solo en enumerar combinaciones,
+# y cada salida mas lo doblaba. Hoy el que mas gasta es el 14, con unos 7 MiB.
+# La ejecucion en si va en un proceso hijo y no cuenta aqui.
+MEMORIA_MAXIMA = 32 * 2**20
+
+
+class MemoriaExcesiva(Exception):
+    """Un modelo ha hecho gastar al proceso principal mas de MEMORIA_MAXIMA."""
 
 from simulator.main import processSimulation  # noqa: E402
 
@@ -103,7 +116,21 @@ def ruta_avisos(ruta):
 
 
 def ejecuta(ruta):
-    return processSimulation(ruta.read_text(encoding="utf-8"), seed=SEMILLA)
+    """Ejecuta un modelo midiendo lo que gasta el proceso principal.
+
+    Si pasa de MEMORIA_MAXIMA, falla con MemoriaExcesiva aunque el resultado
+    sea correcto, y tambien si el modelo tenia que fallar: no es un error
+    previsto, asi que el banco lo trata como un fallo del motor.
+    """
+    tracemalloc.start()
+    try:
+        return processSimulation(ruta.read_text(encoding="utf-8"), seed=SEMILLA)
+    finally:
+        pico = tracemalloc.get_traced_memory()[1]
+        tracemalloc.stop()
+        if pico > MEMORIA_MAXIMA:
+            raise MemoriaExcesiva("%s ha gastado %.1f MiB en el proceso principal; el banco admite %d MiB"
+                                  % (ruta.name, pico / 2**20, MEMORIA_MAXIMA // 2**20))
 
 
 def lee_avisos(ruta):

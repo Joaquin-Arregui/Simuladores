@@ -1,0 +1,33 @@
+# Bifurcacion paralela y union inclusiva, como en el modelo 18, pero la rama de
+# Recoger puede no llegar a la union: despues de recoger, una exclusiva cierra
+# a veces la convocatoria por su cuenta. Mientras ese token esta vivo, la union
+# inclusiva espera; cuando se va al fin, deja de esperarlo y dispara solo con
+# Preparar, y Evaluar arranca sin lote. Que la bifurcacion sea paralela no
+# basta: la union tiene que poder contar con la rama de la recepcion.
+Element: [type=bpmn:Collaboration, id_bpmn='Colaboracion', name='Recepcion que se desvia', instances=1]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Orquestador', name='Orquestador', frequency=0, userWithoutRole=['Ana'], instances=1, participantMultiplicity='true', orchestrationRole='orchestrator', infiniteResources='true', containedElements=['Ini_O', 'Bifurca_O', 'Recoger', 'Decide_O', 'Preparar', 'Une_O', 'Evaluar', 'Fin_O', 'Cierra_O', 'o1', 'o2', 'o3', 'o4', 'o5', 'o6', 'o7', 'o8', 'o9']]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Orquestado', name='Orquestado', frequency=0, userWithoutRole=['Beto'], instances=2, participantMultiplicity='true', orchestrationRole='orchestrated', infiniteResources='true', containedElements=['Ini_R', 'Solicitar', 'Fin_R', 'r1', 'r2']]
+Element: [type=bpmn:StartEvent, id_bpmn='Ini_O', name='Abre la convocatoria', subTask='Bifurca_O']
+Element: [type=bpmn:ParallelGateway, id_bpmn='Bifurca_O', name='Recoger y preparar', subTask='Recoger,Preparar']
+Element: [type=bpmn:ReceiveTask, id_bpmn='Recoger', name='Recoger una solicitud', userTask='Ana', numberOfExecutions=2, multiInstanceType='false', minimumTime=1, maximumTime=1, subTask='Decide_O']
+Element: [type=bpmn:ExclusiveGateway, id_bpmn='Decide_O', name='Hay que evaluar?', subTask='Une_O,Cierra_O']
+Element: [type=bpmn:Task, id_bpmn='Preparar', name='Preparar el tribunal', userTask='Ana', numberOfExecutions=1, minimumTime=3, maximumTime=3, subTask='Une_O']
+Element: [type=bpmn:InclusiveGateway, id_bpmn='Une_O', name='Esperar a las que lleguen', subTask='Evaluar']
+Element: [type=bpmn:Task, id_bpmn='Evaluar', name='Evaluar una solicitud', userTask='Ana', numberOfExecutions=2, multiInstanceType='false', minimumTime=5, maximumTime=5, subTask='Fin_O']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_O', name='Cierra la convocatoria', subTask='']
+Element: [type=bpmn:EndEvent, id_bpmn='Cierra_O', name='Convocatoria desierta', subTask='']
+Element: [type=bpmn:StartEvent, id_bpmn='Ini_R', name='Entra el solicitante', subTask='Solicitar']
+Element: [type=bpmn:SendTask, id_bpmn='Solicitar', name='Enviar la solicitud', userTask='Beto', numberOfExecutions=1, minimumTime=10, maximumTime=10, subTask='Fin_R']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_R', name='Fin del solicitante', subTask='']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o1', name='', superElement='Ini_O', subElement='Bifurca_O']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o2', name='', superElement='Bifurca_O', subElement='Recoger']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o3', name='', superElement='Bifurca_O', subElement='Preparar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o4', name='', superElement='Recoger', subElement='Decide_O']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o5', name='Evaluar', superElement='Decide_O', subElement='Une_O', percentageOfBranches=70]
+Element: [type=bpmn:SequenceFlow, id_bpmn='o6', name='Desierta', superElement='Decide_O', subElement='Cierra_O', percentageOfBranches=30]
+Element: [type=bpmn:SequenceFlow, id_bpmn='o7', name='', superElement='Preparar', subElement='Une_O']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o8', name='', superElement='Une_O', subElement='Evaluar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o9', name='', superElement='Evaluar', subElement='Fin_O']
+Element: [type=bpmn:SequenceFlow, id_bpmn='r1', name='', superElement='Ini_R', subElement='Solicitar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='r2', name='', superElement='Solicitar', subElement='Fin_R']
+Element: [type=bpmn:MessageFlow, id_bpmn='Solicitud', name='Solicitud', superElement='Solicitar', subElement='Recoger']

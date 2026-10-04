@@ -45,11 +45,25 @@ mientras el comportamiento no deba cambiar, su XES no debe cambiar.
 | `13-ciclo-de-flujos` | Un ciclo real de flujos de secuencia, con un gateway que reintenta o cierra | Que el generador no reconozca una funcion ya escrita y se vaya a la recursion infinita |
 | `14-convocatoria-de-50` | La convocatoria del 10 con 50 orquestados: 51 casos, 50 sobres, 50 respuestas | Que la cifra que nombran los criterios del hito 2 deje de salir |
 | `15-contexto-heredado` | La recepcion antes del corte y las dos respuestas despues | Que una respuesta no sepa subir por los contextos del token hasta su recepcion |
+| `16-evaluar-el-lote` | Enviar a N, recoger de N y evaluar N: la evaluacion es una tarea normal con la marca, entre recoger y responder | Que una evaluacion multiinstancia pierda la fuente de su cardinalidad, o que el cuello de botella del orquestador deje de verse |
+| `17-union-que-garantiza-el-lote` | La convocatoria del 16 con una rama paralela que no recoge nada y se junta con la de Recoger en una union paralela antes de evaluar, y un bucle que vuelve a Evaluar | Que la validacion rechace un lote que si esta garantizado: por una union paralela que espera a la rama de la recepcion, o por un bucle que solo empieza despues de recoger |
+| `18-union-inclusiva-que-espera-al-lote` | El 17 con Une_O inclusiva: la bifurcacion sigue siendo paralela, asi que la union espera al token vivo de Recoger | Que la validacion trate toda union inclusiva como si pudiera disparar sin la rama de la recepcion, cuando eso depende de que tokens hay a la vez |
+| `19-bifurcacion-inclusiva-ancha` | Un proceso sin multiinstancia con una bifurcacion inclusiva de 20 salidas: mas de un millon de combinaciones posibles | Que la validacion enumere combinaciones que no necesita y gaste memoria sin limite antes de que empiece el plazo de la simulacion |
 | `con-avisos/envio-a-pool-externo` | Un mensaje dirigido al pool y no a un receptor | Que un envio que sale de la simulacion acabe en un error interno en vez de en un aviso |
 | `con-avisos/mismo-usuario-en-dos-pools` | El mismo nombre declarado en dos pools | Que dos pools vuelvan a competir por el mismo recurso |
 | `con-error/sin-destino` | Tres agencias escribiendo a cinco oficinas: ni 1 a N, ni N a 1, ni mismo numero | Que el motor se invente un emparejamiento en vez de decir que no hay ninguno |
 | `con-error/respuesta-ambigua` | Dos recepciones del mismo pool unidas antes de una sola respuesta | Que el motor elija por su cuenta a cual de las dos responde |
 | `con-error/respuesta-ambigua-desigual` | Lo mismo, con las dos recepciones a distinta distancia de la respuesta | Que la busqueda corte en la primera distancia y elija una rama en silencio |
+| `con-error/multiinstancia-sin-cardinalidad` | Una tarea marcada que ni envia, ni recibe, ni tiene un lote antes | Que una marca sin fuente se simule con un numero inventado |
+| `con-error/multiinstancia-hacia-pool-externo` | Un envio multiinstancia a un pool sin casos | Que se manden N copias a nadie |
+| `con-error/evaluacion-de-dos-lotes` | Una evaluacion con dos recepciones multiinstancia antes | Que el motor elija en silencio cual de los dos lotes cuenta |
+| `con-error/evaluacion-sin-lote-en-otra-rama` | Una bifurcacion paralela que manda un token a Recoger y otro directamente a Evaluar | Que se acepte la evaluacion porque hay una recepcion en alguno de sus caminos, y la otra rama evalue en t=0 sin lote |
+| `con-error/evaluacion-sin-lote-por-union-inclusiva` | Recoger y Preparar abiertas por una bifurcacion inclusiva y juntadas en una union inclusiva antes de evaluar | Que una union que puede disparar solo con la rama de Preparar cuente como si garantizara el lote |
+| `con-error/evaluacion-sin-lote-si-la-recepcion-se-desvia` | Bifurcacion paralela y union inclusiva, pero despues de Recoger una exclusiva puede cerrar por su cuenta | Que baste con que la bifurcacion sea paralela: si el token de Recoger se va al fin, la union deja de esperarlo y dispara sin lote |
+| `con-error/evaluacion-sin-lote-segun-quien-llegue-antes` | Bifurcacion paralela y union inclusiva con la rama de Recoger llegando siempre, y una rama al 0 % que la union cuenta igual | Que se decida mirando una sola ordenacion de los tokens: el fallo solo aparece si Tribunal termina antes que Revisar |
+| `con-error/evaluacion-con-demasiadas-combinaciones` | Union inclusiva tras una bifurcacion inclusiva de 20 salidas, con Recoger al 100 %: valido, pero con 2^19 combinaciones | Que se pongan a enumerar en vez de contarlas y rechazar al momento diciendo que no se ha podido comprobar |
+| `con-error/evaluacion-con-demasiados-estados` | El 18 a lo ancho: Recoger y doce comprobaciones en paralelo hacia una union inclusiva. Valido, pero con demasiados ordenes posibles | Que la partida de tokens no tenga presupuesto y crezca sin limite; con presupuesto se rechaza diciendo que no se ha podido comprobar |
+| `con-error/evaluacion-sin-lote-en-la-primera-vuelta` | Un bucle Evaluar, Recoger y otra vez Evaluar | Que la recepcion del camino de vuelta tape que la primera vuelta llega sin lote |
 | `con-error/mensaje-sin-recoger` | Tres solicitudes y una sola recepcion declarada | Que dos mensajes enviados se queden sin recoger y la simulacion termine con buena cara |
 | `con-error/mensaje-al-propio-pool` | Un mensaje dirigido directamente al participante que contiene al emisor | Que un envio al propio pool se acepte como externo en vez de rechazarse con un 400 |
 | `con-error/usuario-ajeno-al-carril` | Una tarea asignada a alguien de otro carril | Que un modelo imposible se simule a medias en vez de rechazarse con un 400 |
@@ -105,7 +119,7 @@ python3 pruebas/regresion.py
 python3 pruebas/regresion.py --acepta-reorganizacion
 ```
 
-Compara cuatro cosas que no conviene confundir:
+Compara cuatro cosas que no conviene confundir, y vigila una quinta:
 
 - **Comportamiento** — qué le ocurre a **cada caso**: qué eventos tiene, cuándo,
   con qué recurso y qué rama elige cada compuerta. Cualquier diferencia es un
@@ -117,6 +131,13 @@ Compara cuatro cosas que no conviene confundir:
 - **Errores** — los modelos de `modelos-con-error/` tienen que seguir fallando
   con el mismo tipo y el mismo mensaje. Que dejen de fallar, que cambie el
   texto, o que un error interno sustituya al diagnóstico son fallos los tres.
+- **Memoria** — `banco.ejecuta` mide con `tracemalloc` lo que cada modelo hace
+  gastar al proceso principal (leer, validar, generar el script y recoger el
+  XES) y falla con `MemoriaExcesiva` si pasa de `banco.MEMORIA_MAXIMA`, 32 MiB.
+  La validación corre antes del plazo de la simulación, así que nada más la
+  para: enumerar las combinaciones de una bifurcación inclusiva de 20 salidas
+  gastaba 128 MiB, y cada salida más lo doblaba. Hoy el que más gasta es el 14,
+  con unos 7 MiB. Es un error interno, no un diagnóstico, y no se congela.
 
 **La línea entre comportamiento y organización está en el caso, no en la traza.**
 Los eventos se agrupan por caso *antes* de comparar. Aceptar la reorganización no
@@ -147,7 +168,10 @@ sin abrir ningún puerto.
 
 - `integracion/<modelo>.bpmn` tiene que responder **200 con el mismo XES** que
   ejecutando directamente las reglas de `<modelo>`, y con los mismos avisos.
-  Aquí no hay nada congelado: la referencia es la ejecución directa.
+  Aquí no hay nada congelado: la referencia es la ejecución directa. Si el
+  modelo tiene tareas multiinstancia, se manda **otra vez sin ningún
+  `multiInstanceType` en las reglas**: la marca tiene que llegar del dibujo
+  (3.1) y el XES tiene que ser el mismo.
 - `integracion-con-error/<modelo>--<variante>.bpmn` es un diagrama roto, o uno
   que no cuenta lo mismo que las reglas de `<modelo>`. Tiene que fallar con un
   400 o un 422 y el mensaje congelado en `esperado/integracion/`. Un 200 o un
@@ -176,6 +200,14 @@ los descriptores `UserTask` y `userWithoutRole` son listas de elementos hijos, y
 escritas como un atributo con comas bpmn-moddle las abre como una cadena y las
 guarda letra a letra —Ana se convertía en A, n y a—. El generador escribe ahora
 un elemento por usuario en tareas, procesos, pools y carriles.
+
+`valida_bpmn.mjs` abre cada diagrama, por último, **como otra herramienta**:
+con bpmn-moddle sin los descriptores del Modeler. Tienen que seguir ahí todos los
+elementos BPMN y todas las marcas, que son lo que el motor lee del dibujo; lo
+único que se tolera que no entienda son los elementos propios del Modeler, y los
+cuenta. Hoy son las listas de usuarios: el Modeler las escribe como elementos
+hijos sin `extensionElements`, y otra herramienta las descarta. Abrir sin avisos
+en Camunda o Bizagi es la 5.2.
 
 Si cambia un modelo que tiene diagrama, se regenera con
 `python3 pruebas/bpmn_desde_reglas.py pruebas/modelos/<modelo>.txt` y se vuelve

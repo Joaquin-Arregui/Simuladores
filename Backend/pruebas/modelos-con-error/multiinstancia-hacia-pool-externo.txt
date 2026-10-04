@@ -1,0 +1,12 @@
+# Un envio multiinstancia dirigido a un pool externo. En un envio, N son los
+# casos del pool al que se escribe, y un pool externo no tiene ninguno: no hay
+# de donde sacar cuantas copias mandar.
+Element: [type=bpmn:Collaboration, id_bpmn='Colaboracion', name='Envio a N al exterior', instances=1]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Interno', name='Oficina', frequency=0, userWithoutRole=['Ana'], containedElements=['Ini', 'Comunicar', 'Fin', 'f1', 'f2']]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Externo', name='Organismo', frequency=0, userWithoutRole=[], containedElements=[]]
+Element: [type=bpmn:StartEvent, id_bpmn='Ini', name='Inicio', subTask='Comunicar']
+Element: [type=bpmn:SendTask, id_bpmn='Comunicar', name='Comunicar a todos', userTask='Ana', numberOfExecutions=3, multiInstanceType='false', minimumTime=1, maximumTime=1, subTask='Fin']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin', name='Fin', subTask='']
+Element: [type=bpmn:SequenceFlow, id_bpmn='f1', name='', superElement='Ini', subElement='Comunicar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='f2', name='', superElement='Comunicar', subElement='Fin']
+Element: [type=bpmn:MessageFlow, id_bpmn='Comunicacion', name='Comunicacion', superElement='Comunicar', subElement='Pool_Externo']

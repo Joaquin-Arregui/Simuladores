@@ -10,6 +10,9 @@ Dos grupos de diagramas:
   referencia (las reglas del modelo) y el diagramXML. Tiene que responder 200
   con el MISMO XES que ejecutando esas reglas directamente, y con los mismos
   avisos. Aqui no se congela nada: la referencia es la ejecucion directa.
+  Si el modelo tiene tareas multiinstancia, se manda ademas con las reglas SIN
+  ningun multiInstanceType: la marca tiene que llegar del dibujo (3.1) y el XES
+  tiene que ser el mismo.
 - `integracion-con-error/<modelo>--<variante>.bpmn` -- el diagrama esta roto o
   no cuenta lo mismo que las reglas de <modelo>, y la API tiene que rechazarlo
   con un 400 o un 422 y el mensaje congelado en esperado/integracion/. Un 500 no
@@ -22,6 +25,7 @@ Con --congela escribe las respuestas de error esperadas, y como congelar.py,
 solo si TODOS los diagramas pasan.
 """
 import argparse
+import re
 from pathlib import Path
 
 import banco
@@ -42,13 +46,21 @@ def reglas_de(nombre):
     raise SystemExit(f"No hay modelo de referencia para el diagrama {nombre}.")
 
 
-def manda(cliente, reglas, diagrama):
+def manda(cliente, reglas, diagrama, content=None):
     respuesta = cliente.post("/simulate", json={
-        "content": reglas.read_text(encoding="utf-8"),
+        "content": content if content is not None else reglas.read_text(encoding="utf-8"),
         "diagramXML": diagrama.read_text(encoding="utf-8"),
         "seed": banco.SEMILLA,
     })
     return respuesta.status_code, respuesta.get_json(silent=True) or {}
+
+
+def sin_marcas(reglas):
+    """Las reglas sin ningun multiInstanceType, como las escribiria quien solo
+    ha dibujado la marca; None si no tenian ninguno."""
+    texto = reglas.read_text(encoding="utf-8")
+    limpio = re.sub(r""",\s*multiInstanceType=['"](?:true|false)['"]""", "", texto)
+    return limpio if limpio != texto else None
 
 
 def ruta_respuesta(diagrama):
@@ -79,6 +91,20 @@ def revisa_correctos(cliente):
             fallos += 1
         else:
             print("%-38s ok      HTTP 200, mismo XES y mismos avisos" % nombre)
+        # 3.1: la marca dibujada basta, sin escribir nada a mano en las reglas.
+        limpio = sin_marcas(reglas)
+        if limpio is None:
+            continue
+        codigo, datos = manda(cliente, reglas, diagrama, content=limpio)
+        etiqueta = "  ...sin multiInstanceType"
+        if codigo != 200:
+            print("%-38s HTTP %d   %s" % (etiqueta, codigo, datos.get("error", "")))
+            fallos += 1
+        elif datos.get("simulation") != directo.simulation:
+            print("%-38s DISTINTO  la marca del dibujo no ha llegado al motor" % etiqueta)
+            fallos += 1
+        else:
+            print("%-38s ok      la marca llega del dibujo: mismo XES" % etiqueta)
     return fallos
 
 

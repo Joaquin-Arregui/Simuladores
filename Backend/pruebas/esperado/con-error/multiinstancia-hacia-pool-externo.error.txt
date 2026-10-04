@@ -1,0 +1,1 @@
+ValueError: Comunicar (bpmn:SendTask): es multiinstancia y escribe al pool Pool_Externo, que no tiene casos: no hay de dónde sacar cuántas ejecuciones lanzar.

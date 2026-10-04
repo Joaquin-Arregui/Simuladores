@@ -1,0 +1,1 @@
+ValueError: Evaluar (bpmn:Task): es multiinstancia y le llegan los lotes de varias recepciones (Recoger_A, Recoger_B); no se sabe cuántas ejecuciones lanzar.

@@ -1,0 +1,26 @@
+# La recepcion multiinstancia esta en el camino de vuelta de un bucle, despues
+# de evaluar: Evaluar, Recoger y otra vez Evaluar. La primera vuelta llega desde
+# el inicio sin haber recogido nada, asi que esa evaluacion no tiene lote. Que
+# la recepcion aparezca al mirar hacia atras por el ciclo no basta: se rechaza
+# nombrando el camino de la primera vuelta.
+Element: [type=bpmn:Collaboration, id_bpmn='Colaboracion', name='Evaluar antes del lote', instances=1]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Orquestador', name='Orquestador', frequency=0, userWithoutRole=['Ana'], instances=1, participantMultiplicity='true', orchestrationRole='orchestrator', infiniteResources='true', containedElements=['Ini_O', 'Vuelve_O', 'Evaluar', 'Recoger', 'Decide_O', 'Fin_O', 'o1', 'o2', 'o3', 'o4', 'o5', 'o6']]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Orquestado', name='Orquestado', frequency=0, userWithoutRole=['Beto'], instances=2, participantMultiplicity='true', orchestrationRole='orchestrated', infiniteResources='true', containedElements=['Ini_R', 'Solicitar', 'Fin_R', 'r1', 'r2']]
+Element: [type=bpmn:StartEvent, id_bpmn='Ini_O', name='Abre la convocatoria', subTask='Vuelve_O']
+Element: [type=bpmn:ExclusiveGateway, id_bpmn='Vuelve_O', name='Otra ronda', subTask='Evaluar']
+Element: [type=bpmn:Task, id_bpmn='Evaluar', name='Evaluar una solicitud', userTask='Ana', numberOfExecutions=2, multiInstanceType='false', minimumTime=5, maximumTime=5, subTask='Recoger']
+Element: [type=bpmn:ReceiveTask, id_bpmn='Recoger', name='Recoger una solicitud', userTask='Ana', numberOfExecutions=2, multiInstanceType='false', minimumTime=1, maximumTime=1, subTask='Decide_O']
+Element: [type=bpmn:ExclusiveGateway, id_bpmn='Decide_O', name='Hay que volver a evaluar?', subTask='Vuelve_O,Fin_O']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_O', name='Cierra la convocatoria', subTask='']
+Element: [type=bpmn:StartEvent, id_bpmn='Ini_R', name='Entra el solicitante', subTask='Solicitar']
+Element: [type=bpmn:SendTask, id_bpmn='Solicitar', name='Enviar la solicitud', userTask='Beto', numberOfExecutions=1, minimumTime=10, maximumTime=10, subTask='Fin_R']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_R', name='Fin del solicitante', subTask='']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o1', name='', superElement='Ini_O', subElement='Vuelve_O']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o2', name='', superElement='Vuelve_O', subElement='Evaluar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o3', name='', superElement='Evaluar', subElement='Recoger']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o4', name='', superElement='Recoger', subElement='Decide_O']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o5', name='', superElement='Decide_O', subElement='Vuelve_O', percentageOfBranches=30]
+Element: [type=bpmn:SequenceFlow, id_bpmn='o6', name='', superElement='Decide_O', subElement='Fin_O', percentageOfBranches=70]
+Element: [type=bpmn:SequenceFlow, id_bpmn='r1', name='', superElement='Ini_R', subElement='Solicitar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='r2', name='', superElement='Solicitar', subElement='Fin_R']
+Element: [type=bpmn:MessageFlow, id_bpmn='Solicitud', name='Solicitud', superElement='Solicitar', subElement='Recoger']

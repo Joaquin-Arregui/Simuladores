@@ -1,0 +1,28 @@
+# Lo mismo con una union entre medias: la recepcion multiinstancia y una tarea
+# de preparacion se juntan antes de evaluar, pero en una union inclusiva. La
+# bifurcacion inclusiva puede abrir solo la rama de Preparar, y entonces la
+# union dispara con ella sola y Evaluar arranca sin lote. Una union paralela si
+# lo garantizaria (lo prueba el modelo 17); esta no, y se rechaza.
+Element: [type=bpmn:Collaboration, id_bpmn='Colaboracion', name='Union inclusiva sin lote', instances=1]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Orquestador', name='Orquestador', frequency=0, userWithoutRole=['Ana'], instances=1, participantMultiplicity='true', orchestrationRole='orchestrator', infiniteResources='true', containedElements=['Ini_O', 'Bifurca_O', 'Recoger', 'Preparar', 'Une_O', 'Evaluar', 'Fin_O', 'o1', 'o2', 'o3', 'o4', 'o5', 'o6', 'o7']]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Orquestado', name='Orquestado', frequency=0, userWithoutRole=['Beto'], instances=2, participantMultiplicity='true', orchestrationRole='orchestrated', infiniteResources='true', containedElements=['Ini_R', 'Solicitar', 'Fin_R', 'r1', 'r2']]
+Element: [type=bpmn:StartEvent, id_bpmn='Ini_O', name='Abre la convocatoria', subTask='Bifurca_O']
+Element: [type=bpmn:InclusiveGateway, id_bpmn='Bifurca_O', name='Recoger, preparar o las dos', subTask='Recoger,Preparar']
+Element: [type=bpmn:ReceiveTask, id_bpmn='Recoger', name='Recoger una solicitud', userTask='Ana', numberOfExecutions=2, multiInstanceType='false', minimumTime=1, maximumTime=1, subTask='Une_O']
+Element: [type=bpmn:Task, id_bpmn='Preparar', name='Preparar el tribunal', userTask='Ana', numberOfExecutions=1, minimumTime=3, maximumTime=3, subTask='Une_O']
+Element: [type=bpmn:InclusiveGateway, id_bpmn='Une_O', name='Esperar a las que se abrieron', subTask='Evaluar']
+Element: [type=bpmn:Task, id_bpmn='Evaluar', name='Evaluar una solicitud', userTask='Ana', numberOfExecutions=2, multiInstanceType='false', minimumTime=5, maximumTime=5, subTask='Fin_O']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_O', name='Cierra la convocatoria', subTask='']
+Element: [type=bpmn:StartEvent, id_bpmn='Ini_R', name='Entra el solicitante', subTask='Solicitar']
+Element: [type=bpmn:SendTask, id_bpmn='Solicitar', name='Enviar la solicitud', userTask='Beto', numberOfExecutions=1, minimumTime=10, maximumTime=10, subTask='Fin_R']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_R', name='Fin del solicitante', subTask='']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o1', name='', superElement='Ini_O', subElement='Bifurca_O']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o2', name='', superElement='Bifurca_O', subElement='Recoger', percentageOfBranches=50]
+Element: [type=bpmn:SequenceFlow, id_bpmn='o3', name='', superElement='Bifurca_O', subElement='Preparar', percentageOfBranches=50]
+Element: [type=bpmn:SequenceFlow, id_bpmn='o4', name='', superElement='Recoger', subElement='Une_O']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o5', name='', superElement='Preparar', subElement='Une_O']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o6', name='', superElement='Une_O', subElement='Evaluar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o7', name='', superElement='Evaluar', subElement='Fin_O']
+Element: [type=bpmn:SequenceFlow, id_bpmn='r1', name='', superElement='Ini_R', subElement='Solicitar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='r2', name='', superElement='Solicitar', subElement='Fin_R']
+Element: [type=bpmn:MessageFlow, id_bpmn='Solicitud', name='Solicitud', superElement='Solicitar', subElement='Recoger']

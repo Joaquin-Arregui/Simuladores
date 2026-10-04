@@ -1,0 +1,39 @@
+# Bifurcacion paralela y union inclusiva otra vez, y aqui la rama de Recoger ni
+# se queda sin abrir ni se desvia: siempre llega. El fallo depende de quien
+# llegue antes. Revisar decide despues si se recoge o se rehace el tribunal; la
+# rama de rehacer esta al 0 %, y el motor no la toma nunca, pero la union
+# inclusiva mira el dibujo, no los porcentajes (BPMN 2.0.2, tabla 13.3): un
+# token vivo que puede llegar a una entrada ocupada no la hace esperar. Si
+# Tribunal termina antes que Revisar, el token de Revisar podria llegar a
+# Tribunal, asi que la union dispara solo con Tribunal y Evaluar arranca sin
+# lote; despues llega Recoger y vuelve a disparar, ya con el. Si Revisar
+# termina antes, todo va bien. Por eso no basta mirar una ordenacion de los
+# tokens: hay que probarlas todas.
+Element: [type=bpmn:Collaboration, id_bpmn='Colaboracion', name='Segun quien llegue antes', instances=1]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Orquestador', name='Orquestador', frequency=0, userWithoutRole=['Ana'], instances=1, participantMultiplicity='true', orchestrationRole='orchestrator', infiniteResources='true', containedElements=['Ini_O', 'Bifurca_O', 'Revisar', 'Elige_O', 'Recoger', 'Tribunal', 'Une_O', 'Evaluar', 'Fin_O', 'o1', 'o2', 'o3', 'o4', 'o5', 'o6', 'o7', 'o8', 'o9', 'o10']]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Orquestado', name='Orquestado', frequency=0, userWithoutRole=['Beto'], instances=2, participantMultiplicity='true', orchestrationRole='orchestrated', infiniteResources='true', containedElements=['Ini_R', 'Solicitar', 'Fin_R', 'r1', 'r2']]
+Element: [type=bpmn:StartEvent, id_bpmn='Ini_O', name='Abre la convocatoria', subTask='Bifurca_O']
+Element: [type=bpmn:ParallelGateway, id_bpmn='Bifurca_O', name='Revisar y montar el tribunal', subTask='Revisar,Tribunal']
+Element: [type=bpmn:Task, id_bpmn='Revisar', name='Revisar las bases', userTask='Ana', numberOfExecutions=1, minimumTime=5, maximumTime=5, subTask='Elige_O']
+Element: [type=bpmn:ExclusiveGateway, id_bpmn='Elige_O', name='Recoger o rehacer el tribunal', subTask='Recoger,Tribunal']
+Element: [type=bpmn:ReceiveTask, id_bpmn='Recoger', name='Recoger una solicitud', userTask='Ana', numberOfExecutions=2, multiInstanceType='false', minimumTime=1, maximumTime=1, subTask='Une_O']
+Element: [type=bpmn:Task, id_bpmn='Tribunal', name='Montar el tribunal', userTask='Ana', numberOfExecutions=1, minimumTime=1, maximumTime=1, subTask='Une_O']
+Element: [type=bpmn:InclusiveGateway, id_bpmn='Une_O', name='Esperar a las dos', subTask='Evaluar']
+Element: [type=bpmn:Task, id_bpmn='Evaluar', name='Evaluar una solicitud', userTask='Ana', numberOfExecutions=2, multiInstanceType='false', minimumTime=5, maximumTime=5, subTask='Fin_O']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_O', name='Cierra la convocatoria', subTask='']
+Element: [type=bpmn:StartEvent, id_bpmn='Ini_R', name='Entra el solicitante', subTask='Solicitar']
+Element: [type=bpmn:SendTask, id_bpmn='Solicitar', name='Enviar la solicitud', userTask='Beto', numberOfExecutions=1, minimumTime=10, maximumTime=10, subTask='Fin_R']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_R', name='Fin del solicitante', subTask='']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o1', name='', superElement='Ini_O', subElement='Bifurca_O']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o2', name='', superElement='Bifurca_O', subElement='Revisar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o3', name='', superElement='Bifurca_O', subElement='Tribunal']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o4', name='', superElement='Revisar', subElement='Elige_O']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o5', name='Recoger', superElement='Elige_O', subElement='Recoger', percentageOfBranches=100]
+Element: [type=bpmn:SequenceFlow, id_bpmn='o6', name='Rehacer el tribunal', superElement='Elige_O', subElement='Tribunal', percentageOfBranches=0]
+Element: [type=bpmn:SequenceFlow, id_bpmn='o7', name='', superElement='Recoger', subElement='Une_O']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o8', name='', superElement='Tribunal', subElement='Une_O']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o9', name='', superElement='Une_O', subElement='Evaluar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o10', name='', superElement='Evaluar', subElement='Fin_O']
+Element: [type=bpmn:SequenceFlow, id_bpmn='r1', name='', superElement='Ini_R', subElement='Solicitar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='r2', name='', superElement='Solicitar', subElement='Fin_R']
+Element: [type=bpmn:MessageFlow, id_bpmn='Solicitud', name='Solicitud', superElement='Solicitar', subElement='Recoger']

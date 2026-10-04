@@ -1,0 +1,1 @@
+ValueError: Trabajar (bpmn:Task): es multiinstancia y no tiene de dónde sacar cuántas ejecuciones lanzar: tiene que enviar o recibir un mensaje, o tener antes en su camino una recepción multiinstancia cuyo lote evaluar.

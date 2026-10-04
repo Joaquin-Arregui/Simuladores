@@ -9,7 +9,7 @@ from tempfile import TemporaryDirectory
 from typing import List, NamedTuple
 import xml.etree.ElementTree as ET
 
-from simulator.parser import parse_bpmn_elements
+from simulator.parser import aplica_marcas_del_diagrama, parse_bpmn_elements
 from simulator.generateScript import DEFAULT_START_DATE, generateScript
 from simulator.validation import (validate_diagram_correspondence, validate_diagram_xml,
                                   validate_simulation)
@@ -127,6 +127,10 @@ def processSimulation(rules: str, *, diagram_xml=None, timeout_seconds=None, see
     if diagram_xml is not None:
         diagram_root = validate_diagram_xml(diagram_xml, warnings)
     elements, process, starts, message_starts = parse_bpmn_elements(rules, warnings)
+    # La marca de multiinstancia sale del dibujo (3.1), antes de validar nada,
+    # para que la validacion vea el modelo que se va a simular.
+    if diagram_root is not None:
+        aplica_marcas_del_diagrama(elements, diagram_root)
     validate_simulation(elements, process, starts, message_starts, warnings)
     # Con las dos cosas validadas por separado, que cuenten el mismo modelo.
     if diagram_root is not None:

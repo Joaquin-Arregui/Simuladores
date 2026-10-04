@@ -1,0 +1,1 @@
+ValueError: Evaluar (bpmn:Task): es multiinstancia y no se ha podido comprobar que todas sus activaciones traigan el lote de Recoger: depende de a qué esperan las uniones inclusivas Une_O, y comprobarlo en un caso de su proceso pasa de 500000 pasos. Si tienen que esperar a la recepción, usa una unión paralela.
