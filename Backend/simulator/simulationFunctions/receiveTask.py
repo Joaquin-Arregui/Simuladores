@@ -24,7 +24,7 @@ f'''
         # Users are handed out in order of arrival (see UserQueue in runtime.py).
         userTask = yield user_queue.acquire(possibleUsers)
         try:
-            time = resolve_task_time({element.id_bpmn!r}, {element.maximumTime}, {element.minimumTime}, userTask)
+            time = resolve_task_time({element.maximumTime}, {element.minimumTime})
             if env.now > start_standBy: 
                 simulationResults[name].append(
 f'''

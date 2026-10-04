@@ -184,14 +184,24 @@ Respecto al motor anterior a la limpieza:
 - Cada mensaje se consume una sola vez.
 - Los usuarios se asignan por orden de llegada. Antes, con varias instancias
   esperando, se atendía primero a la última en llegar.
-- Una tarea con tiempo mayor que cero dura al menos un segundo, aunque el mismo
-  usuario la repita muchas veces.
+- La duración de una tarea sale de una normal truncada entre su mínimo y su
+  máximo, y no depende de cuántas veces la haya hecho ese usuario: se ha
+  retirado el aprendizaje por repetición del motor original, que la acortaba un
+  5 % por repetición hasta un 50 %.
+- Una tarea con tiempo mayor que cero dura al menos un segundo: el redondeo
+  nunca la convierte en un bucle de duración cero.
 - Las trazas se ordenan por número de instancia (1, 2, 3…).
 - Una simulación bloqueada o incompleta devuelve un error en lugar de un XES
   parcial.
 - Las fechas del XES y `concept:name` siguen el formato descrito arriba.
 
 Con el ejemplo de la Ludoteca, en 30 ejecuciones con las mismas semillas, los
-resultados son equivalentes: la duración media de una instancia pasa de 454,1 s a
-454,4 s y se ejecutan las mismas tareas. Las diferencias aparecen en modelos con
-uniones, esperas por datos o eventos intermedios de mensaje.
+resultados eran equivalentes: la duración media de una instancia pasaba de
+454,1 s a 454,4 s y se ejecutaban las mismas tareas. Las diferencias aparecen en
+modelos con uniones, esperas por datos o eventos intermedios de mensaje.
+
+Esa comparación se midió **antes de retirar el aprendizaje por repetición**. Sin
+él, una tarea que un mismo usuario repite ya no se acorta, así que las duraciones
+de este motor son ahora mayores que las del original a propósito, y la cifra de
+arriba ya no vale como equivalencia. Se volverá a medir con los modelos de
+referencia.

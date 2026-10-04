@@ -20,15 +20,11 @@ def xml_value(value):
     return escape(str(value), quote=True)
 
 
-def resolve_task_time(task_name, max_time, min_time, user):
-    counts = user_task_count.setdefault(user, {})
-    previous = counts.get(task_name, 0)
+def resolve_task_time(max_time, min_time):
     duration = max(min_time, min(random.gauss((min_time + max_time) / 2,
                                              (max_time - min_time) / 6), max_time))
-    counts[task_name] = previous + 1
-    # Learning must not turn a positive-duration task into a zero-time loop.
-    return max(1 if min_time > 0 else 0,
-               round(duration * (1 - min(0.05 * previous, 0.5))))
+    # Rounding must not turn a positive-duration task into a zero-time loop.
+    return max(1 if min_time > 0 else 0, round(duration))
 
 
 def resolve_possible_users(possibleUsers, taskName):
@@ -296,7 +292,7 @@ def _finalize_item(item):
 
 
 def _run_simulation():
-    global env, simulationResults, user_queue, user_assignments, user_task_count
+    global env, simulationResults, user_queue, user_assignments
     global messages, message_waiters, data, data_changed, active_tokens, pending_joins
     global reachability, completed, startDate
     # Every draw (durations, gateways, loops) comes from this generator, so the
@@ -307,7 +303,6 @@ def _run_simulation():
     simulationResults = {f'Instance {i + 1}': [] for i in range(nInstances)}
     user_assignments = dict.fromkeys(userPool, 0)
     user_queue = UserQueue(userPool)
-    user_task_count = {}
     messages, message_waiters = Counter(), defaultdict(deque)
     data = {(item, name) for item in defaultData for name in simulationResults}
     data_changed = {}
