@@ -1,0 +1,11 @@
+# Modelo de referencia 1 - el camino mas corto posible.
+# Un proceso, dos instancias, dos tareas en serie, dos usuarios.
+# Sirve para detectar roturas en lo basico: duraciones, cola de usuarios y XES.
+Element: [type=bpmn:Process, id_bpmn='Proceso_simple', name='Proceso simple', instances=2, frequency=30, userWithoutRole=['Ana', 'Luis'], userWithRole={}]
+Element: [type=bpmn:StartEvent, id_bpmn='Inicio', name='Inicio', subTask='Preparar']
+Element: [type=bpmn:Task, id_bpmn='Preparar', name='Preparar la solicitud', userTask='Ana', numberOfExecutions=1, minimumTime=30, maximumTime=60, subTask='Revisar']
+Element: [type=bpmn:Task, id_bpmn='Revisar', name='Revisar la solicitud', userTask='Luis', numberOfExecutions=1, minimumTime=20, maximumTime=40, subTask='Fin']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin', name='Fin', subTask='']
+Element: [type=bpmn:SequenceFlow, id_bpmn='Flujo_1', name='Inicio a Preparar', superElement='Inicio', subElement='Preparar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='Flujo_2', name='Preparar a Revisar', superElement='Preparar', subElement='Revisar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='Flujo_3', name='Revisar a Fin', superElement='Revisar', subElement='Fin']

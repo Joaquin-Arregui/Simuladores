@@ -1,0 +1,30 @@
+# Modelo de referencia 3 - uniones paralelas e inclusivas, y un bucle.
+# Es el que detecta roturas en lo dificil: tokens, uniones que esperan solo a
+# las ramas que de verdad se abrieron, y repeticion de una tarea.
+# Bifurcacion paralela (siempre las dos ramas) -> union paralela
+#   -> bifurcacion inclusiva (una rama, la otra, o las dos) -> union inclusiva
+#   -> tarea que se repite 3 veces -> fin
+Element: [type=bpmn:Process, id_bpmn='Proceso_uniones', name='Uniones y bucle', instances=2, frequency=60, userWithoutRole=['Rosa', 'Tomas', 'Vera'], userWithRole={}]
+Element: [type=bpmn:StartEvent, id_bpmn='Inicio', name='Inicio', subTask='Bifurcacion_P']
+Element: [type=bpmn:ParallelGateway, id_bpmn='Bifurcacion_P', name='Abrir las dos ramas', subTask='Tarea_A,Tarea_B']
+Element: [type=bpmn:Task, id_bpmn='Tarea_A', name='Rama A', userTask='Rosa', numberOfExecutions=1, minimumTime=20, maximumTime=40, subTask='Union_P']
+Element: [type=bpmn:Task, id_bpmn='Tarea_B', name='Rama B', userTask='Tomas', numberOfExecutions=1, minimumTime=30, maximumTime=50, subTask='Union_P']
+Element: [type=bpmn:ParallelGateway, id_bpmn='Union_P', name='Esperar a las dos', subTask='Bifurcacion_I']
+Element: [type=bpmn:InclusiveGateway, id_bpmn='Bifurcacion_I', name='Una, otra o las dos', subTask='Tarea_C,Tarea_D']
+Element: [type=bpmn:Task, id_bpmn='Tarea_C', name='Rama C', userTask='Vera', numberOfExecutions=1, minimumTime=15, maximumTime=25, subTask='Union_I']
+Element: [type=bpmn:Task, id_bpmn='Tarea_D', name='Rama D', userTask='Rosa', numberOfExecutions=1, minimumTime=10, maximumTime=30, subTask='Union_I']
+Element: [type=bpmn:InclusiveGateway, id_bpmn='Union_I', name='Esperar a las que se abrieron', subTask='Revision']
+Element: [type=bpmn:Task, id_bpmn='Revision', name='Revision repetida', userTask='Tomas', numberOfExecutions=1, minimumTime=10, maximumTime=20, loopParameter={'Units': 3}, subTask='Fin']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin', name='Fin', subTask='']
+Element: [type=bpmn:SequenceFlow, id_bpmn='F01', name='', superElement='Inicio', subElement='Bifurcacion_P']
+Element: [type=bpmn:SequenceFlow, id_bpmn='F02', name='', superElement='Bifurcacion_P', subElement='Tarea_A']
+Element: [type=bpmn:SequenceFlow, id_bpmn='F03', name='', superElement='Bifurcacion_P', subElement='Tarea_B']
+Element: [type=bpmn:SequenceFlow, id_bpmn='F04', name='', superElement='Tarea_A', subElement='Union_P']
+Element: [type=bpmn:SequenceFlow, id_bpmn='F05', name='', superElement='Tarea_B', subElement='Union_P']
+Element: [type=bpmn:SequenceFlow, id_bpmn='F06', name='', superElement='Union_P', subElement='Bifurcacion_I']
+Element: [type=bpmn:SequenceFlow, id_bpmn='F07', name='', superElement='Bifurcacion_I', subElement='Tarea_C', percentageOfBranches=50]
+Element: [type=bpmn:SequenceFlow, id_bpmn='F08', name='', superElement='Bifurcacion_I', subElement='Tarea_D', percentageOfBranches=50]
+Element: [type=bpmn:SequenceFlow, id_bpmn='F09', name='', superElement='Tarea_C', subElement='Union_I']
+Element: [type=bpmn:SequenceFlow, id_bpmn='F10', name='', superElement='Tarea_D', subElement='Union_I']
+Element: [type=bpmn:SequenceFlow, id_bpmn='F11', name='', superElement='Union_I', subElement='Revision']
+Element: [type=bpmn:SequenceFlow, id_bpmn='F12', name='', superElement='Revision', subElement='Fin']
