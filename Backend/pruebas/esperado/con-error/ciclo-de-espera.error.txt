@@ -1,0 +1,1 @@
+SimulationExecutionError: Simulación bloqueada o incompleta; elementos esperando mensaje o datos: Recoger (Pool_Orquestador - 1), Esperar_Aviso (Pool_Orquestado - 1), Esperar_Aviso (Pool_Orquestado - 2); casos sin evento de fin: Pool_Orquestador - 1, Pool_Orquestado - 1, Pool_Orquestado - 2.

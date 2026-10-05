@@ -702,15 +702,138 @@ def _caminos_sin_lote(nodes, outgoing, incoming, reverse):
     return camino
 
 
+def _recepciones_del_lote(element_id, nodes, reverse):
+    """Las recepciones multiinstancia de las que puede venir el lote de una tarea.
+
+    La primera de cada camino hacia atras, recorriendolos TODOS: si salen dos,
+    el lote es ambiguo y validate_simulation lo rechaza.
+    """
+    candidatos, vistos, frontera = [], {element_id}, [element_id]
+    while frontera:
+        siguiente = []
+        for nodo in frontera:
+            for previo in reverse[nodo]:
+                if previo in vistos:
+                    continue
+                vistos.add(previo)
+                anterior = nodes[previo]
+                if _kind(anterior) == "ReceiveTask" and anterior.multiInstanceType is not None:
+                    candidatos.append(previo)
+                else:
+                    siguiente.append(previo)
+        frontera = siguiente
+    return candidatos
+
+
+def _grafo_de_secuencia(elements):
+    model = {key: value for key, value in elements.items() if hasattr(value, "bpmn_type")}
+    nodes = {key: value for key, value in model.items() if _kind(value) in NODE_TYPES}
+    outgoing, reverse = defaultdict(list), defaultdict(list)
+    for element in model.values():
+        if _kind(element) == "SequenceFlow":
+            outgoing[element.superElement].append(element)
+            reverse[element.subElement].append(element.superElement)
+    return nodes, outgoing, reverse
+
+
+def resolve_batch_receives(elements):
+    """Para cada evaluacion multiinstancia, la recepcion cuyo lote evalua (D8).
+
+    Es la misma busqueda con la que validate_simulation comprueba que la
+    evaluacion tiene una fuente y solo una; aqui se da por hecho que la paso.
+    """
+    nodes, _, reverse = _grafo_de_secuencia(elements)
+    lotes = {}
+    for nodo, element in nodes.items():
+        if (_kind(element) in TASK_TYPES - {"SendTask", "ReceiveTask"}
+                and element.multiInstanceType is not None):
+            candidatos = _recepciones_del_lote(nodo, nodes, reverse)
+            if len(candidatos) != 1:
+                raise RuntimeError(f"{nodo}: la validacion tenia que haber dejado una sola "
+                                   f"recepcion para su lote, y hay {candidatos}.")
+            lotes[nodo] = candidatos[0]
+    return dict(sorted(lotes.items()))
+
+
+def resolve_send_reach(elements, objetivos):
+    """Desde cada nodo, a cuales de los objetivos se puede llegar todavia.
+
+    Los objetivos son los envios que escriben a una recepcion multiinstancia y,
+    si son respuestas, la recepcion a la que responden: saber si un token puede
+    pasar aun por ella dice si la respuesta ira a quien ya anoto o a quien le
+    escriba despues.
+
+    Es lo que necesita el motor para cerrar una recepcion multiinstancia (D7):
+    cierra cuando ningun caso que pueda escribirle tiene un token capaz de
+    llegar todavia a su envio. Que el caso este vivo no basta, porque un
+    solicitante que ya ha escrito y espera la respuesta sigue vivo, y esa
+    recepcion no cerraria nunca; ni que haya escrito, porque uno que eligio la
+    otra ventanilla no va a escribir a esta, y dos recepciones abiertas a la vez
+    se quedarian esperandose.
+
+    Se recorren solo los flujos que el motor puede tomar: una rama al 0 % no
+    lleva a ningun envio. Un nodo llega a si mismo, porque un token que esta en
+    el envio todavia no ha escrito todas sus ejecuciones.
+    """
+    nodes, outgoing, _ = _grafo_de_secuencia(elements)
+    envios = {objetivo for objetivo in objetivos if objetivo in nodes}
+    previos = defaultdict(list)
+    for nodo, element in nodes.items():
+        siempre, a_veces = _reparto_de_salidas(element, outgoing[nodo])
+        tomados = set(siempre) | set(a_veces)
+        for flow in outgoing[nodo]:
+            if flow.id_bpmn in tomados:
+                previos[flow.subElement].append(nodo)
+    alcance = defaultdict(set)
+    for envio in envios:
+        pendientes, vistos = [envio], {envio}
+        while pendientes:
+            nodo = pendientes.pop()
+            alcance[nodo].add(envio)
+            for previo in previos[nodo]:
+                if previo not in vistos:
+                    vistos.add(previo)
+                    pendientes.append(previo)
+    return {nodo: tuple(sorted(alcanzados)) for nodo, alcanzados in sorted(alcance.items())}
+
+
+def resolve_send_cycles(elements, envios):
+    """Que envios pueden volver a activarse por un ciclo de flujos de secuencia.
+
+    Un token que esta en uno de ellos puede volver a llegar despues, asi que al
+    cerrar una recepcion no basta con lo que le queda a la activacion en curso.
+    Solo por los flujos que el motor puede tomar, como resolve_send_reach.
+    """
+    nodes, outgoing, _ = _grafo_de_secuencia(elements)
+    siguientes = {}
+    for nodo, element in nodes.items():
+        siempre, a_veces = _reparto_de_salidas(element, outgoing[nodo])
+        tomados = set(siempre) | set(a_veces)
+        siguientes[nodo] = [flow.subElement for flow in outgoing[nodo] if flow.id_bpmn in tomados]
+    en_ciclo = []
+    for envio in sorted(set(envios) & set(nodes)):
+        pendientes, vistos = list(siguientes[envio]), set()
+        while pendientes:
+            nodo = pendientes.pop()
+            if nodo == envio:
+                en_ciclo.append(envio)
+                break
+            if nodo in vistos:
+                continue
+            vistos.add(nodo)
+            pendientes.extend(siguientes.get(nodo, ()))
+    return tuple(en_ciclo)
+
+
 def _origen_de_la_cardinalidad(element, nodes, model, reverse, caminos_sin_lote):
     """De donde sale cuantas ejecuciones lanza una tarea multiinstancia (D8).
 
     Enviar a N, recoger de N y evaluar N. En un envio, N son los casos del pool
     al que escribe; en una recepcion, los mensajes que llegan; y en cualquier
     otra tarea -una evaluacion- los que llegaron a la recepcion multiinstancia
-    que tiene antes en su camino. Hoy el motor aun usa numberOfExecutions; la
-    3.2 calcula N de estas fuentes, y una marca que no tenga ninguna no tendria
-    cardinalidad: se rechaza ya, en vez de inventarse un numero.
+    que tiene antes en su camino. El motor calcula N de estas fuentes en
+    ejecucion (3.2), y una marca que no tenga ninguna no tendria cardinalidad:
+    se rechaza aqui, en vez de inventarse un numero.
 
     La recepcion de una evaluacion se busca en TODOS los caminos hacia atras,
     hasta la primera recepcion multiinstancia de cada uno: si aparecen dos, el
@@ -727,20 +850,7 @@ def _origen_de_la_cardinalidad(element, nodes, model, reverse, caminos_sin_lote)
         return
     if kind == "ReceiveTask":
         return
-    candidatos, vistos, frontera = [], {element.id_bpmn}, [element.id_bpmn]
-    while frontera:
-        siguiente = []
-        for nodo in frontera:
-            for previo in reverse[nodo]:
-                if previo in vistos:
-                    continue
-                vistos.add(previo)
-                anterior = nodes[previo]
-                if _kind(anterior) == "ReceiveTask" and anterior.multiInstanceType is not None:
-                    candidatos.append(previo)
-                else:
-                    siguiente.append(previo)
-        frontera = siguiente
+    candidatos = _recepciones_del_lote(element.id_bpmn, nodes, reverse)
     if not candidatos:
         _fail(element, "es multiinstancia y no tiene de dónde sacar cuántas ejecuciones lanzar: "
                        "tiene que enviar o recibir un mensaje, o tener antes en su camino una "
@@ -937,7 +1047,12 @@ def validate_simulation(elements, process, starts, message_starts, warnings=None
     for element in nodes.values():
         if _kind(element) not in TASK_TYPES:
             continue
-        _number(element, "numberOfExecutions", minimum=1, integer=True)
+        ejecuciones = _number(element, "numberOfExecutions", minimum=1, integer=True)
+        if element.multiInstanceType is not None and ejecuciones != 1:
+            # El Modeler escribe 1 por defecto; otro numero es que alguien
+            # espera que se use, y desde la 3.2 no se usa: mejor decirlo.
+            add_warning(warnings, f"{element.id_bpmn} ({element.bpmn_type}): numberOfExecutions={ejecuciones} "
+                                  "no se usa; en una tarea multiinstancia N se calcula en ejecución.")
         minimum = _number(element, "minimumTime")
         maximum = _number(element, "maximumTime")
         if minimum > maximum:

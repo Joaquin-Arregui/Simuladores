@@ -2,9 +2,13 @@ def receiveTask(elements, element, script):
     from simulator.simulationFunctions.generateFunction import generateFunction, function_name, xml_template
     functionStr = f"""
 def {function_name(element.id_bpmn)}(env, caso, contexto):
-    def executeTask(env, TaskName, caso, execution):
-        start_standby_message = env.now
-        remitente = yield env.process(wait_for_message(env, {element.messageOrigin!r}, TaskName, execution, caso, contexto))
+    def executeTask(env, TaskName, caso, execution, recibido=None):
+        # recoge_lote ya trae el sobre, y desde cuando lo esperaba esta ejecucion.
+        if recibido is None:
+            start_standby_message = env.now
+            remitente = yield env.process(wait_for_message(env, {element.messageOrigin!r}, TaskName, execution, caso, contexto))
+        else:
+            remitente, start_standby_message = recibido
         end_standby_message = env.now
         duration_standby_message = end_standby_message - start_standby_message
         if duration_standby_message > 0:
@@ -76,16 +80,16 @@ f'''
             <date key="time:duration" value="{{xml_value(env.now-start_standBy_data)}}"/>
             <int key="bpmn:instance" value="{{xml_value(caso.indice)}}"/>
         </event>''')"""
-    if element.multiInstanceType == True or (element.multiInstanceType == None and element.loopParameter == None):
+    # Sin marca, numberOfExecutions sigue siendo el numero de sobres que espera,
+    # uno tras otro. Con la marca recoge todo lo que llegue hasta que ya no
+    # pueda llegar nada (D7): N son los sobres recogidos, cero incluido.
+    if element.multiInstanceType is not None:
+        functionStr = functionStr + f"""
+    yield from recoge_lote(env, {element.messageOrigin!r}, TaskName, caso, contexto, executeTask, {element.multiInstanceType == False})"""
+    elif element.loopParameter == None:
         functionStr = functionStr + f"""
     for execution in range({element.numberOfExecutions}):
         yield env.process(executeTask(env, TaskName, caso, execution+1))"""
-    elif element.multiInstanceType == False:
-        functionStr = functionStr + f"""
-    executionProcesses = []
-    for execution in range({element.numberOfExecutions}):
-        executionProcesses.append(env.process(executeTask(env, TaskName, caso, execution+1)))
-    yield simpy.AllOf(env, executionProcesses)"""
     elif element.multiInstanceType == None:
         if "Time" in element.loopParameter.keys():
             time = element.loopParameter["Time"]

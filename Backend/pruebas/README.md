@@ -49,8 +49,16 @@ mientras el comportamiento no deba cambiar, su XES no debe cambiar.
 | `17-union-que-garantiza-el-lote` | La convocatoria del 16 con una rama paralela que no recoge nada y se junta con la de Recoger en una union paralela antes de evaluar, y un bucle que vuelve a Evaluar | Que la validacion rechace un lote que si esta garantizado: por una union paralela que espera a la rama de la recepcion, o por un bucle que solo empieza despues de recoger |
 | `18-union-inclusiva-que-espera-al-lote` | El 17 con Une_O inclusiva: la bifurcacion sigue siendo paralela, asi que la union espera al token vivo de Recoger | Que la validacion trate toda union inclusiva como si pudiera disparar sin la rama de la recepcion, cuando eso depende de que tokens hay a la vez |
 | `19-bifurcacion-inclusiva-ancha` | Un proceso sin multiinstancia con una bifurcacion inclusiva de 20 salidas: mas de un millon de combinaciones posibles | Que la validacion enumere combinaciones que no necesita y gaste memoria sin limite antes de que empiece el plazo de la simulacion |
+| `20-reclamaciones` | La convocatoria del plan con diez solicitantes: convocar, recoger, evaluar, resolver, recoger reclamaciones, reevaluar y responder, sin ningun numero de ejecuciones escrito. Con la semilla del banco reclaman 5 | Que N deje de ser lo que llega: una convocatoria que no va a los casos vivos, una recepcion que cierra antes o despues de tiempo, o una evaluacion o una respuesta que no cuenten su lote. Ademas, el criterio de la 3.2 sobre treinta semillas (ver abajo) |
+| `21-nadie-reclama` | El 20 con cuatro solicitantes y un 20 % de reclamar: con la semilla del banco no reclama nadie | Que una recepcion que se queda en cero se bloquee, o que la reevaluacion ocupe a alguien sin nada que evaluar |
+| `22-dos-ventanillas-a-eleccion` | Dos recepciones abiertas a la vez, y cada solicitante elige UNA | Que la recepcion cierre por quien ha escrito o ha terminado en vez de por quien todavia puede escribir: la A esperaria a los de la B y la B a los de la A |
+| `23-reconvocar-a-los-vivos` | Una segunda convocatoria cuando la mitad, de media, se ha retirado | Que un envio que abre la conversacion cuente casos terminados y les deje sobres que nadie recoge |
+| `24-reclamaciones-en-secuencia` | El 20 con seis solicitantes y la marca secuencial en todas las tareas | Que la recepcion secuencial, que espera un sobre cada vez, no cierre o se coma el lote |
+| `25-parejas-con-varias-respuestas` | Cuatro parejas 1:1; cada servicio responde una o mas veces a SU cliente, que las recoge con una recepcion multiinstancia | Que una recepcion espere respuestas destinadas a otros casos: el cliente 1 terminaba cuando acababa el ultimo servicio, no el suyo. Se mira a quien puede ir la respuesta de cada token, por lo que anoto su recepcion o por quien le escribiria |
+| `26-respuesta-en-bucle` | Un servicio responde con un bucle de dos vueltas (Units=2, numberOfExecutions=1): la primera al cliente que anoto, la segunda al 2 por las reglas fijas | Que el cierre cuente las ejecuciones de un envio por numberOfExecutions y no por su bucle, y la recepcion del cliente 2 cierre antes de la segunda respuesta; o, al reves, que la del cliente 1 espere al final del bucle (t=25) cuando la unica vuelta pendiente ya no va a el, en vez de cerrar al recibir (t=17) |
 | `con-avisos/envio-a-pool-externo` | Un mensaje dirigido al pool y no a un receptor | Que un envio que sale de la simulacion acabe en un error interno en vez de en un aviso |
 | `con-avisos/mismo-usuario-en-dos-pools` | El mismo nombre declarado en dos pools | Que dos pools vuelvan a competir por el mismo recurso |
+| `con-avisos/multiinstancia-con-numero-escrito` | Una convocatoria multiinstancia con numberOfExecutions=4 a dos casos | Que un numero que ya no se usa se ignore en silencio; N son los dos casos vivos |
 | `con-error/sin-destino` | Tres agencias escribiendo a cinco oficinas: ni 1 a N, ni N a 1, ni mismo numero | Que el motor se invente un emparejamiento en vez de decir que no hay ninguno |
 | `con-error/respuesta-ambigua` | Dos recepciones del mismo pool unidas antes de una sola respuesta | Que el motor elija por su cuenta a cual de las dos responde |
 | `con-error/respuesta-ambigua-desigual` | Lo mismo, con las dos recepciones a distinta distancia de la respuesta | Que la busqueda corte en la primera distancia y elija una rama en silencio |
@@ -67,6 +75,7 @@ mientras el comportamiento no deba cambiar, su XES no debe cambiar.
 | `con-error/mensaje-sin-recoger` | Tres solicitudes y una sola recepcion declarada | Que dos mensajes enviados se queden sin recoger y la simulacion termine con buena cara |
 | `con-error/mensaje-al-propio-pool` | Un mensaje dirigido directamente al participante que contiene al emisor | Que un envio al propio pool se acepte como externo en vez de rechazarse con un 400 |
 | `con-error/usuario-ajeno-al-carril` | Una tarea asignada a alguien de otro carril | Que un modelo imposible se simule a medias en vez de rechazarse con un 400 |
+| `con-error/ciclo-de-espera` | El solicitante espera un aviso que solo sale cuando cierra la recepcion a la que tiene que escribir | Que un ciclo de espera real se cuelgue en vez de denunciarse; el mensaje lo afinara la 3.4 |
 
 ## Por qué existe `modelos-con-avisos/`
 
@@ -119,7 +128,7 @@ python3 pruebas/regresion.py
 python3 pruebas/regresion.py --acepta-reorganizacion
 ```
 
-Compara cuatro cosas que no conviene confundir, y vigila una quinta:
+Compara cuatro cosas que no conviene confundir, y vigila dos más:
 
 - **Comportamiento** — qué le ocurre a **cada caso**: qué eventos tiene, cuándo,
   con qué recurso y qué rama elige cada compuerta. Cualquier diferencia es un
@@ -138,6 +147,19 @@ Compara cuatro cosas que no conviene confundir, y vigila una quinta:
   para: enumerar las combinaciones de una bifurcación inclusiva de 20 salidas
   gastaba 128 MiB, y cada salida más lo doblaba. Hoy el que más gasta es el 14,
   con unos 7 MiB. Es un error interno, no un diagnóstico, y no se congela.
+- **El criterio de la 3.2** — el modelo `20-reclamaciones` se ejecuta además
+  con treinta semillas (`banco.CRITERIO_DEL_LOTE`). En cada una se tiene que
+  recoger, reevaluar y responder exactamente lo que se reclamó, y entre todas
+  tienen que salir una con 4 reclamaciones y otra con 6: es la tarea, «el mismo
+  modelo evalúa 4 veces si reclaman 4 y 6 si reclaman 6». Una sola semilla no lo
+  ve: un motor que se quedara corto a partir de 6 pasaría el XES congelado, que
+  tiene 5, y fallaría aquí. Tarda unos cinco segundos.
+
+En las tareas multiinstancia del banco `numberOfExecutions` vale 1, que es lo
+que escribe el Modeler: desde la 3.2 N se calcula en ejecución y ese campo no se
+usa, y si vale otra cosa la validación avisa. Los XES congelados no cambiaron al
+pasar de los números escritos a 1, que es la prueba de que el motor ya no los
+leía.
 
 **La línea entre comportamiento y organización está en el caso, no en la traza.**
 Los eventos se agrupan por caso *antes* de comparar. Aceptar la reorganización no

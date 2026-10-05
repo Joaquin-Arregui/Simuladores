@@ -190,11 +190,11 @@ def _anotacion(caso, recepcion, execution, contexto):
     de una union.
 
     La subida se para en el primer contexto que tenga ALGUNA anotacion de esa
-    recepcion: si esa activacion recogio menos sobres de los que esta respuesta
-    pide, lo honesto es quedarse sin anotacion y que el destino salga de las
-    cardinalidades, no heredar el remitente de una activacion anterior. Hoy no
-    puede pasar, porque con el numero de ejecuciones escrito a mano una vuelta
-    corta se bloquea en vez de seguir; cuando la 3.2 calcule N en ejecucion, si.
+    recepcion, o que la haya cerrado vacia: si esa activacion recogio menos
+    sobres de los que esta respuesta pide, lo honesto es quedarse sin anotacion
+    y que el destino salga de las cardinalidades, no heredar el remitente de una
+    activacion anterior. Desde la 3.2 una respuesta multiinstancia pide tantos
+    como se recogieron (cardinalidad_del_envio), asi que no deberia pasar.
     """
     vistos, frontera = {contexto}, [contexto]
     while frontera:
@@ -213,7 +213,7 @@ def _anotacion(caso, recepcion, execution, contexto):
     return None
 
 
-def destino_de(origin, target, caso, execution, contexto):
+def destino_de(origin, target, caso, execution, contexto, destinatarios=None):
     """El caso al que va un sobre, o None si ninguna regla le asigna uno.
 
     Un sobre tiene un solo destinatario. Cuatro reglas, y el orden importa:
@@ -231,13 +231,14 @@ def destino_de(origin, target, caso, execution, contexto):
     3. Si los dos pools tienen el mismo numero de casos, se emparejan por
        indice. Es el 1:1 que D2 conserva en una colaboracion sin marcadores, y va
        antes que la regla siguiente para que N contra N no se cruce.
-    4. Si quien envia es un pool de un solo caso, el envio es multiinstancia y
-       cada ejecucion escribe a UN caso: el que ocupa esa posicion en el pool de
-       enfrente. Es el 1 a N, y el caso destino no tiene que haber arrancado,
-       por eso la tabla de casos se construye entera antes de lanzar nada (2.2).
-       Hasta la 3.2 el numero de ejecuciones se escribe a mano; si pasa del
-       numero de casos de enfrente, esa ejecucion se queda sin destino y se
-       denuncia, y si se queda corto lo denuncian los casos que nadie atiende.
+    4. Si quien envia es un pool de un solo caso, cada ejecucion escribe a UN
+       caso: el que ocupa esa posicion en el pool de enfrente. Es el 1 a N, y el
+       caso destino no tiene que haber arrancado, por eso la tabla de casos se
+       construye entera antes de lanzar nada (2.2).
+
+    Un envio multiinstancia que abre la conversacion no pasa por las reglas 2 a
+    4: trae ya sus destinatarios, los casos vivos de enfrente que conto al
+    activarse (cardinalidad_del_envio), y la ejecucion i escribe al i-esimo.
 
     Sin regla aplicable no hay destino y publish_message lo dice: entre 3 casos
     y 5 no hay emparejamiento que el motor pueda adivinar.
@@ -247,6 +248,8 @@ def destino_de(origin, target, caso, execution, contexto):
         anotado = _anotacion(caso, recepcion, execution, contexto)
         if anotado is not None:
             return anotado
+    if destinatarios is not None:
+        return destinatarios[execution - 1] if 1 <= execution <= len(destinatarios) else None
     participante = elementParticipant[target]
     enfrente, propios = casos_de(participante), casos_de(caso.participante)
     if len(enfrente) == 1:
@@ -258,7 +261,7 @@ def destino_de(origin, target, caso, execution, contexto):
     return None
 
 
-def publish_message(origin, target, execution, caso, contexto):
+def publish_message(origin, target, execution, caso, contexto, destinatarios=None):
     """Deja el sobre en el buzon de su caso destino y devuelve ese caso.
 
     El sobre lleva el remitente y nada mas: con el gateway de porcentajes el
@@ -274,7 +277,7 @@ def publish_message(origin, target, execution, caso, contexto):
         # emisor sigue su camino, que es lo que hacia antes de la clave por caso
         # destino. No es lo mismo que un receptor sin caso al que dirigirse.
         return None
-    destino = destino_de(origin, target, caso, execution, contexto)
+    destino = destino_de(origin, target, caso, execution, contexto, destinatarios)
     if destino is None:
         raise SimulationError(
             f'El mensaje de {origin} a {target} no tiene caso destino: lo envia '
@@ -288,6 +291,10 @@ def publish_message(origin, target, execution, caso, contexto):
         message_waiters[key].popleft().succeed(caso)
     else:
         messages[key].append(caso)
+    # Esta ejecucion ya no puede escribir mas: si era lo unico que tenia abierta
+    # una recepcion, cierra ahora y no cuando termine el envio entero (D7).
+    enviadas.setdefault((caso, contexto, origin), set()).add(execution)
+    _revisa_lotes()
     return destino
 
 
@@ -300,13 +307,356 @@ def wait_for_message(env, origin, target, execution, caso, contexto):
         event = env.event()
         message_waiters[key].append(event)
         remitente = yield event
-    # Una anotacion por sobre recogido: de ESTE token, de ESTA recepcion y de la
-    # ejecucion que lo recoge. La respuesta de esa misma ejecucion vuelve a ESE
-    # remitente, y ni otra recepcion del caso ni otra activacion de esta le pisan
-    # el contexto.
-    correspondientes[(caso, contexto, target, execution)] = remitente
-    recepciones_anotadas.add((caso, contexto, target))
+    _anota(caso, contexto, target, execution, remitente)
     return remitente
+
+
+def _anota(caso, contexto, recepcion, execution, remitente):
+    """Un sobre recogido: su remitente, y uno mas en el lote de esa activacion.
+
+    La anotacion es de ESTE token, de ESTA recepcion y de la ejecucion que lo
+    recoge: la respuesta de esa misma ejecucion vuelve a ESE remitente, y ni
+    otra recepcion del caso ni otra activacion de esta le pisan el contexto. La
+    cuenta es lo que luego multiplica a la evaluacion y a la respuesta (D8).
+    """
+    correspondientes[(caso, contexto, recepcion, execution)] = remitente
+    recepciones_anotadas.add((caso, contexto, recepcion))
+    clave = (caso, contexto, recepcion)
+    lotes[clave] = lotes.get(clave, 0) + 1
+
+
+def caso_vivo(caso):
+    """Si al caso le queda algo por hacer: un token activo o esperando en una union.
+
+    Un caso que todavia no ha arrancado esta vivo, porque sus eventos de inicio
+    tienen el token desde el principio aunque esperen a su retardo de llegada.
+    """
+    return (any(cuenta > 0 for cuenta in active_tokens[caso].values())
+            or any(any(esperando.values()) for esperando in pending_joins[caso].values()))
+
+
+def tamano_del_lote(caso, contexto, recepcion, tarea):
+    """Cuantos mensajes recogio la recepcion de la que viene este token (D8).
+
+    Se sube por los contextos del token, como _anotacion, hasta la activacion
+    de esa recepcion mas cercana. Cero es un lote valido: una recepcion que
+    cierra sin mensajes deja su cuenta a cero, no la deja sin escribir.
+    """
+    vistos, frontera = {contexto}, [contexto]
+    while frontera:
+        siguiente = []
+        for ctx in frontera:
+            cuenta = lotes.get((caso, ctx, recepcion))
+            if cuenta is not None:
+                return cuenta
+            for padre in contextos_padres.get(ctx, ()):
+                if padre not in vistos:
+                    vistos.add(padre)
+                    siguiente.append(padre)
+        frontera = siguiente
+    raise SimulationError(
+        f'{tarea} ({caso}) es multiinstancia y no encuentra en su camino el lote de '
+        f'{recepcion}: no sabe cuantas ejecuciones lanzar.')
+
+
+def cardinalidad_del_envio(tarea, destino, caso, contexto):
+    """Cuantas ejecuciones lanza un envio multiinstancia, y a quien escribe cada una.
+
+    Si responde a una recepcion, una por mensaje que esa recepcion recogio, y
+    cada ejecucion devuelve el suyo a quien lo escribio (destino_de, regla 1):
+    un caso vivo que no escribio no recibe una respuesta que no espera. Si abre
+    la conversacion, una por caso vivo del pool de enfrente, en orden de indice,
+    y la ejecucion i escribe al i-esimo: N envios con una copia cada uno (2.5).
+    Un caso que ya ha terminado no cuenta, porque nadie recogeria su sobre.
+    """
+    recepcion = recepcionDeRespuesta.get(tarea)
+    if recepcion is not None:
+        plan = tamano_del_lote(caso, contexto, recepcion, tarea), None
+    else:
+        vivos = [otro for otro in casos_de(elementParticipant[destino]) if caso_vivo(otro)]
+        plan = len(vivos), vivos
+    # El cierre de las recepciones necesita saber que le queda por escribir a
+    # esta activacion (_destinos_de_una_activacion).
+    planes[(caso, contexto, tarea)] = plan
+    return plan
+
+
+class Lote:
+    """Una activacion de una recepcion multiinstancia, mientras recoge (D7).
+
+    Recoge todo lo que llegue, sin plazo ni cupo, y cierra cuando ya no puede
+    llegar nada: cuando ningun caso que pueda escribirle tiene un token capaz de
+    alcanzar todavia el envio. N son los mensajes que llegaron, cero incluido.
+    """
+
+    def __init__(self, origen, recepcion, caso, contexto):
+        self.origen, self.recepcion, self.caso, self.contexto = origen, recepcion, caso, contexto
+        self.cerrado = False
+        self.espera = None
+
+    @property
+    def buzon(self):
+        return (self.origen, self.recepcion, self.caso)
+
+
+def _destinos_fijos(remitente, recepcion, desde=1, hasta=None):
+    """A quien mandan las reglas 2 a 4 de destino_de los sobres de las ejecuciones
+    desde..hasta de un envio del remitente a esa recepcion (hasta=None: sin
+    tope). Solo la regla 4 depende de la ejecucion: la i va al caso i."""
+    enfrente, propios = casos_de(elementParticipant[recepcion]), casos_de(remitente.participante)
+    if hasta is not None and hasta < desde:
+        return set()
+    if len(enfrente) == 1:
+        return {enfrente[0]}
+    if len(enfrente) == len(propios):
+        return {otro for otro in enfrente if otro.indice == remitente.indice}
+    if len(propios) == 1:
+        return set(enfrente[desde - 1:hasta])
+    return set()
+
+
+def _escritores_fijos(recepcion, caso):
+    """Quien podria escribir a esa recepcion de ese caso, o None si no se acota.
+
+    Solo por las reglas fijas: si quien escribe a la recepcion es a su vez una
+    respuesta, a quien va depende de lo que anoto, y no se sigue mas lejos.
+    """
+    origen = origenDeRecepcion.get(recepcion)
+    if origen is None or origen in recepcionDeRespuesta:
+        return None
+    escritores = set()
+    for otro in casos_de(elementParticipant[origen]):
+        if origen in enviosMultiinstancia or caso in _destinos_fijos(
+                otro, recepcion, 1, ejecucionesMaximas.get(origen, 1)):
+            escritores.add(otro)
+    return escritores
+
+
+def _activacion_anotada(caso, recepcion, contexto):
+    """La activacion de la recepcion cuya anotacion leeria una respuesta desde
+    este contexto, como _anotacion: su clave (caso, contexto, recepcion), o None."""
+    vistos, frontera = {contexto}, [contexto]
+    while frontera:
+        siguiente = []
+        for ctx in frontera:
+            clave = (caso, ctx, recepcion)
+            if clave in recepciones_anotadas:
+                return clave
+            for padre in contextos_padres.get(ctx, ()):
+                if padre not in vistos:
+                    vistos.add(padre)
+                    siguiente.append(padre)
+        frontera = siguiente
+    return None
+
+
+def _destinos_de_una_activacion(remitente, envio, recepcion_destino, contexto, en_curso):
+    """A que casos pueden ir los sobres que le quedan a una activacion del envio.
+
+    Cada ejecucion escribe a un caso: una respuesta, al que anoto su recepcion
+    para ESA ejecucion, y si no hay anotacion, por las reglas fijas; un envio
+    que abre la conversacion, por las reglas fijas, o al i-esimo de los vivos que
+    conto si es multiinstancia. De la activacion en curso solo cuentan las
+    ejecuciones que aun no han escrito: las que ya lo hicieron no pueden mandar
+    nada mas, y su destinatario no tiene por que seguir esperando.
+
+    Cuantas ejecuciones tiene: las N que conto al activarse si es
+    multiinstancia; sin marca, ejecucionesMaximas, que mira el bucle y que con
+    Time o Percentage no tiene tope. None si puede ir a cualquiera.
+    """
+    multiinstancia = envio in enviosMultiinstancia
+    respuesta = recepcionDeRespuesta.get(envio)
+    plan = planes.get((remitente, contexto, envio)) if en_curso else None
+    hechas = enviadas.get((remitente, contexto, envio), ()) if en_curso else ()
+    if multiinstancia and respuesta is None:
+        if plan is None:
+            return None
+        cuantas, destinatarios = plan
+        return {destinatarios[k - 1] for k in range(1, cuantas + 1) if k not in hechas}
+    anotada = _activacion_anotada(remitente, respuesta, contexto) if respuesta is not None else None
+    recogidos = lotes.get(anotada, 0) if anotada is not None else 0
+    if multiinstancia:
+        maximo = plan[0] if plan is not None else recogidos
+    else:
+        maximo = ejecucionesMaximas.get(envio, 1)
+    if maximo is not None:
+        pendientes, desde = [k for k in range(1, maximo + 1) if k not in hechas], None
+    else:
+        tope = max(hechas, default=0)
+        pendientes, desde = [k for k in range(1, tope + 1) if k not in hechas], tope + 1
+        # Sin tope, todas las que vengan: las anotadas, una a una, y el resto
+        # por las reglas fijas de golpe.
+        pendientes += list(range(desde, recogidos + 1))
+        desde = max(desde, recogidos + 1)
+
+    def una(k):
+        anotado = correspondientes.get(anotada + (k,)) if anotada is not None else None
+        return {anotado} if anotado is not None else _destinos_fijos(remitente, recepcion_destino, k, k)
+
+    destinos = set()
+    for k in pendientes:
+        destinos |= una(k)
+    if desde is not None:
+        destinos |= _destinos_fijos(remitente, recepcion_destino, desde, None)
+    return destinos
+
+
+def _destinos_del_token(remitente, envio, recepcion_destino, nodo, contexto):
+    """A que casos puede ir todavia un sobre del envio mandado por este token, o
+    None si a cualquiera. Es lo que decide si el token mantiene abierta una
+    recepcion (D7).
+
+    Si el token esta en el envio, cuentan las ejecuciones que le quedan; si aun
+    no ha llegado, o puede volver a el por un ciclo, una activacion entera. Y si
+    antes de llegar puede pasar otra vez por la recepcion a la que responde, la
+    anotacion la hara quien le escriba entonces, y puede anotar menos de las que
+    salgan: cuentan tambien quienes podrian escribirle y las reglas fijas.
+    """
+    destinos = set()
+    if nodo == envio:
+        actual = _destinos_de_una_activacion(remitente, envio, recepcion_destino, contexto, True)
+        if actual is None:
+            return None
+        destinos |= actual
+        if envio not in enviosEnCiclo:
+            return destinos
+    futura = _destinos_de_una_activacion(remitente, envio, recepcion_destino, contexto, False)
+    if futura is None:
+        return None
+    destinos |= futura
+    respuesta = recepcionDeRespuesta.get(envio)
+    if (respuesta is not None and respuesta in alcanzaDesde.get(nodo, ())
+            and envio in alcanzaDesde.get(respuesta, ())):
+        if envio not in enviosMultiinstancia:
+            destinos |= _destinos_fijos(remitente, recepcion_destino, 1, ejecucionesMaximas.get(envio, 1))
+        escritores = _escritores_fijos(respuesta, remitente)
+        if escritores is None:
+            return None
+        destinos |= escritores
+    return destinos
+
+
+def _alguien_puede_escribir(lote):
+    """Si algun token vivo puede llegar todavia al envio y mandar su sobre a lote.caso.
+
+    Se mira token a token, con su contexto, y no caso a caso: en varias parejas
+    1:1 el servicio 3 sigue vivo y puede responder, pero su respuesta va al
+    cliente 3, y la recepcion del cliente 1 no tiene por que esperarla.
+    """
+    def le_escribe(remitente, nodo, contexto):
+        if lote.origen not in alcanzaDesde.get(nodo, ()):
+            return False
+        destinos = _destinos_del_token(remitente, lote.origen, lote.recepcion, nodo, contexto)
+        return destinos is None or lote.caso in destinos
+
+    for remitente in casos_de(elementParticipant[lote.origen]):
+        for (nodo, contexto), cuenta in tokensVivos[remitente].items():
+            if cuenta > 0 and le_escribe(remitente, nodo, contexto):
+                return True
+        for union, por_flujo in join_waits[remitente].items():
+            for llegadas in por_flujo.values():
+                if any(le_escribe(remitente, union, contexto) for _, contexto in llegadas):
+                    return True
+    return False
+
+
+def _cierra(lote):
+    """Ya no puede llegar nada: la ejecucion que esperaba el siguiente sobre se va."""
+    lote.cerrado = True
+    lotesAbiertos.remove(lote)
+    espera, lote.espera = lote.espera, None
+    if espera is not None and not espera.triggered:
+        message_waiters[lote.buzon].remove(espera)
+        espera.succeed(None)
+
+
+def _revisa_lotes():
+    """Cierra las recepciones a las que ya no puede llegar nada.
+
+    Solo cambia cuando se mueve un token, asi que basta con mirarlo al final de
+    cada nodo y de cada inicio. Cada recepcion se mira por su cuenta, y por eso
+    dos abiertas a la vez no se esperan: lo que cierra a una son los tokens de
+    quienes le escriben, no lo que haga la otra.
+    """
+    for lote in list(lotesAbiertos):
+        if not _alguien_puede_escribir(lote):
+            _cierra(lote)
+
+
+def abre_lote(origen, recepcion, caso, contexto):
+    lote = Lote(origen, recepcion, caso, contexto)
+    lotesAbiertos.append(lote)
+    if not _alguien_puede_escribir(lote):
+        _cierra(lote)
+    return lote
+
+
+def espera_en_lote(env, lote, execution):
+    """El siguiente sobre del lote, o None si ya no va a llegar ninguno.
+
+    Lo que ya esta en el buzon es del lote aunque este cerrado: llego antes de
+    que nadie pudiera dejar de escribir.
+    """
+    buzon = messages[lote.buzon]
+    if buzon:
+        remitente = buzon.popleft()
+    elif lote.cerrado:
+        return None
+    else:
+        evento = env.event()
+        lote.espera = evento
+        message_waiters[lote.buzon].append(evento)
+        remitente = yield evento
+        lote.espera = None
+        if remitente is None:
+            return None
+    _anota(lote.caso, lote.contexto, lote.recepcion, execution, remitente)
+    return remitente
+
+
+def recoge_lote(env, origen, recepcion, caso, contexto, ejecuta, paralelo):
+    """Una recepcion multiinstancia: una ejecucion por sobre, hasta que cierre.
+
+    En paralelo hay siempre una ejecucion esperando el siguiente sobre, y en
+    cuanto recibe el suyo deja otra esperando: es lo que hacian las N
+    ejecuciones lanzadas a la vez cuando N estaba escrito, y por eso cada sobre
+    va a la misma ejecucion que antes y su espera cuenta desde que se activo la
+    recepcion. En secuencia, cada una espera cuando termina la anterior.
+    Cuando cierra, la que esperaba se va sin registrar nada, y la recepcion
+    termina con las demas. Con cero sobres no ejecuta nada ni ocupa a nadie.
+    """
+    lote = abre_lote(origen, recepcion, caso, contexto)
+    inicio = env.now
+    if paralelo:
+        ejecuciones, fin = [], env.event()
+
+        def ejecucion(numero):
+            remitente = yield env.process(espera_en_lote(env, lote, numero))
+            if remitente is None:
+                fin.succeed()
+                return
+            ejecuciones.append(env.process(ejecucion(numero + 1)))
+            yield from ejecuta(env, recepcion, caso, numero, (remitente, inicio))
+
+        ejecuciones.append(env.process(ejecucion(1)))
+        yield fin
+        yield simpy.AllOf(env, ejecuciones)
+    else:
+        def ejecucion_secuencial(numero):
+            empieza = env.now
+            remitente = yield env.process(espera_en_lote(env, lote, numero))
+            if remitente is None:
+                return False
+            yield from ejecuta(env, recepcion, caso, numero, (remitente, empieza))
+            return True
+
+        numero = 1
+        while (yield env.process(ejecucion_secuencial(numero))):
+            numero += 1
+    # El lote queda escrito aunque este vacio: la evaluacion y la respuesta lo
+    # buscan, y cero es una respuesta, no la falta de una.
+    lotes.setdefault((caso, contexto, recepcion), 0)
+    recepciones_anotadas.add((caso, contexto, recepcion))
 
 
 def publish_data(data_object, caso):
@@ -380,15 +730,32 @@ def _register(node, caso, incoming_flow=None, contexto=None):
         # lo que espera aqui, lo segundo para que la union herede su contexto.
         join_waits[caso].setdefault(node, {}).setdefault(incoming_flow, deque()).append((env.now, contexto))
     else:
-        active_tokens[caso][node] += 1
-        env.process(_run_node(node, caso, nuevo_contexto([contexto] if contexto is not None else [])))
+        _activa(node, caso, nuevo_contexto([contexto] if contexto is not None else []))
 
 
-def _release_token(caso, node):
+def _activa(node, caso, contexto):
+    """Un token entra en un nodo: se cuenta, se apunta con su contexto y arranca.
+
+    El contexto hace falta para saber a quien puede escribir todavia el caso
+    (_alguien_puede_escribir): una respuesta va a quien anoto su recepcion en el
+    linaje de ESE token.
+    """
+    active_tokens[caso][node] += 1
+    tokensVivos[caso][(node, contexto)] += 1
+    env.process(_run_node(node, caso, contexto))
+
+
+def _release_token(caso, node, contexto):
     tokens = active_tokens[caso]
     tokens[node] -= 1
     if tokens[node] <= 0:
         del tokens[node]
+    vivos = tokensVivos[caso]
+    vivos[(node, contexto)] -= 1
+    if vivos[(node, contexto)] <= 0:
+        del vivos[(node, contexto)]
+        enviadas.pop((caso, contexto, node), None)
+        planes.pop((caso, contexto, node), None)
 
 
 def _registra_espera_union(caso, node, edge):
@@ -431,8 +798,7 @@ def _flush_joins(caso):
                             heredados.append(contexto)
                 if not any(counts.values()):
                     del joins[node]
-                active_tokens[caso][node] += 1
-                env.process(_run_node(node, caso, nuevo_contexto(heredados)))
+                _activa(node, caso, nuevo_contexto(heredados))
                 changed = True
 
 
@@ -457,11 +823,12 @@ def _route(node, caso, result, contexto):
 def _run_node(node, caso, contexto):
     function_name = 'node_' + node.encode('utf-8').hex()
     result = yield env.process(globals()[function_name](env, caso, contexto))
-    _release_token(caso, node)
+    _release_token(caso, node, contexto)
     _route(node, caso, result, contexto)
     if node in endEvents:
         completed[caso] += 1
     _flush_joins(caso)
+    _revisa_lotes()
 
 
 def _start_event(node, caso, delay, contexto):
@@ -486,9 +853,10 @@ def _start_event(node, caso, delay, contexto):
         values.append(('string', 'bpmn:messageOrigin', item['origin']))
         values.append(('string', 'bpmn:messageSender', remitente))
     _append_event(caso, values)
-    _release_token(caso, node)
+    _release_token(caso, node, contexto)
     _route(node, caso, item['next'], contexto)
     _flush_joins(caso)
+    _revisa_lotes()
 
 
 def _assert_complete():
@@ -580,7 +948,7 @@ def _finalize_item(item):
 def _run_simulation():
     global env, simulationResults, colasPorParticipante
     global messages, message_waiters, correspondientes, recepciones_anotadas
-    global contextos_padres, contador_contextos
+    global contextos_padres, contador_contextos, lotes, lotesAbiertos, tokensVivos, enviadas, planes
     global data, data_changed, active_tokens, pending_joins
     global reachability, completed, startDate, join_waits
     global casosPorParticipante, casosArrancados
@@ -613,6 +981,13 @@ def _run_simulation():
     # Que recepciones tienen ya alguna anotacion en cada contexto, para que
     # _anotacion no tenga que recorrer todas las anotaciones para saberlo.
     recepciones_anotadas = set()
+    # Cuantos sobres recogio cada activacion de cada recepcion, y que recepciones
+    # multiinstancia siguen recogiendo (D7).
+    lotes, lotesAbiertos = {}, []
+    # Cada token vivo con su contexto, y de cada activacion de un envio que
+    # ejecuciones han escrito ya y cuantas tiene: con eso se sabe a quien puede
+    # ir todavia un sobre (_destinos_del_token).
+    tokensVivos, enviadas, planes = defaultdict(Counter), {}, {}
     data = {(item, caso) for item in defaultData for caso in simulationResults}
     data_changed = {}
     active_tokens, pending_joins = defaultdict(Counter), defaultdict(dict)
@@ -624,9 +999,10 @@ def _run_simulation():
             if indice > instanciasPorParticipante[elementParticipant[node]]:
                 continue
             caso = caso_de(node, indice)
+            contexto = nuevo_contexto([])
             active_tokens[caso][node] += 1
-            env.process(_start_event(node, caso, (indice - 1) * item['frequency'],
-                                     nuevo_contexto([])))
+            tokensVivos[caso][(node, contexto)] += 1
+            env.process(_start_event(node, caso, (indice - 1) * item['frequency'], contexto))
     env.run()
     _assert_complete()
     metadata = ET.fromstring(logMetadata)

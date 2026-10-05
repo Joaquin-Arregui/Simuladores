@@ -58,14 +58,20 @@ f'''
             <date key="time:duration" value="{{xml_value(env.now-start_standBy_data)}}"/>
             <int key="bpmn:instance" value="{{xml_value(caso.indice)}}"/>
         </event>''')"""
+    # Sin marca, numberOfExecutions sigue siendo el numero de repeticiones de
+    # siempre; con la marca, N se calcula en ejecucion (3.2) y ese campo no se usa.
+    cuantas = 'N' if element.multiInstanceType is not None else element.numberOfExecutions
+    if element.multiInstanceType is not None:
+        functionStr = functionStr + f"""
+    N = tamano_del_lote(caso, contexto, loteDeEvaluacion[TaskName], TaskName)"""
     if element.multiInstanceType == True or (element.multiInstanceType == None and element.loopParameter == None):
         functionStr = functionStr + f"""
-    for execution in range({element.numberOfExecutions}):
+    for execution in range({cuantas}):
         yield env.process(executeTask(env, TaskName, caso, execution+1))"""
     elif element.multiInstanceType == False:
         functionStr = functionStr + f"""
     executionProcesses = []
-    for execution in range({element.numberOfExecutions}):
+    for execution in range({cuantas}):
         executionProcesses.append(env.process(executeTask(env, TaskName, caso, execution+1)))
     yield simpy.AllOf(env, executionProcesses)"""
     elif element.multiInstanceType == None:

@@ -186,3 +186,61 @@ def referencias_huerfanas():
             sueltas |= {p for p in carpeta_.glob("*.avisos.txt")}
             sueltas |= {p for p in carpeta_.glob("*.error.txt")}
     return sorted(p.relative_to(ESPERADO) for p in sueltas - esperadas)
+
+
+# El criterio de la tarea 3.2: el MISMO modelo evalua 4 veces si reclaman 4 y 6
+# si reclaman 6, sin tocar sus parametros. Con una sola semilla eso no se ve, asi
+# que el modelo de las reclamaciones se ejecuta con varias, y en cada una tiene
+# que recogerse, reevaluarse y responderse exactamente lo que se reclamo. Que
+# entre ellas salgan el 4 y el 6 es lo que pide el criterio; con diez casos al
+# 50 % y treinta semillas salen los dos de sobra, y la cuenta es determinista.
+CRITERIO_DEL_LOTE = {
+    "modelo": "20-reclamaciones",
+    "semillas": range(1, 31),
+    "cuenta": ("Reclamar", "bpmn:SendTask"),
+    "iguales": (("Recoger_Reclamaciones", "bpmn:ReceiveTask"), ("Reevaluar", "bpmn:Task"),
+                ("Responder", "bpmn:SendTask")),
+    "tienen_que_salir": (4, 6),
+}
+
+
+def cuenta_eventos(xes, ident, tipo):
+    """Cuantos eventos de ese elemento y ese tipo hay en un XES: uno por ejecucion."""
+    import xml.etree.ElementTree as ET
+    total = 0
+    for evento in ET.fromstring(xes.encode("utf-8")).iter("{http://www.xes-standard.org/}event"):
+        valores = {hijo.get("key"): hijo.get("value") for hijo in evento}
+        if valores.get("bpmn:id") == ident and valores.get("bpmn:type") == tipo:
+            total += 1
+    return total
+
+
+def revisa_criterio_del_lote():
+    """(lineas, fallos) del criterio de la 3.2 sobre varias semillas."""
+    criterio = CRITERIO_DEL_LOTE
+    ruta = MODELOS / (criterio["modelo"] + ".txt")
+    if not ruta.exists():
+        return ["falta el modelo %s" % ruta.name], 1
+    texto = ruta.read_text(encoding="utf-8")
+    lineas, fallos, vistos = [], 0, {}
+    for semilla in criterio["semillas"]:
+        try:
+            xes = processSimulation(texto, seed=semilla).simulation
+        except Exception as error:
+            lineas.append("semilla %d: %s: %s" % (semilla, type(error).__name__, error))
+            fallos += 1
+            continue
+        reclamadas = cuenta_eventos(xes, *criterio["cuenta"])
+        vistos[reclamadas] = vistos.get(reclamadas, 0) + 1
+        for ident, tipo in criterio["iguales"]:
+            hechas = cuenta_eventos(xes, ident, tipo)
+            if hechas != reclamadas:
+                lineas.append("semilla %d: %d %s y %d %s" % (semilla, reclamadas, criterio["cuenta"][0], hechas, ident))
+                fallos += 1
+    faltan = [n for n in criterio["tienen_que_salir"] if n not in vistos]
+    if faltan:
+        lineas.append("ninguna semilla da %s reclamaciones" % " ni ".join(map(str, faltan)))
+        fallos += 1
+    reparto = ", ".join("%d: %d" % par for par in sorted(vistos.items()))
+    lineas.insert(0, "%d semillas; reclamaciones (cuantas: semillas) %s" % (len(criterio["semillas"]), reparto))
+    return lineas, fallos

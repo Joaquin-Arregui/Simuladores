@@ -17,7 +17,7 @@
     <bpmn:startEvent id="Ini_O" name="Abre la convocatoria">
       <bpmn:outgoing>o1</bpmn:outgoing>
     </bpmn:startEvent>
-    <bpmn:sendTask id="Convocar" name="Publicar la convocatoria" user:NumberOfExecutions="3" user:minimumTime="2" user:maximumTime="2">
+    <bpmn:sendTask id="Convocar" name="Publicar la convocatoria" user:NumberOfExecutions="1" user:minimumTime="2" user:maximumTime="2">
       <user:UserTask>Ana</user:UserTask>
       <bpmn:incoming>o1</bpmn:incoming>
       <bpmn:outgoing>o2</bpmn:outgoing>
@@ -28,7 +28,7 @@
       <bpmn:outgoing>o3</bpmn:outgoing>
       <bpmn:outgoing>o4</bpmn:outgoing>
     </bpmn:parallelGateway>
-    <bpmn:receiveTask id="Recoger" name="Recoger una solicitud" user:NumberOfExecutions="3" user:minimumTime="1" user:maximumTime="1">
+    <bpmn:receiveTask id="Recoger" name="Recoger una solicitud" user:NumberOfExecutions="1" user:minimumTime="1" user:maximumTime="1">
       <user:UserTask>Ana</user:UserTask>
       <bpmn:incoming>o3</bpmn:incoming>
       <bpmn:outgoing>o5</bpmn:outgoing>
@@ -49,7 +49,7 @@
       <bpmn:incoming>o10</bpmn:incoming>
       <bpmn:outgoing>o8</bpmn:outgoing>
     </bpmn:exclusiveGateway>
-    <bpmn:task id="Evaluar" name="Evaluar una solicitud" user:NumberOfExecutions="3" user:minimumTime="10" user:maximumTime="20">
+    <bpmn:task id="Evaluar" name="Evaluar una solicitud" user:NumberOfExecutions="1" user:minimumTime="10" user:maximumTime="20">
       <user:UserTask>Ana</user:UserTask>
       <bpmn:incoming>o8</bpmn:incoming>
       <bpmn:outgoing>o9</bpmn:outgoing>
@@ -60,7 +60,7 @@
       <bpmn:outgoing>o10</bpmn:outgoing>
       <bpmn:outgoing>o11</bpmn:outgoing>
     </bpmn:exclusiveGateway>
-    <bpmn:sendTask id="Responder" name="Responder a una solicitud" user:NumberOfExecutions="3" user:minimumTime="1" user:maximumTime="1">
+    <bpmn:sendTask id="Responder" name="Responder a una solicitud" user:NumberOfExecutions="1" user:minimumTime="1" user:maximumTime="1">
       <user:UserTask>Ana</user:UserTask>
       <bpmn:incoming>o11</bpmn:incoming>
       <bpmn:outgoing>o12</bpmn:outgoing>

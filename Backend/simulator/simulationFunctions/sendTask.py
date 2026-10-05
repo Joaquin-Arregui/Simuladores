@@ -2,7 +2,7 @@ def sendTask(elements, element, script):
     from simulator.simulationFunctions.generateFunction import generateFunction, function_name, xml_template
     functionStr = f"""
 def {function_name(element.id_bpmn)}(env, caso, contexto):
-    def executeTask(env, TaskName, caso, execution):
+    def executeTask(env, TaskName, caso, execution, destinatarios=None):
         start_standBy = env.now
         possibleUsers = resolve_possible_users({element.userTask}, TaskName)
         # Users are handed out in order of arrival (see UserQueue in runtime.py).
@@ -27,7 +27,7 @@ f'''
             yield env.timeout(time)
             # El sobre sale antes de registrar el envio, para poder anotar a que
             # caso va. No consume tiempo, asi que el instante no cambia.
-            destino = publish_message(TaskName, {element.messageDestiny!r}, execution, caso, contexto)
+            destino = publish_message(TaskName, {element.messageDestiny!r}, execution, caso, contexto, destinatarios)
             simulationResults[caso].append(
 f'''
         <event>
@@ -63,15 +63,24 @@ f'''
             <date key="time:duration" value="{{xml_value(env.now-start_standBy_data)}}"/>
             <int key="bpmn:instance" value="{{xml_value(caso.indice)}}"/>
         </event>''')"""
+    # Sin marca, numberOfExecutions sigue siendo el numero de repeticiones de
+    # siempre; con la marca, N se calcula en ejecucion (3.2) y ese campo no se usa.
+    cuantas = 'N' if element.multiInstanceType is not None else element.numberOfExecutions
+    if element.multiInstanceType is not None:
+        functionStr = functionStr + f"""
+    N, destinatarios = cardinalidad_del_envio(TaskName, {element.messageDestiny!r}, caso, contexto)"""
+    else:
+        functionStr = functionStr + f"""
+    destinatarios = None"""
     if element.multiInstanceType == True or (element.multiInstanceType == None and element.loopParameter == None):
         functionStr = functionStr + f"""
-    for execution in range({element.numberOfExecutions}):
-        yield env.process(executeTask(env, TaskName, caso, execution+1))"""
+    for execution in range({cuantas}):
+        yield env.process(executeTask(env, TaskName, caso, execution+1, destinatarios))"""
     elif element.multiInstanceType == False:
         functionStr = functionStr + f"""
     executionProcesses = []
-    for execution in range({element.numberOfExecutions}):
-        executionProcesses.append(env.process(executeTask(env, TaskName, caso, execution+1)))
+    for execution in range({cuantas}):
+        executionProcesses.append(env.process(executeTask(env, TaskName, caso, execution+1, destinatarios)))
     yield simpy.AllOf(env, executionProcesses)"""
     elif element.multiInstanceType == None:
         if "Time" in element.loopParameter.keys():

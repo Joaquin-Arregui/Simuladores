@@ -1,0 +1,39 @@
+# Modelo de referencia 26 - una respuesta que se repite con un bucle (D7).
+# Un servicio y tres clientes. El servicio avisa al primer cliente, recibe su
+# peticion y le responde con un bucle de dos vueltas (loopParameter Units=2,
+# numberOfExecutions=1). La primera vuelta va a quien anoto la recepcion, el
+# cliente 1; la segunda ya no tiene anotacion y sale por las reglas fijas, que
+# con un servicio y tres clientes la mandan al cliente 2. Cada cliente recoge
+# las respuestas con una recepcion multiinstancia: la del cliente 2 tiene que
+# seguir abierta mientras el bucle pueda llegar a su segunda vuelta. Contar las
+# ejecuciones por numberOfExecutions la cerraba antes, y la segunda respuesta
+# se quedaba sin recoger (422); cambiar ese campo a 2, que el bucle no usa, lo
+# arreglaba por casualidad. El cliente 3 no recibe nada y cierra vacio.
+# Y al reves: en cuanto la primera vuelta escribe al cliente 1 (t=16), a ese
+# cliente ya no puede llegarle nada, porque la vuelta que queda va al 2. Su
+# recepcion cierra entonces y no cuando acaba el bucle: el cliente 1 termina
+# en t=17, no en t=25. El registro congelado fija los dos instantes.
+Element: [type=bpmn:Collaboration, id_bpmn='Colaboracion', name='Respuesta en bucle', instances=1]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Servicio', name='Servicio', frequency=0, userWithoutRole=['Sara'], instances=1, participantMultiplicity='true', infiniteResources='true', containedElements=['Inicio_S', 'Convocar', 'Recibir_Peticion', 'Responder', 'Fin_S', 's1', 's2', 's3', 's4']]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Cliente', name='Cliente', frequency=10, userWithoutRole=['Carla'], instances=3, participantMultiplicity='true', infiniteResources='true', containedElements=['Inicio_C', 'Esperar_Aviso', 'Enviar_Peticion', 'Esperar_Respuesta', 'Fin_C', 'c1', 'c2', 'c3', 'c4']]
+Element: [type=bpmn:StartEvent, id_bpmn='Inicio_S', name='Arranca el servicio', subTask='Convocar']
+Element: [type=bpmn:SendTask, id_bpmn='Convocar', name='Avisar al primer cliente', userTask='Sara', numberOfExecutions=1, minimumTime=1, maximumTime=2, subTask='Recibir_Peticion']
+Element: [type=bpmn:ReceiveTask, id_bpmn='Recibir_Peticion', name='Recibir la peticion', userTask='Sara', numberOfExecutions=1, minimumTime=1, maximumTime=2, subTask='Responder']
+Element: [type=bpmn:SendTask, id_bpmn='Responder', name='Responder', userTask='Sara', numberOfExecutions=1, minimumTime=5, maximumTime=10, loopParameter={'Units': 2}, subTask='Fin_S']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_S', name='Fin del servicio', subTask='']
+Element: [type=bpmn:StartEvent, id_bpmn='Inicio_C', name='Arranca el cliente', subTask='Esperar_Aviso']
+Element: [type=bpmn:ReceiveTask, id_bpmn='Esperar_Aviso', name='Recoger los avisos', userTask='Carla', numberOfExecutions=1, multiInstanceType='false', minimumTime=1, maximumTime=2, subTask='Enviar_Peticion']
+Element: [type=bpmn:SendTask, id_bpmn='Enviar_Peticion', name='Pedir por cada aviso', userTask='Carla', numberOfExecutions=1, multiInstanceType='false', minimumTime=2, maximumTime=4, subTask='Esperar_Respuesta']
+Element: [type=bpmn:ReceiveTask, id_bpmn='Esperar_Respuesta', name='Recoger las respuestas', userTask='Carla', numberOfExecutions=1, multiInstanceType='false', minimumTime=1, maximumTime=2, subTask='Fin_C']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_C', name='Fin del cliente', subTask='']
+Element: [type=bpmn:SequenceFlow, id_bpmn='s1', name='', superElement='Inicio_S', subElement='Convocar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='s2', name='', superElement='Convocar', subElement='Recibir_Peticion']
+Element: [type=bpmn:SequenceFlow, id_bpmn='s3', name='', superElement='Recibir_Peticion', subElement='Responder']
+Element: [type=bpmn:SequenceFlow, id_bpmn='s4', name='', superElement='Responder', subElement='Fin_S']
+Element: [type=bpmn:SequenceFlow, id_bpmn='c1', name='', superElement='Inicio_C', subElement='Esperar_Aviso']
+Element: [type=bpmn:SequenceFlow, id_bpmn='c2', name='', superElement='Esperar_Aviso', subElement='Enviar_Peticion']
+Element: [type=bpmn:SequenceFlow, id_bpmn='c3', name='', superElement='Enviar_Peticion', subElement='Esperar_Respuesta']
+Element: [type=bpmn:SequenceFlow, id_bpmn='c4', name='', superElement='Esperar_Respuesta', subElement='Fin_C']
+Element: [type=bpmn:MessageFlow, id_bpmn='Mensaje_Aviso', name='Aviso', superElement='Convocar', subElement='Esperar_Aviso']
+Element: [type=bpmn:MessageFlow, id_bpmn='Mensaje_Peticion', name='Peticion', superElement='Enviar_Peticion', subElement='Recibir_Peticion']
+Element: [type=bpmn:MessageFlow, id_bpmn='Mensaje_Respuesta', name='Respuesta', superElement='Responder', subElement='Esperar_Respuesta']

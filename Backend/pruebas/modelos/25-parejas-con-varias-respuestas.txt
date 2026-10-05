@@ -1,0 +1,37 @@
+# Modelo de referencia 25 - varias parejas 1:1, cada una con su lote (D7).
+# Cuatro clientes y cuatro servicios, emparejados por indice como en el 02. Cada
+# servicio atiende la peticion de SU cliente y le responde una o mas veces: tras
+# cada respuesta decide con un gateway de porcentajes si amplia. El cliente
+# recoge las respuestas con una recepcion multiinstancia, que cierra cuando SU
+# servicio ya no puede responderle, y lee una por una.
+# Los servicios de los demas siguen vivos y pueden responder, pero su respuesta
+# va a quien anoto su recepcion, que es otro cliente: la recepcion del cliente 1
+# no tiene por que esperarlos. Mirar si el remitente puede escribir, sin mirar
+# a quien, la tenia abierta hasta que acababa el ultimo servicio. Los dos pools
+# van con recursos infinitos para que cada pareja dependa solo de si misma.
+Element: [type=bpmn:Collaboration, id_bpmn='Colaboracion', name='Parejas con varias respuestas', instances=4]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Cliente', name='Cliente', frequency=30, userWithoutRole=['Carla'], infiniteResources='true', containedElements=['Inicio_C', 'Enviar_Peticion', 'Esperar_Respuesta', 'Leer', 'Fin_C', 'c1', 'c2', 'c3', 'c4']]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Servicio', name='Servicio', frequency=0, userWithoutRole=['Sara'], infiniteResources='true', containedElements=['Inicio_S', 'Recibir_Peticion', 'Atender', 'Enviar_Respuesta', 'Ampliar', 'Fin_S', 's1', 's2', 's3', 's4', 's5', 's6']]
+Element: [type=bpmn:StartEvent, id_bpmn='Inicio_C', name='Arranca el cliente', subTask='Enviar_Peticion']
+Element: [type=bpmn:SendTask, id_bpmn='Enviar_Peticion', name='Enviar la peticion', userTask='Carla', numberOfExecutions=1, minimumTime=5, maximumTime=10, subTask='Esperar_Respuesta']
+Element: [type=bpmn:ReceiveTask, id_bpmn='Esperar_Respuesta', name='Recoger una respuesta', userTask='Carla', numberOfExecutions=1, multiInstanceType='false', minimumTime=1, maximumTime=2, subTask='Leer']
+Element: [type=bpmn:Task, id_bpmn='Leer', name='Leer una respuesta', userTask='Carla', numberOfExecutions=1, multiInstanceType='false', minimumTime=5, maximumTime=10, subTask='Fin_C']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_C', name='Fin del cliente', subTask='']
+Element: [type=bpmn:StartEvent, id_bpmn='Inicio_S', name='Arranca el servicio', subTask='Recibir_Peticion']
+Element: [type=bpmn:ReceiveTask, id_bpmn='Recibir_Peticion', name='Recibir la peticion', userTask='Sara', numberOfExecutions=1, minimumTime=1, maximumTime=2, subTask='Atender']
+Element: [type=bpmn:Task, id_bpmn='Atender', name='Atender la peticion', userTask='Sara', numberOfExecutions=1, minimumTime=20, maximumTime=60, subTask='Enviar_Respuesta']
+Element: [type=bpmn:SendTask, id_bpmn='Enviar_Respuesta', name='Enviar una respuesta', userTask='Sara', numberOfExecutions=1, minimumTime=1, maximumTime=2, subTask='Ampliar']
+Element: [type=bpmn:ExclusiveGateway, id_bpmn='Ampliar', name='Ampliar la respuesta?', subTask='Atender,Fin_S']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_S', name='Fin del servicio', subTask='']
+Element: [type=bpmn:SequenceFlow, id_bpmn='c1', name='', superElement='Inicio_C', subElement='Enviar_Peticion']
+Element: [type=bpmn:SequenceFlow, id_bpmn='c2', name='', superElement='Enviar_Peticion', subElement='Esperar_Respuesta']
+Element: [type=bpmn:SequenceFlow, id_bpmn='c3', name='', superElement='Esperar_Respuesta', subElement='Leer']
+Element: [type=bpmn:SequenceFlow, id_bpmn='c4', name='', superElement='Leer', subElement='Fin_C']
+Element: [type=bpmn:SequenceFlow, id_bpmn='s1', name='', superElement='Inicio_S', subElement='Recibir_Peticion']
+Element: [type=bpmn:SequenceFlow, id_bpmn='s2', name='', superElement='Recibir_Peticion', subElement='Atender']
+Element: [type=bpmn:SequenceFlow, id_bpmn='s3', name='', superElement='Atender', subElement='Enviar_Respuesta']
+Element: [type=bpmn:SequenceFlow, id_bpmn='s4', name='', superElement='Enviar_Respuesta', subElement='Ampliar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='s5', name='', superElement='Ampliar', subElement='Atender', percentageOfBranches=50]
+Element: [type=bpmn:SequenceFlow, id_bpmn='s6', name='', superElement='Ampliar', subElement='Fin_S', percentageOfBranches=50]
+Element: [type=bpmn:MessageFlow, id_bpmn='Mensaje_Peticion', name='Peticion', superElement='Enviar_Peticion', subElement='Recibir_Peticion']
+Element: [type=bpmn:MessageFlow, id_bpmn='Mensaje_Respuesta', name='Respuesta', superElement='Enviar_Respuesta', subElement='Esperar_Respuesta']

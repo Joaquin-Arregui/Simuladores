@@ -5,7 +5,7 @@
 # rechaza en vez de inventarse un numero.
 Element: [type=bpmn:Process, id_bpmn='Proceso', name='Multiinstancia sin fuente', instances=1, frequency=0, userWithoutRole=['Ana'], userWithRole={}]
 Element: [type=bpmn:StartEvent, id_bpmn='Ini', name='Inicio', subTask='Trabajar']
-Element: [type=bpmn:Task, id_bpmn='Trabajar', name='Trabajar tres veces a la vez', userTask='Ana', numberOfExecutions=3, multiInstanceType='false', minimumTime=5, maximumTime=10, subTask='Fin']
+Element: [type=bpmn:Task, id_bpmn='Trabajar', name='Trabajar tres veces a la vez', userTask='Ana', numberOfExecutions=1, multiInstanceType='false', minimumTime=5, maximumTime=10, subTask='Fin']
 Element: [type=bpmn:EndEvent, id_bpmn='Fin', name='Fin', subTask='']
 Element: [type=bpmn:SequenceFlow, id_bpmn='f1', name='', superElement='Ini', subElement='Trabajar']
 Element: [type=bpmn:SequenceFlow, id_bpmn='f2', name='', superElement='Trabajar', subElement='Fin']

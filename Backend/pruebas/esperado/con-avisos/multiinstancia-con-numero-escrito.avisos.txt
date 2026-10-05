@@ -1,0 +1,1 @@
+Convocar (bpmn:SendTask): numberOfExecutions=4 no se usa; en una tarea multiinstancia N se calcula en ejecución.

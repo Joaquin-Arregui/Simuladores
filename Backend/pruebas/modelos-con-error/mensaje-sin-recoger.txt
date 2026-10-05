@@ -6,7 +6,7 @@
 # terminaba BIEN perdiendo dos solicitudes, y con la clave por caso destino
 # fallaba por no tener a quien escribir. Ahora el N a 1 ya sabe a donde va, y lo
 # que queda al descubierto es la perdida: la recepcion tendria que ser
-# multiinstancia, que es la 3.2.
+# multiinstancia, y entonces, desde la 3.2, recogeria las tres.
 Element: [type=bpmn:Collaboration, id_bpmn='Colaboracion', name='Sin destino', instances=1]
 Element: [type=bpmn:Participant, id_bpmn='Pool_Orquestador', name='Orquestador', frequency=0, userWithoutRole=['Ana'], instances=1, participantMultiplicity='true', orchestrationRole='orchestrator', containedElements=['Ini_O', 'Recoger', 'Fin_O', 'o1', 'o2']]
 Element: [type=bpmn:Participant, id_bpmn='Pool_Orquestado', name='Orquestado', frequency=25, userWithoutRole=['Beto'], instances=3, participantMultiplicity='true', orchestrationRole='orchestrated', containedElements=['Ini_R', 'Solicitar', 'Fin_R', 'r1', 'r2']]

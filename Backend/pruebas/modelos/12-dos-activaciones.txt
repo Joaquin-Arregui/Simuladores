@@ -10,7 +10,7 @@ Element: [type=bpmn:Collaboration, id_bpmn='Colaboracion', name='Dos activacione
 Element: [type=bpmn:Participant, id_bpmn='Pool_Orquestador', name='Orquestador', frequency=0, userWithoutRole=['Ana'], instances=1, participantMultiplicity='true', orchestrationRole='orchestrator', infiniteResources='true', containedElements=['Ini_O', 'Convocar', 'Bifurca_O', 'Ruta_A', 'Ruta_B', 'Recoger', 'Valorar', 'Responder', 'Fin_O', 'o1', 'o2', 'o3', 'o4', 'o5', 'o6', 'o7', 'o8', 'o9']]
 Element: [type=bpmn:Participant, id_bpmn='Pool_Orquestado', name='Orquestado', frequency=10, userWithoutRole=['Beto'], instances=2, participantMultiplicity='true', orchestrationRole='orchestrated', infiniteResources='true', containedElements=['Ini_R', 'Esperar_Convocatoria', 'Solicitar', 'Esperar_Resultado', 'Fin_R', 'r1', 'r2', 'r3', 'r4']]
 Element: [type=bpmn:StartEvent, id_bpmn='Ini_O', name='Abre la convocatoria', subTask='Convocar']
-Element: [type=bpmn:SendTask, id_bpmn='Convocar', name='Publicar la convocatoria', userTask='Ana', numberOfExecutions=2, multiInstanceType='false', minimumTime=1, maximumTime=1, subTask='Bifurca_O']
+Element: [type=bpmn:SendTask, id_bpmn='Convocar', name='Publicar la convocatoria', userTask='Ana', numberOfExecutions=1, multiInstanceType='false', minimumTime=1, maximumTime=1, subTask='Bifurca_O']
 Element: [type=bpmn:ParallelGateway, id_bpmn='Bifurca_O', name='Dos turnos de ventanilla', subTask='Ruta_A,Ruta_B']
 Element: [type=bpmn:Task, id_bpmn='Ruta_A', name='Abrir el turno de la manana', userTask='Ana', numberOfExecutions=1, minimumTime=1, maximumTime=1, subTask='Recoger']
 Element: [type=bpmn:Task, id_bpmn='Ruta_B', name='Abrir el turno de la tarde', userTask='Ana', numberOfExecutions=1, minimumTime=6, maximumTime=6, subTask='Recoger']

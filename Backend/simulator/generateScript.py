@@ -4,8 +4,9 @@ from pathlib import Path
 from xml.etree import ElementTree as ET
 
 from simulator.simulationFunctions.generateFunction import generateFunction
-from simulator.validation import (TASK_TYPES, resolve_participant_instances,
-                                  resolve_reply_contexts, task_base_users)
+from simulator.validation import (TASK_TYPES, resolve_batch_receives, resolve_participant_instances,
+                                  resolve_reply_contexts, resolve_send_cycles, resolve_send_reach,
+                                  task_base_users)
 
 DEFAULT_START_DATE = '2026-01-01T00:00:00+00:00'
 
@@ -67,6 +68,22 @@ def _lane_participant(elements, lane_id, element_participant, pools):
     owners = {element_participant.get(child) for child in elements[lane_id].contained_elements}
     owners &= pools
     return owners.pop() if len(owners) == 1 else None
+
+
+def _ejecuciones_maximas(envio):
+    """Cuantos sobres puede mandar como mucho una activacion de un envio sin marca.
+
+    Sin bucle, numberOfExecutions, que sin marca sigue repitiendo la tarea. Con
+    loopParameter manda el bucle y numberOfExecutions no cuenta: con Units son
+    esas vueltas; con Time o Percentage no hay un tope que se pueda dar por
+    seguro, y None lo dice. Lo usa el cierre de una recepcion (D7): una respuesta
+    que manda mas sobres de los que su recepcion anoto saca los que sobran por
+    las reglas fijas, y esos pueden ir a otro caso.
+    """
+    bucle = envio.loopParameter
+    if bucle is None:
+        return envio.numberOfExecutions
+    return bucle.get('Units')
 
 
 def generateScript(elements, process, starts, messageStarts, start_date=DEFAULT_START_DATE, *, seed):
@@ -143,6 +160,13 @@ def generateScript(elements, process, starts, messageStarts, start_date=DEFAULT_
     # A que recepcion responde cada envio, para que dos conversaciones del mismo
     # caso no compartan la anotacion del remitente.
     reply_contexts = resolve_reply_contexts(elements, element_participant)
+    # Lo que necesita el motor para cerrar una recepcion multiinstancia (D7): los
+    # envios que le escriben y, si son respuestas, la recepcion a la que
+    # responden; desde cada nodo, a cuales de ellos se puede llegar todavia.
+    receptores = [item for item in elements.values() if getattr(item, 'messageOrigin', None)]
+    envios_a_lotes = {item.messageOrigin for item in receptores
+                      if type(item).__name__ == 'BPMNReceiveTask' and item.multiInstanceType is not None}
+    objetivos = envios_a_lotes | {reply_contexts[envio] for envio in envios_a_lotes if envio in reply_contexts}
     # Cuantas instancias simula cada pool. Sin marcadores todos heredan el
     # numero de la colaboracion, que es como se comportaba hasta la tarea 2.1.
     instancias = resolve_participant_instances(elements, process)
@@ -180,6 +204,19 @@ def generateScript(elements, process, starts, messageStarts, start_date=DEFAULT_
         'joinTypes': joins, 'startEvents': start_events,
         'destinosExternos': external_targets,
         'recepcionDeRespuesta': reply_contexts,
+        # La cardinalidad en ejecucion (3.2): que lote evalua cada evaluacion
+        # multiinstancia y que envios lo son; para cerrar una recepcion (D7), a
+        # que envios y recepciones puede llegar un token desde cada nodo, quien
+        # escribe a cada recepcion y cuantas veces repite un envio sin marca.
+        'loteDeEvaluacion': resolve_batch_receives(elements),
+        'enviosMultiinstancia': tuple(sorted(
+            item.id_bpmn for item in elements.values()
+            if type(item).__name__ == 'BPMNSendTask' and item.multiInstanceType is not None)),
+        'alcanzaDesde': resolve_send_reach(elements, objetivos),
+        'enviosEnCiclo': resolve_send_cycles(elements, envios_a_lotes),
+        'origenDeRecepcion': {item.id_bpmn: item.messageOrigin for item in receptores},
+        'ejecucionesMaximas': {item.id_bpmn: _ejecuciones_maximas(item) for item in elements.values()
+                               if type(item).__name__ == 'BPMNSendTask' and item.multiInstanceType is None},
         'endEvents': [item.id_bpmn for item in elements.values()
                       if type(item).__name__ == 'BPMNEndEvent'],
         'logMetadata': _metadata(element, elements),

@@ -273,6 +273,14 @@ def main():
         else:
             print("%-34s ok" % nombre)
 
+    # El criterio de la 3.2, que una sola semilla no puede mostrar.
+    lineas, fallos_criterio = banco.revisa_criterio_del_lote()
+    nombre = "criterio 3.2 (%s)" % banco.CRITERIO_DEL_LOTE["modelo"]
+    print("%-34s %s" % (nombre, "ok" if not fallos_criterio else "FALLA"))
+    for linea in lineas:
+        print("         %s" % linea)
+    fallos += fallos_criterio
+
     for huerfana in banco.referencias_huerfanas():
         print("%-34s REFERENCIA HUERFANA  no existe su modelo" % str(huerfana))
         fallos += 1

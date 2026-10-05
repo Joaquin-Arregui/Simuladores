@@ -17,25 +17,25 @@
     <bpmn:startEvent id="Ini_O" name="Abre la convocatoria">
       <bpmn:outgoing>o1</bpmn:outgoing>
     </bpmn:startEvent>
-    <bpmn:sendTask id="Convocar" name="Publicar la convocatoria" user:NumberOfExecutions="4" user:minimumTime="2" user:maximumTime="2">
+    <bpmn:sendTask id="Convocar" name="Publicar la convocatoria" user:NumberOfExecutions="1" user:minimumTime="2" user:maximumTime="2">
       <user:UserTask>Ana</user:UserTask>
       <bpmn:incoming>o1</bpmn:incoming>
       <bpmn:outgoing>o2</bpmn:outgoing>
       <bpmn:multiInstanceLoopCharacteristics />
     </bpmn:sendTask>
-    <bpmn:receiveTask id="Recoger" name="Recoger una solicitud" user:NumberOfExecutions="4" user:minimumTime="1" user:maximumTime="1">
+    <bpmn:receiveTask id="Recoger" name="Recoger una solicitud" user:NumberOfExecutions="1" user:minimumTime="1" user:maximumTime="1">
       <user:UserTask>Ana</user:UserTask>
       <bpmn:incoming>o2</bpmn:incoming>
       <bpmn:outgoing>o3</bpmn:outgoing>
       <bpmn:multiInstanceLoopCharacteristics />
     </bpmn:receiveTask>
-    <bpmn:task id="Evaluar" name="Evaluar una solicitud" user:NumberOfExecutions="4" user:minimumTime="10" user:maximumTime="20">
+    <bpmn:task id="Evaluar" name="Evaluar una solicitud" user:NumberOfExecutions="1" user:minimumTime="10" user:maximumTime="20">
       <user:UserTask>Ana</user:UserTask>
       <bpmn:incoming>o3</bpmn:incoming>
       <bpmn:outgoing>o4</bpmn:outgoing>
       <bpmn:multiInstanceLoopCharacteristics />
     </bpmn:task>
-    <bpmn:sendTask id="Responder" name="Responder a una solicitud" user:NumberOfExecutions="4" user:minimumTime="1" user:maximumTime="1">
+    <bpmn:sendTask id="Responder" name="Responder a una solicitud" user:NumberOfExecutions="1" user:minimumTime="1" user:maximumTime="1">
       <user:UserTask>Ana</user:UserTask>
       <bpmn:incoming>o4</bpmn:incoming>
       <bpmn:outgoing>o5</bpmn:outgoing>

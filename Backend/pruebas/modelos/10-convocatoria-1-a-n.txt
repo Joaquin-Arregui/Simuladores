@@ -3,7 +3,9 @@
 # multiinstancia de cuatro ejecuciones, y cada una escribe a UN caso: el que
 # ocupa su posicion en el pool de enfrente. El orquestado 1 ya ha arrancado
 # cuando llega su sobre; los otros tres no, asi que el suyo tiene que esperarles
-# en el buzon. Hasta la 3.2 ese cuatro esta escrito a mano.
+# en el buzon. Ese cuatro no esta escrito en ningun sitio: desde la 3.2 es el
+# numero de casos vivos de enfrente, y numberOfExecutions vale 1 en las tres
+# tareas multiinstancia sin que el registro cambie.
 # Las cuatro solicitudes vuelven al caso unico del orquestador, que las recoge
 # con una recepcion multiinstancia, y cada respuesta vuelve a SU solicitante:
 # eso depende de que la anotacion del remitente sea por sobre y por ejecucion.
@@ -13,9 +15,9 @@ Element: [type=bpmn:Collaboration, id_bpmn='Colaboracion', name='Convocatoria', 
 Element: [type=bpmn:Participant, id_bpmn='Pool_Orquestador', name='Orquestador', frequency=0, userWithoutRole=['Ana'], instances=1, participantMultiplicity='true', orchestrationRole='orchestrator', containedElements=['Ini_O', 'Convocar', 'Recoger', 'Responder', 'Fin_O', 'o1', 'o2', 'o3', 'o4']]
 Element: [type=bpmn:Participant, id_bpmn='Pool_Orquestado', name='Orquestado', frequency=15, userWithoutRole=['Beto'], instances=4, participantMultiplicity='true', orchestrationRole='orchestrated', infiniteResources='true', containedElements=['Ini_R', 'Esperar_Convocatoria', 'Solicitar', 'Esperar_Resultado', 'Fin_R', 'r1', 'r2', 'r3', 'r4']]
 Element: [type=bpmn:StartEvent, id_bpmn='Ini_O', name='Abre la convocatoria', subTask='Convocar']
-Element: [type=bpmn:SendTask, id_bpmn='Convocar', name='Publicar la convocatoria', userTask='Ana', numberOfExecutions=4, multiInstanceType='false', minimumTime=2, maximumTime=2, subTask='Recoger']
-Element: [type=bpmn:ReceiveTask, id_bpmn='Recoger', name='Recoger una solicitud', userTask='Ana', numberOfExecutions=4, multiInstanceType='false', minimumTime=5, maximumTime=5, subTask='Responder']
-Element: [type=bpmn:SendTask, id_bpmn='Responder', name='Responder a una solicitud', userTask='Ana', numberOfExecutions=4, multiInstanceType='false', minimumTime=3, maximumTime=3, subTask='Fin_O']
+Element: [type=bpmn:SendTask, id_bpmn='Convocar', name='Publicar la convocatoria', userTask='Ana', numberOfExecutions=1, multiInstanceType='false', minimumTime=2, maximumTime=2, subTask='Recoger']
+Element: [type=bpmn:ReceiveTask, id_bpmn='Recoger', name='Recoger una solicitud', userTask='Ana', numberOfExecutions=1, multiInstanceType='false', minimumTime=5, maximumTime=5, subTask='Responder']
+Element: [type=bpmn:SendTask, id_bpmn='Responder', name='Responder a una solicitud', userTask='Ana', numberOfExecutions=1, multiInstanceType='false', minimumTime=3, maximumTime=3, subTask='Fin_O']
 Element: [type=bpmn:EndEvent, id_bpmn='Fin_O', name='Cierra la convocatoria', subTask='']
 Element: [type=bpmn:StartEvent, id_bpmn='Ini_R', name='Entra el solicitante', subTask='Esperar_Convocatoria']
 Element: [type=bpmn:ReceiveTask, id_bpmn='Esperar_Convocatoria', name='Esperar la convocatoria', userTask='Beto', numberOfExecutions=1, minimumTime=2, maximumTime=2, subTask='Solicitar']

@@ -1,0 +1,31 @@
+# Un ciclo de espera de verdad (D7). El orquestador recoge las solicitudes y
+# despues avisa a cada solicitante; pero el solicitante espera ese aviso ANTES
+# de enviar su solicitud. Mientras espera, todavia puede llegar a Solicitar,
+# asi que la recepcion no puede cerrar; y el aviso solo sale cuando cierre. No
+# hay regla que lo arregle sin inventarse algo: el motor tiene que denunciarlo
+# en vez de colgarse. Hoy lo dice _assert_complete al acabarse los eventos; la
+# 3.4 dira ademas quien espera a quien.
+Element: [type=bpmn:Collaboration, id_bpmn='Colaboracion', name='Ciclo de espera', instances=1]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Orquestador', name='Orquestador', frequency=0, userWithoutRole=['Ana'], instances=1, participantMultiplicity='true', orchestrationRole='orchestrator', infiniteResources='true', containedElements=['Ini_O', 'Convocar', 'Recoger', 'Avisar', 'Fin_O', 'o1', 'o2', 'o3', 'o4']]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Orquestado', name='Orquestado', frequency=0, userWithoutRole=['Beto'], instances=2, participantMultiplicity='true', orchestrationRole='orchestrated', infiniteResources='true', containedElements=['Ini_R', 'Esperar_Convocatoria', 'Esperar_Aviso', 'Solicitar', 'Fin_R', 'r1', 'r2', 'r3', 'r4']]
+Element: [type=bpmn:StartEvent, id_bpmn='Ini_O', name='Abre la convocatoria', subTask='Convocar']
+Element: [type=bpmn:SendTask, id_bpmn='Convocar', name='Publicar la convocatoria', userTask='Ana', numberOfExecutions=1, multiInstanceType='false', minimumTime=1, maximumTime=1, subTask='Recoger']
+Element: [type=bpmn:ReceiveTask, id_bpmn='Recoger', name='Recoger una solicitud', userTask='Ana', numberOfExecutions=1, multiInstanceType='false', minimumTime=1, maximumTime=1, subTask='Avisar']
+Element: [type=bpmn:SendTask, id_bpmn='Avisar', name='Avisar a cada solicitante', userTask='Ana', numberOfExecutions=1, multiInstanceType='false', minimumTime=1, maximumTime=1, subTask='Fin_O']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_O', name='Cierra la convocatoria', subTask='']
+Element: [type=bpmn:StartEvent, id_bpmn='Ini_R', name='Entra el solicitante', subTask='Esperar_Convocatoria']
+Element: [type=bpmn:ReceiveTask, id_bpmn='Esperar_Convocatoria', name='Esperar la convocatoria', userTask='Beto', numberOfExecutions=1, minimumTime=1, maximumTime=1, subTask='Esperar_Aviso']
+Element: [type=bpmn:ReceiveTask, id_bpmn='Esperar_Aviso', name='Esperar el aviso', userTask='Beto', numberOfExecutions=1, minimumTime=1, maximumTime=1, subTask='Solicitar']
+Element: [type=bpmn:SendTask, id_bpmn='Solicitar', name='Enviar la solicitud', userTask='Beto', numberOfExecutions=1, minimumTime=1, maximumTime=1, subTask='Fin_R']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_R', name='Fin del solicitante', subTask='']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o1', name='', superElement='Ini_O', subElement='Convocar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o2', name='', superElement='Convocar', subElement='Recoger']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o3', name='', superElement='Recoger', subElement='Avisar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o4', name='', superElement='Avisar', subElement='Fin_O']
+Element: [type=bpmn:SequenceFlow, id_bpmn='r1', name='', superElement='Ini_R', subElement='Esperar_Convocatoria']
+Element: [type=bpmn:SequenceFlow, id_bpmn='r2', name='', superElement='Esperar_Convocatoria', subElement='Esperar_Aviso']
+Element: [type=bpmn:SequenceFlow, id_bpmn='r3', name='', superElement='Esperar_Aviso', subElement='Solicitar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='r4', name='', superElement='Solicitar', subElement='Fin_R']
+Element: [type=bpmn:MessageFlow, id_bpmn='Convocatoria', name='Convocatoria', superElement='Convocar', subElement='Esperar_Convocatoria']
+Element: [type=bpmn:MessageFlow, id_bpmn='Solicitud', name='Solicitud', superElement='Solicitar', subElement='Recoger']
+Element: [type=bpmn:MessageFlow, id_bpmn='Aviso', name='Aviso', superElement='Avisar', subElement='Esperar_Aviso']
