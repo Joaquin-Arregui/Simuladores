@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:collab="http://collaboration" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:participantWithoutLane="http://participantWithoutLane" xmlns:user="http://user" id="Definitions_28_pedir_y_esperar_a_la_vez" targetNamespace="http://bpmn.io/schema/bpmn" exporter="my-bpmn-exporter" exporterVersion="1.0.0">
+  <bpmn:collaboration id="Colaboracion" collab:instance="3">
+    <bpmn:participant id="Pool_Cliente" name="Cliente" processRef="Process_Pool_Cliente" participantWithoutLane:frequency="40">
+      <participantWithoutLane:userWithoutRole>Carla</participantWithoutLane:userWithoutRole>
+    </bpmn:participant>
+    <bpmn:participant id="Pool_Servicio" name="Servicio" processRef="Process_Pool_Servicio" participantWithoutLane:frequency="0">
+      <participantWithoutLane:userWithoutRole>Sara</participantWithoutLane:userWithoutRole>
+      <participantWithoutLane:userWithoutRole>Diego</participantWithoutLane:userWithoutRole>
+    </bpmn:participant>
+    <bpmn:messageFlow id="Mensaje_Peticion" name="Peticion" sourceRef="Enviar_Peticion" targetRef="Recibir_Peticion" />
+    <bpmn:messageFlow id="Mensaje_Respuesta" name="Respuesta" sourceRef="Enviar_Respuesta" targetRef="Esperar_Respuesta" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_Pool_Cliente" isExecutable="false">
+    <bpmn:startEvent id="Inicio_C" name="Arranca el cliente">
+      <bpmn:outgoing>c1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:parallelGateway id="Bifurca_C" name="Pedir y esperar a la vez">
+      <bpmn:incoming>c1</bpmn:incoming>
+      <bpmn:outgoing>c2</bpmn:outgoing>
+      <bpmn:outgoing>c3</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:sendTask id="Enviar_Peticion" name="Enviar la peticion" user:NumberOfExecutions="1" user:minimumTime="10" user:maximumTime="20">
+      <user:UserTask>Carla</user:UserTask>
+      <bpmn:incoming>c2</bpmn:incoming>
+      <bpmn:outgoing>c4</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:receiveTask id="Esperar_Respuesta" name="Recoger las respuestas" user:NumberOfExecutions="1" user:minimumTime="5" user:maximumTime="10">
+      <user:UserTask>Carla</user:UserTask>
+      <bpmn:incoming>c3</bpmn:incoming>
+      <bpmn:outgoing>c5</bpmn:outgoing>
+      <bpmn:multiInstanceLoopCharacteristics />
+    </bpmn:receiveTask>
+    <bpmn:parallelGateway id="Une_C" name="Juntar">
+      <bpmn:incoming>c4</bpmn:incoming>
+      <bpmn:incoming>c5</bpmn:incoming>
+      <bpmn:outgoing>c6</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:endEvent id="Fin_C" name="Fin del cliente">
+      <bpmn:incoming>c6</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="c1" sourceRef="Inicio_C" targetRef="Bifurca_C" />
+    <bpmn:sequenceFlow id="c2" sourceRef="Bifurca_C" targetRef="Enviar_Peticion" />
+    <bpmn:sequenceFlow id="c3" sourceRef="Bifurca_C" targetRef="Esperar_Respuesta" />
+    <bpmn:sequenceFlow id="c4" sourceRef="Enviar_Peticion" targetRef="Une_C" />
+    <bpmn:sequenceFlow id="c5" sourceRef="Esperar_Respuesta" targetRef="Une_C" />
+    <bpmn:sequenceFlow id="c6" sourceRef="Une_C" targetRef="Fin_C" />
+  </bpmn:process>
+  <bpmn:process id="Process_Pool_Servicio" isExecutable="false">
+    <bpmn:startEvent id="Inicio_S" name="Arranca el servicio">
+      <bpmn:outgoing>s1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:task id="Preparar" name="Preparar la ventanilla" user:NumberOfExecutions="1" user:minimumTime="25" user:maximumTime="35">
+      <user:UserTask>Sara</user:UserTask>
+      <bpmn:incoming>s1</bpmn:incoming>
+      <bpmn:outgoing>s2</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:receiveTask id="Recibir_Peticion" name="Recibir la peticion" user:NumberOfExecutions="1" user:minimumTime="5" user:maximumTime="10">
+      <user:UserTask>Sara</user:UserTask>
+      <bpmn:incoming>s2</bpmn:incoming>
+      <bpmn:outgoing>s3</bpmn:outgoing>
+    </bpmn:receiveTask>
+    <bpmn:task id="Atender" name="Atender la peticion" user:NumberOfExecutions="1" user:minimumTime="40" user:maximumTime="90">
+      <user:UserTask>Sara</user:UserTask>
+      <user:UserTask>Diego</user:UserTask>
+      <bpmn:incoming>s3</bpmn:incoming>
+      <bpmn:outgoing>s4</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sendTask id="Enviar_Respuesta" name="Enviar la respuesta" user:NumberOfExecutions="1" user:minimumTime="10" user:maximumTime="20">
+      <user:UserTask>Diego</user:UserTask>
+      <bpmn:incoming>s4</bpmn:incoming>
+      <bpmn:outgoing>s5</bpmn:outgoing>
+      <bpmn:multiInstanceLoopCharacteristics />
+    </bpmn:sendTask>
+    <bpmn:endEvent id="Fin_S" name="Fin del servicio">
+      <bpmn:incoming>s5</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="s1" sourceRef="Inicio_S" targetRef="Preparar" />
+    <bpmn:sequenceFlow id="s2" sourceRef="Preparar" targetRef="Recibir_Peticion" />
+    <bpmn:sequenceFlow id="s3" sourceRef="Recibir_Peticion" targetRef="Atender" />
+    <bpmn:sequenceFlow id="s4" sourceRef="Atender" targetRef="Enviar_Respuesta" />
+    <bpmn:sequenceFlow id="s5" sourceRef="Enviar_Respuesta" targetRef="Fin_S" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Colaboracion">
+      <bpmndi:BPMNShape id="Pool_Cliente_di" bpmnElement="Pool_Cliente" isHorizontal="true">
+        <dc:Bounds x="160" y="80" width="1140" height="280" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Pool_Servicio_di" bpmnElement="Pool_Servicio" isHorizontal="true">
+        <dc:Bounds x="160" y="420" width="1140" height="150" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Inicio_C_di" bpmnElement="Inicio_C">
+        <dc:Bounds x="272" y="122" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Bifurca_C_di" bpmnElement="Bifurca_C">
+        <dc:Bounds x="435" y="115" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Enviar_Peticion_di" bpmnElement="Enviar_Peticion">
+        <dc:Bounds x="580" y="100" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Esperar_Respuesta_di" bpmnElement="Esperar_Respuesta">
+        <dc:Bounds x="580" y="230" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Une_C_di" bpmnElement="Une_C">
+        <dc:Bounds x="775" y="115" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Fin_C_di" bpmnElement="Fin_C">
+        <dc:Bounds x="952" y="122" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Inicio_S_di" bpmnElement="Inicio_S">
+        <dc:Bounds x="272" y="462" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Preparar_di" bpmnElement="Preparar">
+        <dc:Bounds x="410" y="440" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Recibir_Peticion_di" bpmnElement="Recibir_Peticion">
+        <dc:Bounds x="580" y="440" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Atender_di" bpmnElement="Atender">
+        <dc:Bounds x="750" y="440" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Enviar_Respuesta_di" bpmnElement="Enviar_Respuesta">
+        <dc:Bounds x="920" y="440" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Fin_S_di" bpmnElement="Fin_S">
+        <dc:Bounds x="1122" y="462" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="c1_di" bpmnElement="c1">
+        <di:waypoint x="290" y="140" />
+        <di:waypoint x="460" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="c2_di" bpmnElement="c2">
+        <di:waypoint x="460" y="140" />
+        <di:waypoint x="630" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="c3_di" bpmnElement="c3">
+        <di:waypoint x="460" y="140" />
+        <di:waypoint x="630" y="270" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="c4_di" bpmnElement="c4">
+        <di:waypoint x="630" y="140" />
+        <di:waypoint x="800" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="c5_di" bpmnElement="c5">
+        <di:waypoint x="630" y="270" />
+        <di:waypoint x="800" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="c6_di" bpmnElement="c6">
+        <di:waypoint x="800" y="140" />
+        <di:waypoint x="970" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="s1_di" bpmnElement="s1">
+        <di:waypoint x="290" y="480" />
+        <di:waypoint x="460" y="480" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="s2_di" bpmnElement="s2">
+        <di:waypoint x="460" y="480" />
+        <di:waypoint x="630" y="480" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="s3_di" bpmnElement="s3">
+        <di:waypoint x="630" y="480" />
+        <di:waypoint x="800" y="480" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="s4_di" bpmnElement="s4">
+        <di:waypoint x="800" y="480" />
+        <di:waypoint x="970" y="480" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="s5_di" bpmnElement="s5">
+        <di:waypoint x="970" y="480" />
+        <di:waypoint x="1140" y="480" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Mensaje_Peticion_di" bpmnElement="Mensaje_Peticion">
+        <di:waypoint x="630" y="140" />
+        <di:waypoint x="630" y="480" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Mensaje_Respuesta_di" bpmnElement="Mensaje_Respuesta">
+        <di:waypoint x="970" y="480" />
+        <di:waypoint x="630" y="270" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

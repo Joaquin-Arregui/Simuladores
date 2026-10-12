@@ -289,6 +289,9 @@ def publish_message(origin, target, execution, caso, contexto, destinatarios=Non
     key = (origin, target, destino)
     if message_waiters[key]:
         message_waiters[key].popleft().succeed(caso)
+        # Entregado, pero quien lo recoge aun no ha vuelto a ejecutarse para
+        # anotarlo: hasta entonces solo se sabe aqui (_pendientes_de_anotar).
+        enCamino[key][caso] += 1
     else:
         messages[key].append(caso)
     # Esta ejecucion ya no puede escribir mas: si era lo unico que tenia abierta
@@ -307,6 +310,7 @@ def wait_for_message(env, origin, target, execution, caso, contexto):
         event = env.event()
         message_waiters[key].append(event)
         remitente = yield event
+        enCamino[key][remitente] -= 1
     _anota(caso, contexto, target, execution, remitente)
     return remitente
 
@@ -415,21 +419,65 @@ def _destinos_fijos(remitente, recepcion, desde=1, hasta=None):
     return set()
 
 
-def _escritores_fijos(recepcion, caso):
-    """Quien podria escribir a esa recepcion de ese caso, o None si no se acota.
+def _posiciones(caso):
+    """Donde estan los tokens vivos del caso, como (nodo, contexto): en un nodo, o
+    esperando en una union, con el contexto con el que llegaron."""
+    for (nodo, contexto), cuenta in tokensVivos[caso].items():
+        if cuenta > 0:
+            yield nodo, contexto
+    for union, por_flujo in join_waits[caso].items():
+        for llegadas in por_flujo.values():
+            for _, contexto in llegadas:
+                yield union, contexto
 
-    Solo por las reglas fijas: si quien escribe a la recepcion es a su vez una
-    respuesta, a quien va depende de lo que anoto, y no se sigue mas lejos.
+
+def _le_escriben(origen, recepcion, caso, visitando=frozenset()):
+    """Los tokens vivos que pueden llegar todavia al envio origen y mandar su
+    sobre a esa recepcion del caso, como (remitente, nodo).
+
+    Se mira token a token, con su contexto, y no caso a caso: en varias parejas
+    1:1 el servicio 3 sigue vivo y puede responder, pero su respuesta va al
+    cliente 3, y la recepcion del cliente 1 no tiene por que esperarla.
+    """
+    for remitente in casos_de(elementParticipant[origen]):
+        for nodo, contexto in _posiciones(remitente):
+            if origen not in alcanzaDesde.get(nodo, ()):
+                continue
+            destinos = _destinos_del_token(remitente, origen, recepcion, nodo, contexto, visitando)
+            if destinos is None or caso in destinos:
+                yield remitente, nodo
+
+
+def _escritores(recepcion, caso, visitando=frozenset()):
+    """Quien podria escribir todavia a esa recepcion de ese caso, o None si no se acota.
+
+    Por los tokens vivos, y no por las reglas fijas: un caso que ya termino no
+    escribe, y si quien escribe es a su vez una respuesta, a quien va lo dice su
+    propia anotacion, que se sigue igual. Solo si la cadena de respuestas vuelve
+    sobre una recepcion que ya se esta mirando se deja sin acotar.
     """
     origen = origenDeRecepcion.get(recepcion)
-    if origen is None or origen in recepcionDeRespuesta:
+    clave = (recepcion, caso)
+    if origen is None or clave in visitando:
         return None
-    escritores = set()
-    for otro in casos_de(elementParticipant[origen]):
-        if origen in enviosMultiinstancia or caso in _destinos_fijos(
-                otro, recepcion, 1, ejecucionesMaximas.get(origen, 1)):
-            escritores.add(otro)
+    escritores = set(_pendientes_de_anotar(origen, recepcion, caso))
+    escritores |= {remitente for remitente, _ in _le_escriben(origen, recepcion, caso, visitando | {clave})}
     return escritores
+
+
+def _pendientes_de_anotar(origen, recepcion, caso):
+    """Los remitentes de los sobres que ya se mandaron a esa recepcion del caso y
+    que todavia no se han anotado: los que esperan en el buzon, y los que ya se
+    entregaron a una ejecucion que aun no ha vuelto a correr.
+
+    Quien los mando ya no puede escribir -su ejecucion consta como enviada-,
+    pero la recepcion los anotara, y una respuesta irá a ellos. Sin contarlos,
+    entre el envio y la anotacion parece que nadie va a escribir, y una
+    recepcion que espera esa respuesta cierra antes de tiempo.
+    """
+    buzon = (origen, recepcion, caso)
+    yield from messages[buzon]
+    yield from (remitente for remitente, veces in enCamino[buzon].items() if veces > 0)
 
 
 def _activacion_anotada(caso, recepcion, contexto):
@@ -501,7 +549,7 @@ def _destinos_de_una_activacion(remitente, envio, recepcion_destino, contexto, e
     return destinos
 
 
-def _destinos_del_token(remitente, envio, recepcion_destino, nodo, contexto):
+def _destinos_del_token(remitente, envio, recepcion_destino, nodo, contexto, visitando=frozenset()):
     """A que casos puede ir todavia un sobre del envio mandado por este token, o
     None si a cualquiera. Es lo que decide si el token mantiene abierta una
     recepcion (D7).
@@ -529,7 +577,7 @@ def _destinos_del_token(remitente, envio, recepcion_destino, nodo, contexto):
             and envio in alcanzaDesde.get(respuesta, ())):
         if envio not in enviosMultiinstancia:
             destinos |= _destinos_fijos(remitente, recepcion_destino, 1, ejecucionesMaximas.get(envio, 1))
-        escritores = _escritores_fijos(respuesta, remitente)
+        escritores = _escritores(respuesta, remitente, visitando)
         if escritores is None:
             return None
         destinos |= escritores
@@ -537,27 +585,8 @@ def _destinos_del_token(remitente, envio, recepcion_destino, nodo, contexto):
 
 
 def _alguien_puede_escribir(lote):
-    """Si algun token vivo puede llegar todavia al envio y mandar su sobre a lote.caso.
-
-    Se mira token a token, con su contexto, y no caso a caso: en varias parejas
-    1:1 el servicio 3 sigue vivo y puede responder, pero su respuesta va al
-    cliente 3, y la recepcion del cliente 1 no tiene por que esperarla.
-    """
-    def le_escribe(remitente, nodo, contexto):
-        if lote.origen not in alcanzaDesde.get(nodo, ()):
-            return False
-        destinos = _destinos_del_token(remitente, lote.origen, lote.recepcion, nodo, contexto)
-        return destinos is None or lote.caso in destinos
-
-    for remitente in casos_de(elementParticipant[lote.origen]):
-        for (nodo, contexto), cuenta in tokensVivos[remitente].items():
-            if cuenta > 0 and le_escribe(remitente, nodo, contexto):
-                return True
-        for union, por_flujo in join_waits[remitente].items():
-            for llegadas in por_flujo.values():
-                if any(le_escribe(remitente, union, contexto) for _, contexto in llegadas):
-                    return True
-    return False
+    """Si algun token vivo puede mandar todavia un sobre a esta recepcion (D7)."""
+    return next(_le_escriben(lote.origen, lote.recepcion, lote.caso), None) is not None
 
 
 def _cierra(lote):
@@ -610,6 +639,7 @@ def espera_en_lote(env, lote, execution):
         lote.espera = None
         if remitente is None:
             return None
+        enCamino[lote.buzon][remitente] -= 1
     _anota(lote.caso, lote.contexto, lote.recepcion, execution, remitente)
     return remitente
 
@@ -859,6 +889,160 @@ def _start_event(node, caso, delay, contexto):
     _revisa_lotes()
 
 
+def _enumera(partes, maximo=6):
+    """'a, b y c', cortando con 'y N mas' si son demasiadas."""
+    partes = list(partes)
+    if len(partes) > maximo:
+        partes = partes[:maximo] + [f'{len(partes) - maximo} mas']
+    return partes[0] if len(partes) == 1 else ', '.join(partes[:-1]) + ' y ' + partes[-1]
+
+
+def _desde_donde(posiciones):
+    """'Pool - 1 desde A y Pool - 2 desde B', agrupando los casos de cada nodo."""
+    por_nodo = {}
+    for caso, nodo in sorted(set(posiciones)):
+        por_nodo.setdefault(nodo, []).append(str(caso))
+    return _enumera(f'{_enumera(casos)} desde {nodo}' for nodo, casos in sorted(por_nodo.items()))
+
+
+def _esperas_al_bloquearse():
+    """Que espera cada token que se ha quedado parado, y de quien depende.
+
+    Devuelve {(caso, nodo): (descripcion, [(caso, nodo) de quien depende],
+    es_recepcion_abierta)}. Un token parado espera una de cuatro cosas:
+    - en una recepcion multiinstancia abierta, que nadie pueda escribirle ya:
+      depende de los tokens que todavia pueden hacerlo (_le_escriben);
+    - en una recepcion o evento de mensaje, un sobre: depende de quien puede
+      mandarselo todavia, con las mismas reglas que el cierre;
+    - en una tarea, un dato que no esta: depende de quien puede producirlo;
+    - en una union, una rama que no ha llegado: depende de los tokens del caso
+      que pueden llegar a ella sin pasar antes por la union, como _join_ready.
+    """
+    abiertos = {(lote.caso, lote.recepcion, lote.contexto) for lote in lotesAbiertos}
+    esperas = {}
+    for caso in sorted(tokensVivos):
+        for (nodo, contexto), cuenta in sorted(tokensVivos[caso].items(), key=lambda par: str(par[0])):
+            if cuenta <= 0 or (caso, nodo) in esperas:
+                continue
+            faltan = [dato for dato in requiredData.get(nodo, ()) if (dato, caso) not in data]
+            if (caso, nodo, contexto) in abiertos:
+                quienes = sorted(set(_le_escriben(origenDeRecepcion[nodo], nodo, caso)))
+                esperas[(caso, nodo)] = (
+                    f'{nodo} ({caso}) no puede cerrar mientras puedan escribirle {_desde_donde(quienes)}',
+                    quienes, True)
+            elif faltan:
+                productores = [tarea for tarea, datos in generatedData.items() if set(datos) & set(faltan)]
+                quienes = sorted({(caso, otro) for otro, _ in _posiciones(caso)
+                                  if any(tarea in alcanzaDesde.get(otro, ()) for tarea in productores)})
+                que = (f'que solo puede producir {_enumera(productores)} desde {_enumera(n for _, n in quienes)}'
+                       if quienes else 'que ya no puede producir nadie')
+                esperas[(caso, nodo)] = (f'{caso} espera en {nodo} el dato {_enumera(faltan)}, {que}',
+                                         quienes, False)
+            elif nodo in origenDeRecepcion:
+                origen = origenDeRecepcion[nodo]
+                quienes = sorted(set(_le_escriben(origen, nodo, caso)))
+                que = (f'que solo puede enviar {_desde_donde(quienes)}' if quienes
+                       else 'que ya no puede enviar nadie')
+                esperas[(caso, nodo)] = (f'{caso} espera en {nodo} el mensaje de {origen}, {que}',
+                                         quienes, False)
+            else:
+                esperas[(caso, nodo)] = (f'{caso} sigue en {nodo}', [], False)
+    for caso in sorted(pending_joins):
+        for union, cuentas in sorted(pending_joins[caso].items()):
+            if not any(cuentas.values()):
+                continue
+            faltan = [flujo for flujo in incomingFlows[union] if not cuentas[flujo]]
+            vivos = {nodo for nodo, _ in _posiciones(caso) if nodo != union}
+            quienes = sorted({(caso, vivo) for vivo in vivos
+                              if any(_reachable(vivo, flujo, union) for flujo in faltan)})
+            ramas = _enumera(sequenceFlows[flujo][0] for flujo in faltan)
+            que = (f'que solo puede llegar desde {_enumera(n for _, n in quienes)}' if quienes
+                   else 'que ya no puede llegar')
+            esperas[(caso, union)] = (f'{caso} espera en {union} la rama de {ramas}, {que}', quienes, False)
+    return esperas
+
+
+def _componentes(esperas):
+    """Los ciclos del grafo de esperas: componentes fuertemente conexas de mas de
+    un nodo, o de uno que depende de si mismo (Tarjan, iterativo)."""
+    indice, bajo, pila, en_pila, ciclos, contador = {}, {}, [], set(), [], [0]
+    for inicio in sorted(esperas):
+        if inicio in indice:
+            continue
+        trabajo = [(inicio, iter(esperas[inicio][1]))]
+        indice[inicio] = bajo[inicio] = contador[0]
+        contador[0] += 1
+        pila.append(inicio)
+        en_pila.add(inicio)
+        while trabajo:
+            nodo, hijos = trabajo[-1]
+            avanzado = False
+            for hijo in hijos:
+                if hijo not in esperas:
+                    continue
+                if hijo not in indice:
+                    indice[hijo] = bajo[hijo] = contador[0]
+                    contador[0] += 1
+                    pila.append(hijo)
+                    en_pila.add(hijo)
+                    trabajo.append((hijo, iter(esperas[hijo][1])))
+                    avanzado = True
+                    break
+                if hijo in en_pila:
+                    bajo[nodo] = min(bajo[nodo], indice[hijo])
+            if avanzado:
+                continue
+            trabajo.pop()
+            if trabajo:
+                padre = trabajo[-1][0]
+                bajo[padre] = min(bajo[padre], bajo[nodo])
+            if bajo[nodo] == indice[nodo]:
+                componente = []
+                while True:
+                    miembro = pila.pop()
+                    en_pila.discard(miembro)
+                    componente.append(miembro)
+                    if miembro == nodo:
+                        break
+                if len(componente) > 1 or nodo in esperas[nodo][1]:
+                    ciclos.append(sorted(componente))
+    return ciclos
+
+
+def _diagnostico_del_bloqueo():
+    """Por que se ha quedado parada la simulacion, si es por esperas (3.4).
+
+    Si hay un ciclo -una recepcion que no puede cerrar porque quien puede
+    escribirle espera algo que solo llega cuando cierre, o dos casos que se
+    esperan el mensaje uno del otro-, se nombra el elemento, los casos que
+    forman el ciclo y que espera cada uno. Si no lo hay, lo que queda son
+    esperas sin salida: un mensaje, un dato o una rama que ya no puede llegar.
+    Se calcula solo cuando el motor ya se ha parado, sobre lo que de verdad ha
+    pasado, asi que un modelo que termina nunca pasa por aqui. None si no hay
+    ningun token esperando.
+    """
+    esperas = _esperas_al_bloquearse()
+    if not esperas:
+        return None
+    ciclos = _componentes(esperas)
+    if ciclos:
+        # Primero el que contiene una recepcion que no puede cerrar (D7).
+        ciclo = min(ciclos, key=lambda c: (not any(esperas[m][2] for m in c), c))
+        cabeza = next((m for m in ciclo if esperas[m][2]), ciclo[0])
+        orden = [cabeza] + [m for m in ciclo if m != cabeza]
+        partes = [esperas[m][0] for m in orden]
+        if len(partes) > 8:
+            partes = partes[:8] + [f'y {len(partes) - 8} esperas mas']
+        caso, nodo = cabeza
+        return f'Ciclo de espera en {nodo} ({caso}): ' + '; '.join(partes) + '.'
+    sin_salida = [esperas[clave][0] for clave in sorted(esperas) if not esperas[clave][1]]
+    if not sin_salida:
+        return None
+    if len(sin_salida) > 8:
+        sin_salida = sin_salida[:8] + [f'y {len(sin_salida) - 8} mas']
+    return 'Esperas sin salida: ' + '; '.join(sin_salida) + '.'
+
+
 def _assert_complete():
     pending = [f'{node} ({caso})' for caso, joins in pending_joins.items()
                for node, counts in joins.items() if any(counts.values())]
@@ -885,7 +1069,11 @@ def _assert_complete():
             details.append('casos preparados que nunca arrancaron: ' + ', '.join(sin_arrancar[:10]))
         if missing:
             details.append('casos sin evento de fin: ' + ', '.join(missing[:10]))
-        raise SimulationError('Simulación bloqueada o incompleta; ' + '; '.join(details) + '.')
+        # Delante, el porque, si es un bloqueo por esperas: el resumen dice que
+        # se quedo parado, el diagnostico quien espera a quien (3.4).
+        diagnostico = _diagnostico_del_bloqueo() if (pending or active) else None
+        raise SimulationError(('' if diagnostico is None else diagnostico + ' ')
+                              + 'Simulación bloqueada o incompleta; ' + '; '.join(details) + '.')
 
 
 def xes_time(seconds):
@@ -949,6 +1137,7 @@ def _run_simulation():
     global env, simulationResults, colasPorParticipante
     global messages, message_waiters, correspondientes, recepciones_anotadas
     global contextos_padres, contador_contextos, lotes, lotesAbiertos, tokensVivos, enviadas, planes
+    global enCamino
     global data, data_changed, active_tokens, pending_joins
     global reachability, completed, startDate, join_waits
     global casosPorParticipante, casosArrancados
@@ -984,6 +1173,8 @@ def _run_simulation():
     # Cuantos sobres recogio cada activacion de cada recepcion, y que recepciones
     # multiinstancia siguen recogiendo (D7).
     lotes, lotesAbiertos = {}, []
+    # Sobres entregados a una ejecucion que todavia no los ha anotado.
+    enCamino = defaultdict(Counter)
     # Cada token vivo con su contexto, y de cada activacion de un envio que
     # ejecuciones han escrito ya y cuantas tiene: con eso se sabe a quien puede
     # ir todavia un sobre (_destinos_del_token).

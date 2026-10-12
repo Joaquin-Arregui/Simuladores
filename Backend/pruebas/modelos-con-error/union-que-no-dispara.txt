@@ -1,0 +1,18 @@
+# Una union paralela que espera una rama que nunca se abrio (3.4). El proceso
+# elige UNA de dos ramas con una exclusiva y las junta con una paralela, que
+# espera las dos. No hay mensajes ni recepciones: el bloqueo es del dibujo, y
+# el diagnostico tiene que nombrar la union y la rama que ya no puede llegar,
+# no inventarse un ciclo.
+Element: [type=bpmn:Process, id_bpmn='Proceso', name='Union que no dispara', instances=1, frequency=0, userWithoutRole=['Ana'], userWithRole={}]
+Element: [type=bpmn:StartEvent, id_bpmn='Inicio', name='Inicio', subTask='Elige']
+Element: [type=bpmn:ExclusiveGateway, id_bpmn='Elige', name='Una de dos', subTask='Tarea_A,Tarea_B']
+Element: [type=bpmn:Task, id_bpmn='Tarea_A', name='Camino A', userTask='Ana', numberOfExecutions=1, minimumTime=1, maximumTime=3, subTask='Une']
+Element: [type=bpmn:Task, id_bpmn='Tarea_B', name='Camino B', userTask='Ana', numberOfExecutions=1, minimumTime=1, maximumTime=3, subTask='Une']
+Element: [type=bpmn:ParallelGateway, id_bpmn='Une', name='Esperar a las dos', subTask='Fin']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin', name='Fin', subTask='']
+Element: [type=bpmn:SequenceFlow, id_bpmn='f1', name='', superElement='Inicio', subElement='Elige']
+Element: [type=bpmn:SequenceFlow, id_bpmn='f2', name='', superElement='Elige', subElement='Tarea_A', percentageOfBranches=50]
+Element: [type=bpmn:SequenceFlow, id_bpmn='f3', name='', superElement='Elige', subElement='Tarea_B', percentageOfBranches=50]
+Element: [type=bpmn:SequenceFlow, id_bpmn='f4', name='', superElement='Tarea_A', subElement='Une']
+Element: [type=bpmn:SequenceFlow, id_bpmn='f5', name='', superElement='Tarea_B', subElement='Une']
+Element: [type=bpmn:SequenceFlow, id_bpmn='f6', name='', superElement='Une', subElement='Fin']

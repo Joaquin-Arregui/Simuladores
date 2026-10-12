@@ -163,10 +163,12 @@ def generateScript(elements, process, starts, messageStarts, start_date=DEFAULT_
     # Lo que necesita el motor para cerrar una recepcion multiinstancia (D7): los
     # envios que le escriben y, si son respuestas, la recepcion a la que
     # responden; desde cada nodo, a cuales de ellos se puede llegar todavia.
+    # El diagnostico de un bloqueo (3.4) pregunta lo mismo de cualquier envio, y
+    # de quien produce cada dato, asi que se calcula para todos.
     receptores = [item for item in elements.values() if getattr(item, 'messageOrigin', None)]
-    envios_a_lotes = {item.messageOrigin for item in receptores
-                      if type(item).__name__ == 'BPMNReceiveTask' and item.multiInstanceType is not None}
-    objetivos = envios_a_lotes | {reply_contexts[envio] for envio in envios_a_lotes if envio in reply_contexts}
+    envios = {item.id_bpmn for item in elements.values() if getattr(item, 'messageDestiny', None)}
+    productores = set(elements['generatedData'])
+    objetivos = envios | {reply_contexts[envio] for envio in envios if envio in reply_contexts} | productores
     # Cuantas instancias simula cada pool. Sin marcadores todos heredan el
     # numero de la colaboracion, que es como se comportaba hasta la tarea 2.1.
     instancias = resolve_participant_instances(elements, process)
@@ -213,7 +215,7 @@ def generateScript(elements, process, starts, messageStarts, start_date=DEFAULT_
             item.id_bpmn for item in elements.values()
             if type(item).__name__ == 'BPMNSendTask' and item.multiInstanceType is not None)),
         'alcanzaDesde': resolve_send_reach(elements, objetivos),
-        'enviosEnCiclo': resolve_send_cycles(elements, envios_a_lotes),
+        'enviosEnCiclo': resolve_send_cycles(elements, envios),
         'origenDeRecepcion': {item.id_bpmn: item.messageOrigin for item in receptores},
         'ejecucionesMaximas': {item.id_bpmn: _ejecuciones_maximas(item) for item in elements.values()
                                if type(item).__name__ == 'BPMNSendTask' and item.multiInstanceType is None},

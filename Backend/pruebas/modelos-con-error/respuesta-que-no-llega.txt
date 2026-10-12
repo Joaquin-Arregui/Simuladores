@@ -1,0 +1,29 @@
+# Una respuesta que ya no llega, y no es un ciclo (3.4). Cuatro parejas 1:1:
+# cada servicio decide con un gateway de porcentajes si responde o archiva la
+# peticion sin responder. Con la semilla del banco archiva el servicio 4, y su
+# cliente se queda esperando un mensaje que ya nadie puede enviar: el servicio
+# termino. El diagnostico tiene que decir eso, una espera sin salida, y no
+# confundirla con un ciclo de espera: nadie espera al cliente.
+Element: [type=bpmn:Collaboration, id_bpmn='Colaboracion', name='Respuesta que no llega', instances=4]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Cliente', name='Cliente', frequency=10, userWithoutRole=['Carla'], infiniteResources='true', containedElements=['Inicio_C', 'Enviar_Peticion', 'Esperar_Respuesta', 'Fin_C', 'c1', 'c2', 'c3']]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Servicio', name='Servicio', frequency=0, userWithoutRole=['Sara'], infiniteResources='true', containedElements=['Inicio_S', 'Recibir_Peticion', 'Decide_S', 'Responder', 'Fin_S', 'Archivar', 's1', 's2', 's3', 's4', 's5']]
+Element: [type=bpmn:StartEvent, id_bpmn='Inicio_C', name='Arranca el cliente', subTask='Enviar_Peticion']
+Element: [type=bpmn:SendTask, id_bpmn='Enviar_Peticion', name='Enviar la peticion', userTask='Carla', numberOfExecutions=1, minimumTime=1, maximumTime=5, subTask='Esperar_Respuesta']
+Element: [type=bpmn:ReceiveTask, id_bpmn='Esperar_Respuesta', name='Esperar la respuesta', userTask='Carla', numberOfExecutions=1, minimumTime=1, maximumTime=2, subTask='Fin_C']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_C', name='Fin del cliente', subTask='']
+Element: [type=bpmn:StartEvent, id_bpmn='Inicio_S', name='Arranca el servicio', subTask='Recibir_Peticion']
+Element: [type=bpmn:ReceiveTask, id_bpmn='Recibir_Peticion', name='Recibir la peticion', userTask='Sara', numberOfExecutions=1, minimumTime=1, maximumTime=2, subTask='Decide_S']
+Element: [type=bpmn:ExclusiveGateway, id_bpmn='Decide_S', name='Responder?', subTask='Responder,Archivar']
+Element: [type=bpmn:SendTask, id_bpmn='Responder', name='Responder', userTask='Sara', numberOfExecutions=1, minimumTime=5, maximumTime=10, subTask='Fin_S']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_S', name='Fin del servicio', subTask='']
+Element: [type=bpmn:EndEvent, id_bpmn='Archivar', name='Archivada sin responder', subTask='']
+Element: [type=bpmn:SequenceFlow, id_bpmn='c1', name='', superElement='Inicio_C', subElement='Enviar_Peticion']
+Element: [type=bpmn:SequenceFlow, id_bpmn='c2', name='', superElement='Enviar_Peticion', subElement='Esperar_Respuesta']
+Element: [type=bpmn:SequenceFlow, id_bpmn='c3', name='', superElement='Esperar_Respuesta', subElement='Fin_C']
+Element: [type=bpmn:SequenceFlow, id_bpmn='s1', name='', superElement='Inicio_S', subElement='Recibir_Peticion']
+Element: [type=bpmn:SequenceFlow, id_bpmn='s2', name='', superElement='Recibir_Peticion', subElement='Decide_S']
+Element: [type=bpmn:SequenceFlow, id_bpmn='s3', name='', superElement='Decide_S', subElement='Responder', percentageOfBranches=50]
+Element: [type=bpmn:SequenceFlow, id_bpmn='s4', name='', superElement='Decide_S', subElement='Archivar', percentageOfBranches=50]
+Element: [type=bpmn:SequenceFlow, id_bpmn='s5', name='', superElement='Responder', subElement='Fin_S']
+Element: [type=bpmn:MessageFlow, id_bpmn='Mensaje_Peticion', name='Peticion', superElement='Enviar_Peticion', subElement='Recibir_Peticion']
+Element: [type=bpmn:MessageFlow, id_bpmn='Mensaje_Respuesta', name='Respuesta', superElement='Responder', subElement='Esperar_Respuesta']

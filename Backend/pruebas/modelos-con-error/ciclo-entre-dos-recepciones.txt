@@ -1,0 +1,27 @@
+# Dos recepciones multiinstancia que se esperan la una a la otra (D7, 3.4).
+# El comite recoge los informes de los evaluadores y despues publica los
+# criterios; cada evaluador recoge los criterios y despues envia su informe.
+# La recepcion del comite no puede cerrar mientras un evaluador pueda escribirle,
+# y todos pueden, porque estan esperando los criterios; la de cada evaluador no
+# puede cerrar mientras el comite pueda publicar, y puede, porque espera los
+# informes. Ninguna regla lo deshace sin inventarse algo: el motor se queda sin
+# eventos y lo denuncia nombrando las dos recepciones y quien espera a quien.
+Element: [type=bpmn:Collaboration, id_bpmn='Colaboracion', name='Ciclo entre dos recepciones', instances=1]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Comite', name='Comite', frequency=0, userWithoutRole=['Ana'], instances=1, participantMultiplicity='true', orchestrationRole='orchestrator', infiniteResources='true', containedElements=['Inicio_C', 'Recoger_Informes', 'Publicar', 'Fin_C', 'c1', 'c2', 'c3']]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Evaluador', name='Evaluador', frequency=0, userWithoutRole=['Beto'], instances=3, participantMultiplicity='true', orchestrationRole='orchestrated', infiniteResources='true', containedElements=['Inicio_E', 'Recoger_Criterios', 'Enviar_Informe', 'Fin_E', 'e1', 'e2', 'e3']]
+Element: [type=bpmn:StartEvent, id_bpmn='Inicio_C', name='Abre la ronda', subTask='Recoger_Informes']
+Element: [type=bpmn:ReceiveTask, id_bpmn='Recoger_Informes', name='Recoger un informe', userTask='Ana', numberOfExecutions=1, multiInstanceType='false', minimumTime=1, maximumTime=1, subTask='Publicar']
+Element: [type=bpmn:SendTask, id_bpmn='Publicar', name='Publicar los criterios', userTask='Ana', numberOfExecutions=1, multiInstanceType='false', minimumTime=1, maximumTime=1, subTask='Fin_C']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_C', name='Cierra la ronda', subTask='']
+Element: [type=bpmn:StartEvent, id_bpmn='Inicio_E', name='Entra el evaluador', subTask='Recoger_Criterios']
+Element: [type=bpmn:ReceiveTask, id_bpmn='Recoger_Criterios', name='Recoger los criterios', userTask='Beto', numberOfExecutions=1, multiInstanceType='false', minimumTime=1, maximumTime=1, subTask='Enviar_Informe']
+Element: [type=bpmn:SendTask, id_bpmn='Enviar_Informe', name='Enviar el informe', userTask='Beto', numberOfExecutions=1, minimumTime=1, maximumTime=1, subTask='Fin_E']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_E', name='Fin del evaluador', subTask='']
+Element: [type=bpmn:SequenceFlow, id_bpmn='c1', name='', superElement='Inicio_C', subElement='Recoger_Informes']
+Element: [type=bpmn:SequenceFlow, id_bpmn='c2', name='', superElement='Recoger_Informes', subElement='Publicar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='c3', name='', superElement='Publicar', subElement='Fin_C']
+Element: [type=bpmn:SequenceFlow, id_bpmn='e1', name='', superElement='Inicio_E', subElement='Recoger_Criterios']
+Element: [type=bpmn:SequenceFlow, id_bpmn='e2', name='', superElement='Recoger_Criterios', subElement='Enviar_Informe']
+Element: [type=bpmn:SequenceFlow, id_bpmn='e3', name='', superElement='Enviar_Informe', subElement='Fin_E']
+Element: [type=bpmn:MessageFlow, id_bpmn='Mensaje_Informe', name='Informe', superElement='Enviar_Informe', subElement='Recoger_Informes']
+Element: [type=bpmn:MessageFlow, id_bpmn='Mensaje_Criterios', name='Criterios', superElement='Publicar', subElement='Recoger_Criterios']

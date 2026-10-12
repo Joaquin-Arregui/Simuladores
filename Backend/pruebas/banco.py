@@ -244,3 +244,31 @@ def revisa_criterio_del_lote():
     reparto = ", ".join("%d: %d" % par for par in sorted(vistos.items()))
     lineas.insert(0, "%d semillas; reclamaciones (cuantas: semillas) %s" % (len(criterio["semillas"]), reparto))
     return lineas, fallos
+
+
+# Que ningun modelo correcto se quede bloqueado con otras semillas (3.4: ningun
+# falso positivo). El diagnostico del bloqueo solo se calcula cuando el motor ya
+# se ha parado, asi que lo que hay que vigilar es que no se pare donde no debe:
+# una recepcion que no cierra porque el motor no sabe descartar a un remitente
+# daria un "ciclo de espera" en un modelo bueno. Con una semilla no se ve; aqui
+# cada modelo limpio y con avisos corre con tres mas. Se probo con veinticinco
+# al hacer la 3.4 y ninguno se bloqueo.
+SEMILLAS_SIN_BLOQUEO = range(1, 4)
+
+
+def revisa_sin_bloqueos():
+    """(lineas, fallos): los modelos que tienen que terminar, con otras semillas."""
+    lineas, fallos, ejecuciones = [], 0, 0
+    todos = modelos()
+    for ruta, _ in todos:
+        texto = ruta.read_text(encoding="utf-8")
+        for semilla in SEMILLAS_SIN_BLOQUEO:
+            ejecuciones += 1
+            try:
+                processSimulation(texto, seed=semilla)
+            except Exception as error:
+                lineas.append("%s, semilla %d: %s: %s" % (ruta.stem, semilla, type(error).__name__, error))
+                fallos += 1
+    lineas.insert(0, "%d modelos con las semillas %d a %d: %d ejecuciones" % (
+        len(todos), SEMILLAS_SIN_BLOQUEO[0], SEMILLAS_SIN_BLOQUEO[-1], ejecuciones))
+    return lineas, fallos

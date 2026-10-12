@@ -1,0 +1,25 @@
+# Dos casos que se esperan el mensaje el uno del otro (3.4). La ventanilla
+# espera la solicitud antes de mandar el impreso, y el solicitante espera el
+# impreso antes de mandar la solicitud. No hay ninguna recepcion
+# multiinstancia: es el ciclo de espera de toda la vida, entre dos recepciones
+# normales, y el diagnostico tiene que nombrar las dos esperas y a quien espera
+# cada una.
+Element: [type=bpmn:Collaboration, id_bpmn='Colaboracion', name='Ciclo de mensajes', instances=1]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Ventanilla', name='Ventanilla', frequency=0, userWithoutRole=['Ana'], containedElements=['Inicio_V', 'Esperar_Solicitud', 'Enviar_Impreso', 'Fin_V', 'v1', 'v2', 'v3']]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Solicitante', name='Solicitante', frequency=0, userWithoutRole=['Beto'], containedElements=['Inicio_S', 'Esperar_Impreso', 'Enviar_Solicitud', 'Fin_S', 's1', 's2', 's3']]
+Element: [type=bpmn:StartEvent, id_bpmn='Inicio_V', name='Abre la ventanilla', subTask='Esperar_Solicitud']
+Element: [type=bpmn:ReceiveTask, id_bpmn='Esperar_Solicitud', name='Esperar la solicitud', userTask='Ana', numberOfExecutions=1, minimumTime=1, maximumTime=1, subTask='Enviar_Impreso']
+Element: [type=bpmn:SendTask, id_bpmn='Enviar_Impreso', name='Enviar el impreso', userTask='Ana', numberOfExecutions=1, minimumTime=1, maximumTime=1, subTask='Fin_V']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_V', name='Cierra la ventanilla', subTask='']
+Element: [type=bpmn:StartEvent, id_bpmn='Inicio_S', name='Llega el solicitante', subTask='Esperar_Impreso']
+Element: [type=bpmn:ReceiveTask, id_bpmn='Esperar_Impreso', name='Esperar el impreso', userTask='Beto', numberOfExecutions=1, minimumTime=1, maximumTime=1, subTask='Enviar_Solicitud']
+Element: [type=bpmn:SendTask, id_bpmn='Enviar_Solicitud', name='Enviar la solicitud', userTask='Beto', numberOfExecutions=1, minimumTime=1, maximumTime=1, subTask='Fin_S']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_S', name='Se va el solicitante', subTask='']
+Element: [type=bpmn:SequenceFlow, id_bpmn='v1', name='', superElement='Inicio_V', subElement='Esperar_Solicitud']
+Element: [type=bpmn:SequenceFlow, id_bpmn='v2', name='', superElement='Esperar_Solicitud', subElement='Enviar_Impreso']
+Element: [type=bpmn:SequenceFlow, id_bpmn='v3', name='', superElement='Enviar_Impreso', subElement='Fin_V']
+Element: [type=bpmn:SequenceFlow, id_bpmn='s1', name='', superElement='Inicio_S', subElement='Esperar_Impreso']
+Element: [type=bpmn:SequenceFlow, id_bpmn='s2', name='', superElement='Esperar_Impreso', subElement='Enviar_Solicitud']
+Element: [type=bpmn:SequenceFlow, id_bpmn='s3', name='', superElement='Enviar_Solicitud', subElement='Fin_S']
+Element: [type=bpmn:MessageFlow, id_bpmn='Mensaje_Solicitud', name='Solicitud', superElement='Enviar_Solicitud', subElement='Esperar_Solicitud']
+Element: [type=bpmn:MessageFlow, id_bpmn='Mensaje_Impreso', name='Impreso', superElement='Enviar_Impreso', subElement='Esperar_Impreso']

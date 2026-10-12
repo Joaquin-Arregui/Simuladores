@@ -1,0 +1,40 @@
+# Modelo de referencia 28 - pedir y esperar a la vez (D7, 3.4).
+# El 02 con la peticion y la recepcion en ramas paralelas del cliente: abre la
+# recepcion de respuestas, multiinstancia, al mismo tiempo que envia la
+# peticion. Cada servicio prepara su ventanilla, recibe la peticion, la atiende y
+# responde con un envio multiinstancia, una respuesta por peticion recogida.
+# Cuando el cliente envia, ya no puede escribir mas, y la peticion todavia no
+# esta anotada en el servicio: o espera en su buzon, porque el servicio aun
+# prepara (cliente 1), o ya se le entrego y el servicio no ha vuelto a
+# ejecutarse para anotarla (clientes 2 y 3). En ese hueco parece que nadie va a
+# escribir al servicio, y por tanto que el servicio no respondera a nadie: la
+# recepcion del cliente cerraba vacia y las tres respuestas se quedaban sin
+# recoger. Los sobres ya enviados y sin anotar cuentan como escritores.
+Element: [type=bpmn:Collaboration, id_bpmn='Colaboracion', name='Pedir y esperar a la vez', instances=3]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Cliente', name='Cliente', frequency=40, userWithoutRole=['Carla'], containedElements=['Inicio_C', 'Bifurca_C', 'Enviar_Peticion', 'Esperar_Respuesta', 'Une_C', 'Fin_C', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6']]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Servicio', name='Servicio', frequency=0, userWithoutRole=['Sara', 'Diego'], infiniteResources='true', containedElements=['Inicio_S', 'Preparar', 'Recibir_Peticion', 'Atender', 'Enviar_Respuesta', 'Fin_S', 's1', 's2', 's3', 's4', 's5']]
+Element: [type=bpmn:StartEvent, id_bpmn='Inicio_C', name='Arranca el cliente', subTask='Bifurca_C']
+Element: [type=bpmn:ParallelGateway, id_bpmn='Bifurca_C', name='Pedir y esperar a la vez', subTask='Enviar_Peticion,Esperar_Respuesta']
+Element: [type=bpmn:SendTask, id_bpmn='Enviar_Peticion', name='Enviar la peticion', userTask='Carla', numberOfExecutions=1, minimumTime=10, maximumTime=20, subTask='Une_C']
+Element: [type=bpmn:ReceiveTask, id_bpmn='Esperar_Respuesta', name='Recoger las respuestas', userTask='Carla', numberOfExecutions=1, multiInstanceType='false', minimumTime=5, maximumTime=10, subTask='Une_C']
+Element: [type=bpmn:ParallelGateway, id_bpmn='Une_C', name='Juntar', subTask='Fin_C']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_C', name='Fin del cliente', subTask='']
+Element: [type=bpmn:StartEvent, id_bpmn='Inicio_S', name='Arranca el servicio', subTask='Preparar']
+Element: [type=bpmn:Task, id_bpmn='Preparar', name='Preparar la ventanilla', userTask='Sara', numberOfExecutions=1, minimumTime=25, maximumTime=35, subTask='Recibir_Peticion']
+Element: [type=bpmn:ReceiveTask, id_bpmn='Recibir_Peticion', name='Recibir la peticion', userTask='Sara', numberOfExecutions=1, minimumTime=5, maximumTime=10, subTask='Atender']
+Element: [type=bpmn:Task, id_bpmn='Atender', name='Atender la peticion', userTask='Sara, Diego', numberOfExecutions=1, minimumTime=40, maximumTime=90, subTask='Enviar_Respuesta']
+Element: [type=bpmn:SendTask, id_bpmn='Enviar_Respuesta', name='Enviar la respuesta', userTask='Diego', numberOfExecutions=1, multiInstanceType='false', minimumTime=10, maximumTime=20, subTask='Fin_S']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_S', name='Fin del servicio', subTask='']
+Element: [type=bpmn:SequenceFlow, id_bpmn='c1', name='', superElement='Inicio_C', subElement='Bifurca_C']
+Element: [type=bpmn:SequenceFlow, id_bpmn='c2', name='', superElement='Bifurca_C', subElement='Enviar_Peticion']
+Element: [type=bpmn:SequenceFlow, id_bpmn='c3', name='', superElement='Bifurca_C', subElement='Esperar_Respuesta']
+Element: [type=bpmn:SequenceFlow, id_bpmn='c4', name='', superElement='Enviar_Peticion', subElement='Une_C']
+Element: [type=bpmn:SequenceFlow, id_bpmn='c5', name='', superElement='Esperar_Respuesta', subElement='Une_C']
+Element: [type=bpmn:SequenceFlow, id_bpmn='c6', name='', superElement='Une_C', subElement='Fin_C']
+Element: [type=bpmn:SequenceFlow, id_bpmn='s1', name='', superElement='Inicio_S', subElement='Preparar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='s2', name='', superElement='Preparar', subElement='Recibir_Peticion']
+Element: [type=bpmn:SequenceFlow, id_bpmn='s3', name='', superElement='Recibir_Peticion', subElement='Atender']
+Element: [type=bpmn:SequenceFlow, id_bpmn='s4', name='', superElement='Atender', subElement='Enviar_Respuesta']
+Element: [type=bpmn:SequenceFlow, id_bpmn='s5', name='', superElement='Enviar_Respuesta', subElement='Fin_S']
+Element: [type=bpmn:MessageFlow, id_bpmn='Mensaje_Peticion', name='Peticion', superElement='Enviar_Peticion', subElement='Recibir_Peticion']
+Element: [type=bpmn:MessageFlow, id_bpmn='Mensaje_Respuesta', name='Respuesta', superElement='Enviar_Respuesta', subElement='Esperar_Respuesta']

@@ -56,6 +56,8 @@ mientras el comportamiento no deba cambiar, su XES no debe cambiar.
 | `24-reclamaciones-en-secuencia` | El 20 con seis solicitantes y la marca secuencial en todas las tareas | Que la recepcion secuencial, que espera un sobre cada vez, no cierre o se coma el lote |
 | `25-parejas-con-varias-respuestas` | Cuatro parejas 1:1; cada servicio responde una o mas veces a SU cliente, que las recoge con una recepcion multiinstancia | Que una recepcion espere respuestas destinadas a otros casos: el cliente 1 terminaba cuando acababa el ultimo servicio, no el suyo. Se mira a quien puede ir la respuesta de cada token, por lo que anoto su recepcion o por quien le escribiria |
 | `26-respuesta-en-bucle` | Un servicio responde con un bucle de dos vueltas (Units=2, numberOfExecutions=1): la primera al cliente que anoto, la segunda al 2 por las reglas fijas | Que el cierre cuente las ejecuciones de un envio por numberOfExecutions y no por su bucle, y la recepcion del cliente 2 cierre antes de la segunda respuesta; o, al reves, que la del cliente 1 espere al final del bucle (t=25) cuando la unica vuelta pendiente ya no va a el, en vez de cerrar al recibir (t=17) |
+| `27-parejas-con-cadena-de-respuestas` | Tres parejas: el servicio avisa, el cliente pide en respuesta al aviso y el servicio responde; el cliente recoge con una recepcion multiinstancia | Que quien puede escribir a una recepcion se deje sin acotar cuando le escribe otra respuesta: el cliente 1 esperaria hasta t=206 a que el servicio 3 reciba la peticion de su cliente, en vez de cerrar en t=43 |
+| `28-pedir-y-esperar-a-la-vez` | El 02 con la peticion y una recepcion multiinstancia en ramas paralelas del cliente, y respuesta multiinstancia del servicio. La peticion del cliente 1 espera en el buzon; las de los clientes 2 y 3 ya se entregaron y aun no se anotan | Que entre el envio y la anotacion parezca que nadie escribira al servicio y la recepcion del cliente cierre vacia: las tres respuestas se quedaban sin recoger. Cuentan como escritores los sobres ya enviados sin anotar, en el buzon y entregados |
 | `con-avisos/envio-a-pool-externo` | Un mensaje dirigido al pool y no a un receptor | Que un envio que sale de la simulacion acabe en un error interno en vez de en un aviso |
 | `con-avisos/mismo-usuario-en-dos-pools` | El mismo nombre declarado en dos pools | Que dos pools vuelvan a competir por el mismo recurso |
 | `con-avisos/multiinstancia-con-numero-escrito` | Una convocatoria multiinstancia con numberOfExecutions=4 a dos casos | Que un numero que ya no se usa se ignore en silencio; N son los dos casos vivos |
@@ -75,7 +77,11 @@ mientras el comportamiento no deba cambiar, su XES no debe cambiar.
 | `con-error/mensaje-sin-recoger` | Tres solicitudes y una sola recepcion declarada | Que dos mensajes enviados se queden sin recoger y la simulacion termine con buena cara |
 | `con-error/mensaje-al-propio-pool` | Un mensaje dirigido directamente al participante que contiene al emisor | Que un envio al propio pool se acepte como externo en vez de rechazarse con un 400 |
 | `con-error/usuario-ajeno-al-carril` | Una tarea asignada a alguien de otro carril | Que un modelo imposible se simule a medias en vez de rechazarse con un 400 |
-| `con-error/ciclo-de-espera` | El solicitante espera un aviso que solo sale cuando cierra la recepcion a la que tiene que escribir | Que un ciclo de espera real se cuelgue en vez de denunciarse; el mensaje lo afinara la 3.4 |
+| `con-error/ciclo-de-espera` | El solicitante espera un aviso que solo sale cuando cierra la recepcion a la que tiene que escribir | Que un ciclo de espera real se quede en «simulacion bloqueada» sin decir por que: el mensaje nombra la recepcion que no cierra, quien la mantiene abierta y que espera cada uno (3.4) |
+| `con-error/ciclo-entre-dos-recepciones` | El comite recoge informes antes de publicar criterios, y cada evaluador recoge criterios antes de enviar su informe | Que dos recepciones multiinstancia que se esperan entre si no se reconozcan como ciclo |
+| `con-error/ciclo-de-mensajes` | Dos casos que se esperan el mensaje el uno del otro, sin ninguna recepcion multiinstancia | Que el diagnostico solo sepa de lotes y no del ciclo de espera de siempre |
+| `con-error/respuesta-que-no-llega` | Cuatro parejas; con la semilla del banco el servicio 4 archiva sin responder | Que una espera sin salida se confunda con un ciclo: nadie espera al cliente 4, es su mensaje el que ya no puede llegar |
+| `con-error/union-que-no-dispara` | Una exclusiva que abre una rama y una paralela que espera las dos | Que el diagnostico se invente un ciclo donde solo hay una rama que ya no puede llegar |
 
 ## Por qué existe `modelos-con-avisos/`
 
@@ -128,7 +134,7 @@ python3 pruebas/regresion.py
 python3 pruebas/regresion.py --acepta-reorganizacion
 ```
 
-Compara cuatro cosas que no conviene confundir, y vigila dos más:
+Compara cuatro cosas que no conviene confundir, y vigila tres más:
 
 - **Comportamiento** — qué le ocurre a **cada caso**: qué eventos tiene, cuándo,
   con qué recurso y qué rama elige cada compuerta. Cualquier diferencia es un
@@ -154,6 +160,13 @@ Compara cuatro cosas que no conviene confundir, y vigila dos más:
   modelo evalúa 4 veces si reclaman 4 y 6 si reclaman 6». Una sola semilla no lo
   ve: un motor que se quedara corto a partir de 6 pasaría el XES congelado, que
   tiene 5, y fallaría aquí. Tarda unos cinco segundos.
+- **Sin bloqueos con otras semillas** — los modelos de `modelos/` y
+  `modelos-con-avisos/` se ejecutan además con las semillas 1 a 3, y ninguno
+  puede acabar con un error (`banco.SEMILLAS_SIN_BLOQUEO`). Es el «ningún falso
+  positivo» de la 3.4: el diagnóstico solo se calcula cuando el motor ya se ha
+  parado, así que lo que hay que vigilar es que un modelo correcto no se pare,
+  por ejemplo porque una recepción no sepa descartar a un remitente. Al hacer
+  la 3.4 se probaron veinticinco semillas sin ningún bloqueo.
 
 En las tareas multiinstancia del banco `numberOfExecutions` vale 1, que es lo
 que escribe el Modeler: desde la 3.2 N se calcula en ejecución y ese campo no se

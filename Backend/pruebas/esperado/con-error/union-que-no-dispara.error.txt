@@ -1,0 +1,1 @@
+SimulationExecutionError: Esperas sin salida: Proceso - 1 espera en Une la rama de Tarea_B, que ya no puede llegar. Simulación bloqueada o incompleta; uniones pendientes: Une (Proceso - 1); casos sin evento de fin: Proceso - 1.

@@ -1,0 +1,1 @@
+SimulationExecutionError: Esperas sin salida: Pool_Cliente - 4 espera en Esperar_Respuesta el mensaje de Responder, que ya no puede enviar nadie. Simulación bloqueada o incompleta; elementos esperando mensaje o datos: Esperar_Respuesta (Pool_Cliente - 4); casos sin evento de fin: Pool_Cliente - 4.

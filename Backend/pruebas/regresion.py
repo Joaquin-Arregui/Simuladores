@@ -281,6 +281,13 @@ def main():
         print("         %s" % linea)
     fallos += fallos_criterio
 
+    # Ningun modelo correcto se bloquea con otras semillas (3.4).
+    lineas, fallos_bloqueo = banco.revisa_sin_bloqueos()
+    print("%-34s %s" % ("sin bloqueos con otras semillas", "ok" if not fallos_bloqueo else "FALLA"))
+    for linea in lineas:
+        print("         %s" % linea)
+    fallos += fallos_bloqueo
+
     for huerfana in banco.referencias_huerfanas():
         print("%-34s REFERENCIA HUERFANA  no existe su modelo" % str(huerfana))
         fallos += 1
