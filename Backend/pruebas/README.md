@@ -60,6 +60,8 @@ mientras el comportamiento no deba cambiar, su XES no debe cambiar.
 | `28-pedir-y-esperar-a-la-vez` | El 02 con la peticion y una recepcion multiinstancia en ramas paralelas del cliente, y respuesta multiinstancia del servicio. La peticion del cliente 1 espera en el buzon; las de los clientes 2 y 3 ya se entregaron y aun no se anotan | Que entre el envio y la anotacion parezca que nadie escribira al servicio y la recepcion del cliente cierre vacia: las tres respuestas se quedaban sin recoger. Cuentan como escritores los sobres ya enviados sin anotar, en el buzon y entregados |
 | `29-rama-al-cero-por-ciento` | Una union inclusiva cuya otra entrada solo se podria alcanzar por una rama al 0 % | Que una rama que el motor no toma nunca haga que la union deje de esperar a la recepcion y se evalue sin lote, en el motor o en la validacion |
 | `30-entrada-al-cero-por-ciento` | La rama de Recoger termina por su cuenta; su unica entrada a la union esta al 0 %, y Tribunal llega en t=1 | Que se compruebe el camino hasta el origen de la entrada pero no el peso de la entrada misma: la union debe disparar en t=1, sin esperar hasta t=11 a una rama que nunca la alcanzara |
+| `31-tres-convocatorias` | Las reclamaciones del 20 con un orquestador de 3 instancias: tres rondas en serie, cada una con su orquestador y tres solicitantes nuevos | Que las convocatorias se solapen, que la siguiente no empiece justo al acabar la anterior, que una ronda reutilice casos o que un mensaje, un lote o una anotacion pase de una ronda a otra |
+| `32-convocatorias-que-empiezan-de-cero` | Tres rondas de un orquestador con dos personas, y una tarea que la cola da a quien menos ha trabajado y que lee un dato por defecto | Que los contadores de la cola pasen de una ronda a otra (Preparar iria a Carla en la segunda), o que los casos de las rondas 2 y 3 se queden sin sus datos por defecto |
 | `con-avisos/envio-a-pool-externo` | Un mensaje dirigido al pool y no a un receptor | Que un envio que sale de la simulacion acabe en un error interno en vez de en un aviso |
 | `con-avisos/mismo-usuario-en-dos-pools` | El mismo nombre declarado en dos pools | Que dos pools vuelvan a competir por el mismo recurso |
 | `con-avisos/multiinstancia-con-numero-escrito` | Una convocatoria multiinstancia con numberOfExecutions=4 a dos casos | Que un numero que ya no se usa se ignore en silencio; N son los dos casos vivos |
@@ -78,6 +80,7 @@ mientras el comportamiento no deba cambiar, su XES no debe cambiar.
 | `con-error/evaluacion-con-demasiados-estados` | El 18 a lo ancho: Recoger y doce comprobaciones en paralelo hacia una union inclusiva. Valido, pero con demasiados ordenes posibles | Que la partida de tokens no tenga presupuesto y crezca sin limite; con presupuesto se rechaza diciendo que no se ha podido comprobar |
 | `con-error/evaluacion-sin-lote-en-la-primera-vuelta` | Un bucle Evaluar, Recoger y otra vez Evaluar | Que la recepcion del camino de vuelta tape que la primera vuelta llega sin lote |
 | `con-error/mensaje-sin-recoger` | Tres solicitudes y una sola recepcion declarada | Que dos mensajes enviados se queden sin recoger y la simulacion termine con buena cara |
+| `con-error/mensaje-sin-recoger-en-la-primera-convocatoria` | Lo mismo con tres convocatorias | Que el estado de una ronda se tire sin mirar antes si se ha perdido algun sobre: la perdida desapareceria con el buzon. Se para al cerrar la primera |
 | `con-error/mensaje-al-propio-pool` | Un mensaje dirigido directamente al participante que contiene al emisor | Que un envio al propio pool se acepte como externo en vez de rechazarse con un 400 |
 | `con-error/usuario-ajeno-al-carril` | Una tarea asignada a alguien de otro carril | Que un modelo imposible se simule a medias en vez de rechazarse con un 400 |
 | `con-error/ciclo-de-espera` | El solicitante espera un aviso que solo sale cuando cierra la recepcion a la que tiene que escribir | Que un ciclo de espera real se quede en «simulacion bloqueada» sin decir por que: el mensaje nombra la recepcion que no cierra, quien la mantiene abierta y que espera cada uno (3.4) |
@@ -137,7 +140,7 @@ python3 pruebas/regresion.py
 python3 pruebas/regresion.py --acepta-reorganizacion
 ```
 
-Compara cuatro cosas que no conviene confundir, y vigila tres más:
+Compara cuatro cosas que no conviene confundir, y vigila cuatro más:
 
 - **Comportamiento** — qué le ocurre a **cada caso**: qué eventos tiene, cuándo,
   con qué recurso y qué rama elige cada compuerta. Cualquier diferencia es un
@@ -170,6 +173,16 @@ Compara cuatro cosas que no conviene confundir, y vigila tres más:
   parado, así que lo que hay que vigilar es que un modelo correcto no se pare,
   por ejemplo porque una recepción no sepa descartar a un remitente. Al hacer
   la 3.4 se probaron veinticinco semillas sin ningún bloqueo.
+- **Convocatorias en serie** — los modelos con varias rondas se miran en su
+  referencia y con las semillas 1 a 3 (`banco.revisa_convocatorias`): cada
+  ronda empieza justo cuando acaba la anterior —antes se solaparían, después
+  algo, una recepción ya cerrada por ejemplo, la habría alargado sin hacer
+  nada—; trae los mismos casos por pool que la primera, con índices que siguen
+  a los de la anterior, y ningún mensaje sale de ella. El `31` corre además con
+  las semillas 1 a 10, y en cada ronda se tiene que reevaluar y responder
+  exactamente lo que se reclamó en ella; entre todas tiene que haber alguna en
+  la que no reclama nadie, para que la recepción que cierra vacía esté
+  cubierta (`banco.CRITERIO_DE_LAS_CONVOCATORIAS`).
 
 En las tareas multiinstancia del banco `numberOfExecutions` vale 1, que es lo
 que escribe el Modeler: desde la 3.2 N se calcula en ejecución y ese campo no se

@@ -4,7 +4,7 @@ from pathlib import Path
 from xml.etree import ElementTree as ET
 
 from simulator.simulationFunctions.generateFunction import generateFunction
-from simulator.validation import (TASK_TYPES, resolve_batch_receives, resolve_participant_instances,
+from simulator.validation import (TASK_TYPES, resolve_batch_receives, resolve_convocatorias,
                                   resolve_reply_contexts, resolve_send_cycles, resolve_send_reach,
                                   resolve_takeable_flows, task_base_users)
 
@@ -169,9 +169,11 @@ def generateScript(elements, process, starts, messageStarts, start_date=DEFAULT_
     envios = {item.id_bpmn for item in elements.values() if getattr(item, 'messageDestiny', None)}
     productores = set(elements['generatedData'])
     objetivos = envios | {reply_contexts[envio] for envio in envios if envio in reply_contexts} | productores
-    # Cuantas instancias simula cada pool. Sin marcadores todos heredan el
-    # numero de la colaboracion, que es como se comportaba hasta la tarea 2.1.
-    instancias = resolve_participant_instances(elements, process)
+    # Cuantas convocatorias hay y cuantos casos tiene cada pool en cada una: las
+    # instancias del orquestador son rondas sucesivas, y las de los demas, casos
+    # por ronda. Sin orquestador marcado hay una sola, y sin marcadores todos
+    # heredan el numero de la colaboracion, como hasta la tarea 2.1.
+    convocatorias, por_convocatoria = resolve_convocatorias(elements, process, participants)
     # La plantilla de cada pool y su casilla de recursos infinitos. Las colas
     # son por pool desde la tarea 2.3: dos pools que declaran el mismo nombre
     # tienen cada uno su persona.
@@ -192,7 +194,8 @@ def generateScript(elements, process, starts, messageStarts, start_date=DEFAULT_
         'usuariosPorParticipante': pool_users,
         'recursosInfinitos': infinite_pools,
         'participantesOrden': participants,
-        'instanciasPorParticipante': {p: instancias[p] for p in participants},
+        'convocatorias': convocatorias,
+        'casosPorConvocatoria': por_convocatoria,
         'elementParticipant': element_participant,
         'rolePool': element.userWithRole if is_process else {},
         'processUsers': process_users,

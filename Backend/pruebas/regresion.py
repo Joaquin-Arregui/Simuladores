@@ -281,6 +281,14 @@ def main():
         print("         %s" % linea)
     fallos += fallos_criterio
 
+    # Las convocatorias en serie (4.1 y 4.2): rondas sin solapes ni huecos,
+    # casos nuevos en cada una y nada que pase de una a otra.
+    lineas, fallos_rondas = banco.revisa_convocatorias()
+    print("%-34s %s" % ("convocatorias en serie", "ok" if not fallos_rondas else "FALLA"))
+    for linea in lineas:
+        print("         %s" % linea)
+    fallos += fallos_rondas
+
     # Ningun modelo correcto se bloquea con otras semillas (3.4).
     lineas, fallos_bloqueo = banco.revisa_sin_bloqueos()
     print("%-34s %s" % ("sin bloqueos con otras semillas", "ok" if not fallos_bloqueo else "FALLA"))

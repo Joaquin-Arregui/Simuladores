@@ -24,6 +24,10 @@ class Caso(NamedTuple):
     tokens, uniones y traza a la vez. La clave de un mensaje es ya el caso
     entero; el indice se guarda aparte porque el registro lo necesita y porque
     con el se encuentran por primera vez los dos pools de una colaboracion 1:1.
+
+    El indice no se repite dentro de un participante en toda la simulacion: los
+    orquestados de la segunda convocatoria siguen numerando donde acabaron los
+    de la primera (D3). Dos rondas no comparten ni un caso ni una traza.
     """
     participante: str
     indice: int
@@ -33,18 +37,21 @@ class Caso(NamedTuple):
         return f'{self.participante} - {self.indice}'
 
 
-def caso_de(node, indice, convocatoria=1):
-    """El caso al que pertenece un elemento en una instancia dada."""
-    return Caso(elementParticipant[node], indice, convocatoria)
-
-
-def casos_de(participante):
-    """Todos los casos de un pool, hayan arrancado o no.
+def casos_de(participante, convocatoria):
+    """Los casos de un pool en una convocatoria, hayan arrancado o no.
 
     La difusion necesita esta lista completa: un mensaje dirigido a un caso que
     todavia no ha arrancado tiene que quedarse esperandole, no perderse. Por eso
-    la tabla se construye entera antes de lanzar ningun evento.
+    la tabla de cada convocatoria se construye entera antes de lanzar ninguno de
+    sus eventos (_abre_convocatoria).
+
+    Solo existe la de la convocatoria en curso: las anteriores ya terminaron y
+    las siguientes no se han abierto, asi que nadie de otra ronda puede escribir
+    a esta ni recibir de ella. Pedir otra es un fallo del motor, no del modelo.
     """
+    if convocatoria != convocatoriaActual:
+        raise RuntimeError(f'Se han pedido los casos de {participante} de la convocatoria '
+                           f'{convocatoria} durante la {convocatoriaActual}.')
     return casosPorParticipante[participante]
 
 
@@ -242,6 +249,9 @@ def destino_de(origin, target, caso, execution, contexto, destinatarios=None):
 
     Sin regla aplicable no hay destino y publish_message lo dice: entre 3 casos
     y 5 no hay emparejamiento que el motor pueda adivinar.
+
+    Las reglas solo cuentan los casos de la convocatoria del remitente: en cada
+    una hay un orquestador y sus N orquestados, y nadie escribe a otra ronda.
     """
     recepcion = recepcionDeRespuesta.get(origin)
     if recepcion is not None:
@@ -251,7 +261,8 @@ def destino_de(origin, target, caso, execution, contexto, destinatarios=None):
     if destinatarios is not None:
         return destinatarios[execution - 1] if 1 <= execution <= len(destinatarios) else None
     participante = elementParticipant[target]
-    enfrente, propios = casos_de(participante), casos_de(caso.participante)
+    enfrente = casos_de(participante, caso.convocatoria)
+    propios = casos_de(caso.participante, caso.convocatoria)
     if len(enfrente) == 1:
         return enfrente[0]
     if len(enfrente) == len(propios):
@@ -283,8 +294,8 @@ def publish_message(origin, target, execution, caso, contexto, destinatarios=Non
             f'El mensaje de {origin} a {target} no tiene caso destino: lo envia '
             f'{caso} en su ejecucion {execution}, y el pool '
             f'{elementParticipant[target]} tiene '
-            f'{len(casos_de(elementParticipant[target]))} casos frente a los '
-            f'{len(casos_de(caso.participante))} del suyo, asi que ninguna regla '
+            f'{len(casos_de(elementParticipant[target], caso.convocatoria))} casos frente a los '
+            f'{len(casos_de(caso.participante, caso.convocatoria))} del suyo, asi que ninguna regla '
             f'de encaminamiento le asigna un destino.')
     key = (origin, target, destino)
     if message_waiters[key]:
@@ -369,15 +380,17 @@ def cardinalidad_del_envio(tarea, destino, caso, contexto):
     Si responde a una recepcion, una por mensaje que esa recepcion recogio, y
     cada ejecucion devuelve el suyo a quien lo escribio (destino_de, regla 1):
     un caso vivo que no escribio no recibe una respuesta que no espera. Si abre
-    la conversacion, una por caso vivo del pool de enfrente, en orden de indice,
-    y la ejecucion i escribe al i-esimo: N envios con una copia cada uno (2.5).
+    la conversacion, una por caso vivo del pool de enfrente en su convocatoria,
+    en orden de indice, y la ejecucion i escribe al i-esimo: N envios con una
+    copia cada uno (2.5).
     Un caso que ya ha terminado no cuenta, porque nadie recogeria su sobre.
     """
     recepcion = recepcionDeRespuesta.get(tarea)
     if recepcion is not None:
         plan = tamano_del_lote(caso, contexto, recepcion, tarea), None
     else:
-        vivos = [otro for otro in casos_de(elementParticipant[destino]) if caso_vivo(otro)]
+        vivos = [otro for otro in casos_de(elementParticipant[destino], caso.convocatoria)
+                 if caso_vivo(otro)]
         plan = len(vivos), vivos
     # El cierre de las recepciones necesita saber que le queda por escribir a
     # esta activacion (_destinos_de_una_activacion).
@@ -407,7 +420,8 @@ def _destinos_fijos(remitente, recepcion, desde=1, hasta=None):
     """A quien mandan las reglas 2 a 4 de destino_de los sobres de las ejecuciones
     desde..hasta de un envio del remitente a esa recepcion (hasta=None: sin
     tope). Solo la regla 4 depende de la ejecucion: la i va al caso i."""
-    enfrente, propios = casos_de(elementParticipant[recepcion]), casos_de(remitente.participante)
+    enfrente = casos_de(elementParticipant[recepcion], remitente.convocatoria)
+    propios = casos_de(remitente.participante, remitente.convocatoria)
     if hasta is not None and hasta < desde:
         return set()
     if len(enfrente) == 1:
@@ -438,8 +452,12 @@ def _le_escriben(origen, recepcion, caso, visitando=frozenset()):
     Se mira token a token, con su contexto, y no caso a caso: en varias parejas
     1:1 el servicio 3 sigue vivo y puede responder, pero su respuesta va al
     cliente 3, y la recepcion del cliente 1 no tiene por que esperarla.
+
+    Solo los de la convocatoria del caso: si contaran los orquestados de la
+    siguiente, la recepcion esperaria a una ronda que no puede abrirse hasta
+    que ella cierre.
     """
-    for remitente in casos_de(elementParticipant[origen]):
+    for remitente in casos_de(elementParticipant[origen], caso.convocatoria):
         for nodo, contexto in _posiciones(remitente):
             if origen not in alcanzaDesde.get(nodo, ()):
                 continue
@@ -869,6 +887,7 @@ def _run_node(node, caso, contexto):
         completed[caso] += 1
     _flush_joins(caso)
     _revisa_lotes()
+    _revisa_convocatoria(caso)
 
 
 def _start_event(node, caso, delay, contexto):
@@ -897,6 +916,7 @@ def _start_event(node, caso, delay, contexto):
     _route(node, caso, item['next'], contexto)
     _flush_joins(caso)
     _revisa_lotes()
+    _revisa_convocatoria(caso)
 
 
 def _enumera(partes, maximo=6):
@@ -1054,12 +1074,19 @@ def _diagnostico_del_bloqueo():
 
 
 def _assert_complete():
+    """Que la convocatoria en curso ha terminado limpia, o por que se ha parado.
+
+    Se llama al cerrar cada convocatoria, antes de tirar su estado, y al acabar
+    la simulacion. Mira solo la ronda en curso: las anteriores ya pasaron por
+    aqui al cerrarse, y sin eso un sobre perdido en la primera desapareceria
+    con su estado.
+    """
     pending = [f'{node} ({caso})' for caso, joins in pending_joins.items()
                for node, counts in joins.items() if any(counts.values())]
     active = [f'{node} ({caso})' for caso, tokens in active_tokens.items()
               for node, count in tokens.items() if count]
-    sin_arrancar = [str(caso) for caso in simulationResults if caso not in casosArrancados]
-    missing = [str(caso) for caso in simulationResults if not completed[caso]]
+    sin_arrancar = [str(caso) for caso in casosDeLaRonda if caso not in casosArrancados]
+    missing = [str(caso) for caso in casosDeLaRonda if not completed[caso]]
     # Sobres que nadie ha abierto. D6 dice que todo mensaje que se envia se
     # recibe, asi que uno sin recoger es un modelo mal planteado, y callarlo
     # seria peor que pararse: la simulacion terminaria con buena cara habiendo
@@ -1079,6 +1106,8 @@ def _assert_complete():
             details.append('casos preparados que nunca arrancaron: ' + ', '.join(sin_arrancar[:10]))
         if missing:
             details.append('casos sin evento de fin: ' + ', '.join(missing[:10]))
+        if convocatorias > 1:
+            details.append(f'se ha parado en la convocatoria {convocatoriaActual} de {convocatorias}')
         # Delante, el porque, si es un bloqueo por esperas: el resumen dice que
         # se quedo parado, el diagnostico quien espera a quien (3.4).
         diagnostico = _diagnostico_del_bloqueo() if (pending or active) else None
@@ -1143,40 +1172,31 @@ def _finalize_item(item):
     return item
 
 
-def _run_simulation():
-    global env, simulationResults, colasPorParticipante
-    global messages, message_waiters, correspondientes, recepciones_anotadas
-    global contextos_padres, contador_contextos, lotes, lotesAbiertos, tokensVivos, enviadas, planes
-    global enCamino
-    global data, data_changed, active_tokens, pending_joins
-    global reachability, completed, startDate, join_waits
-    global casosPorParticipante, casosArrancados
-    # Every draw (durations, gateways, loops) comes from this generator, so the
-    # seed alone fixes the run.
-    random.seed(simulationSeed)
-    env = simpy.Environment()
-    startDate = datetime.fromisoformat(simulationStartDate)
-    # La tabla de casos de la convocatoria, completa ANTES de lanzar nada. El
-    # numero total se conoce desde el principio del experimento, asi que no hay
-    # que esperar a que un caso arranque para poder dirigirle un mensaje.
-    # Un caso por (participante, indice), con el numero de instancias de cada
-    # pool; cuando todos tienen el mismo, el orden es el de siempre.
-    casosPorParticipante = {participante: [Caso(participante, indice)
-                                           for indice in range(1, instanciasPorParticipante[participante] + 1)]
-                            for participante in participantesOrden}
-    casosArrancados = set()
-    maximo = max(instanciasPorParticipante.values())
-    simulationResults = {Caso(participante, indice): []
-                         for indice in range(1, maximo + 1)
-                         for participante in participantesOrden
-                         if indice <= instanciasPorParticipante[participante]}
+def _estado_de_ronda(casos):
+    """Todo lo que vive dentro de una convocatoria, nuevo para la que empieza (D12).
+
+    Una convocatoria termina cuando a ninguno de sus casos le queda un token, ni
+    una espera, ni una recepcion abierta, y como nunca hay dos a la vez, nada de
+    lo que deja le sirve a la siguiente: se tira entero, despues de comprobar
+    que no se ha perdido ningun sobre (_assert_complete). Asi ninguna respuesta,
+    anotacion, lote, dato o decision de una ronda puede llegar a otra, y la
+    memoria no crece con el numero de convocatorias. Las colas se rehacen con
+    los contadores a cero: cada ronda reparte el trabajo como la primera.
+
+    No se toca el reloj, ni el generador aleatorio, que no se vuelve a sembrar,
+    ni el registro, que acumula las trazas de todas las rondas.
+    """
+    global colasPorParticipante, messages, message_waiters, correspondientes, recepciones_anotadas
+    global contextos_padres, lotes, lotesAbiertos, enCamino, tokensVivos, enviadas, planes
+    global data, data_changed, active_tokens, pending_joins, join_waits
+    global completed, casosArrancados, casosAcabados
     colasPorParticipante = {participante: UserQueue(usuariosPorParticipante[participante],
                                                     recursosInfinitos.get(participante, False))
                             for participante in participantesOrden}
     # Un buzon por caso destino, y dentro de cada sobre su remitente.
     messages, message_waiters = defaultdict(deque), defaultdict(deque)
     # Cada token estrena contexto; los padres son los contextos de los que viene.
-    correspondientes, contextos_padres, contador_contextos = {}, {}, 0
+    correspondientes, contextos_padres = {}, {}
     # Que recepciones tienen ya alguna anotacion en cada contexto, para que
     # _anotacion no tenga que recorrer todas las anotaciones para saberlo.
     recepciones_anotadas = set()
@@ -1189,21 +1209,83 @@ def _run_simulation():
     # ejecuciones han escrito ya y cuantas tiene: con eso se sabe a quien puede
     # ir todavia un sobre (_destinos_del_token).
     tokensVivos, enviadas, planes = defaultdict(Counter), {}, {}
-    data = {(item, caso) for item in defaultData for caso in simulationResults}
+    data = {(item, caso) for item in defaultData for caso in casos}
     data_changed = {}
     active_tokens, pending_joins = defaultdict(Counter), defaultdict(dict)
     join_waits = defaultdict(dict)
-    reachability, completed = {}, Counter()
+    # Que casos de la ronda han llegado al fin, han arrancado y han terminado.
+    completed, casosArrancados, casosAcabados = Counter(), set(), set()
+
+
+def _abre_convocatoria(convocatoria):
+    """Crea los casos de una convocatoria y lanza sus eventos de inicio.
+
+    La tabla se construye completa ANTES de lanzar nada: el numero de casos se
+    conoce desde el principio, asi que no hay que esperar a que uno arranque
+    para poder dirigirle un mensaje. En cada ronda el orquestador tiene un caso
+    y los demas pools los suyos, con indices que siguen a los de la ronda
+    anterior (D3). Las llegadas cuentan desde que se abre la convocatoria
+    (D13): el caso i de un pool llega (i - 1) * frequency despues.
+    """
+    global convocatoriaActual, casosPorParticipante, casosDeLaRonda
+    convocatoriaActual = convocatoria
+    casosPorParticipante = {participante: [Caso(participante, (convocatoria - 1) * cuantos + posicion,
+                                                convocatoria)
+                                           for posicion in range(1, cuantos + 1)]
+                            for participante, cuantos in casosPorConvocatoria.items()}
+    # Con un solo caso por pool y ronda, el orden es el de siempre.
+    maximo = max(casosPorConvocatoria.values())
+    casosDeLaRonda = [casosPorParticipante[participante][posicion - 1]
+                      for posicion in range(1, maximo + 1)
+                      for participante in participantesOrden
+                      if posicion <= casosPorConvocatoria[participante]]
+    for caso in casosDeLaRonda:
+        simulationResults[caso] = []
+    _estado_de_ronda(casosDeLaRonda)
     # Waiting for messages never suspends other starts or later instances.
-    for indice in range(1, maximo + 1):
+    for posicion in range(1, maximo + 1):
         for node, item in startEvents.items():
-            if indice > instanciasPorParticipante[elementParticipant[node]]:
+            casos = casosPorParticipante[elementParticipant[node]]
+            if posicion > len(casos):
                 continue
-            caso = caso_de(node, indice)
+            caso = casos[posicion - 1]
             contexto = nuevo_contexto([])
             active_tokens[caso][node] += 1
             tokensVivos[caso][(node, contexto)] += 1
-            env.process(_start_event(node, caso, (indice - 1) * item['frequency'], contexto))
+            env.process(_start_event(node, caso, (posicion - 1) * item['frequency'], contexto))
+
+
+def _revisa_convocatoria(caso):
+    """Si el caso ya no tiene nada que hacer, y con el toda su convocatoria (D12).
+
+    Se mira al final de cada nodo y de cada inicio del caso que acaba de moverse:
+    solo un nodo suyo puede dejarle sin tokens, y un caso sin tokens no vuelve a
+    tenerlos. Cuando el ultimo caso de la ronda termina, la siguiente se abre en
+    ese mismo instante: ni antes, que se solaparian, ni despues. Una recepcion
+    ya cerrada no la retrasa, porque al cerrar suelta la ejecucion que esperaba
+    y el token sale en cuanto acaban las demas (recoge_lote).
+    """
+    if caso in casosAcabados or caso_vivo(caso):
+        return
+    casosAcabados.add(caso)
+    if len(casosAcabados) < len(casosDeLaRonda) or convocatoriaActual >= convocatorias:
+        return
+    _assert_complete()
+    _abre_convocatoria(convocatoriaActual + 1)
+
+
+def _run_simulation():
+    global env, simulationResults, reachability, startDate, contador_contextos
+    # Every draw (durations, gateways, loops) comes from this generator, so the
+    # seed alone fixes the run. Se siembra una sola vez: las convocatorias
+    # siguen la misma secuencia, y la semilla las reproduce todas (D12).
+    random.seed(simulationSeed)
+    env = simpy.Environment()
+    startDate = datetime.fromisoformat(simulationStartDate)
+    # El registro de todas las rondas, y lo que es del modelo y no de una ronda:
+    # la cache de alcance de las uniones y la numeracion de los contextos.
+    simulationResults, reachability, contador_contextos = {}, {}, 0
+    _abre_convocatoria(1)
     env.run()
     _assert_complete()
     metadata = ET.fromstring(logMetadata)

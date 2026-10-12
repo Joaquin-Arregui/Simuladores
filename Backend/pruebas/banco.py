@@ -204,13 +204,17 @@ CRITERIO_DEL_LOTE = {
 }
 
 
-def cuenta_eventos(xes, ident, tipo):
-    """Cuantos eventos de ese elemento y ese tipo hay en un XES: uno por ejecucion."""
+def cuenta_eventos(xes, ident, tipo, convocatoria=None):
+    """Cuantos eventos de ese elemento y ese tipo hay en un XES: uno por ejecucion.
+
+    Con `convocatoria`, solo los de esa ronda.
+    """
     import xml.etree.ElementTree as ET
     total = 0
     for evento in ET.fromstring(xes.encode("utf-8")).iter("{http://www.xes-standard.org/}event"):
         valores = {hijo.get("key"): hijo.get("value") for hijo in evento}
-        if valores.get("bpmn:id") == ident and valores.get("bpmn:type") == tipo:
+        if (valores.get("bpmn:id") == ident and valores.get("bpmn:type") == tipo
+                and (convocatoria is None or valores.get("bpmn:convocatoria") == str(convocatoria))):
             total += 1
     return total
 
@@ -271,4 +275,154 @@ def revisa_sin_bloqueos():
                 fallos += 1
     lineas.insert(0, "%d modelos con las semillas %d a %d: %d ejecuciones" % (
         len(todos), SEMILLAS_SIN_BLOQUEO[0], SEMILLAS_SIN_BLOQUEO[-1], ejecuciones))
+    return lineas, fallos
+
+
+# Las convocatorias en serie (4.1 y 4.2). Las instancias del orquestador son
+# rondas que van una detras de otra, cada una con casos nuevos. Lo que el XES
+# congelado de una sola semilla no garantiza se mira aqui con varias:
+# - que una ronda empieza justo cuando acaba la anterior. Antes, se solaparian;
+#   despues, algo -una recepcion ya cerrada, por ejemplo- la habria alargado
+#   sin hacer nada. El fin de una ronda es su ultimo instante con actividad: la
+#   marca o el fin de cualquiera de sus eventos.
+# - que cada ronda trae casos nuevos: los mismos por pool en todas, y con
+#   indices que siguen a los de la anterior (D3), asi que N trazas nuevas.
+# - que ningun mensaje sale de su ronda: el remitente y el destinatario de cada
+#   sobre son de la misma.
+# Y con el modelo de las tres convocatorias, que cada ronda reevalua y responde
+# lo que se reclamo en ella, ni mas ni menos: un lote o una anotacion que
+# pasara de una ronda a otra lo descuadraria. Entre todas las rondas tiene que
+# haber alguna en la que nadie reclama, para que la recepcion que cierra vacia
+# este cubierta.
+CRITERIO_DE_LAS_CONVOCATORIAS = {
+    "modelo": "31-tres-convocatorias",
+    "semillas": range(1, 11),
+    "cuenta": ("Reclamar", "bpmn:SendTask"),
+    "iguales": (("Recoger_Reclamaciones", "bpmn:ReceiveTask"), ("Reevaluar", "bpmn:Task"),
+                ("Responder", "bpmn:SendTask")),
+    "tienen_que_salir": (0,),
+}
+
+
+def lee_convocatorias(xes):
+    """{convocatoria: {"casos": {participante: [indices]}, "eventos": [atributos]}}."""
+    import xml.etree.ElementTree as ET
+    ns = "{http://www.xes-standard.org/}"
+    rondas = {}
+    for traza in ET.fromstring(xes.encode("utf-8")).iter(ns + "trace"):
+        atributos = {hijo.get("key"): hijo.get("value") for hijo in traza if hijo.tag != ns + "event"}
+        ronda = rondas.setdefault(int(atributos["bpmn:convocatoria"]), {"casos": {}, "eventos": []})
+        ronda["casos"].setdefault(atributos["bpmn:participant"], []).append(int(atributos["bpmn:instance"]))
+        for evento in traza.iter(ns + "event"):
+            ronda["eventos"].append({hijo.get("key"): hijo.get("value") for hijo in evento})
+    return rondas
+
+
+def problemas_de_las_convocatorias(xes):
+    """Lo que esta mal en el reparto en rondas de un XES; nada si solo hay una."""
+    from datetime import datetime
+    rondas = lee_convocatorias(xes)
+    if len(rondas) < 2:
+        return []
+    problemas = []
+    if sorted(rondas) != list(range(1, len(rondas) + 1)):
+        problemas.append("las rondas no son 1 a %d sino %s" % (len(rondas), sorted(rondas)))
+    # Cada caso es de una sola ronda; si se repite, sus mensajes no se pueden
+    # atribuir, y lo primero es decir que se repite.
+    rondas_del_caso = {}
+    for numero, ronda in sorted(rondas.items()):
+        for participante, indices in ronda["casos"].items():
+            for indice in indices:
+                rondas_del_caso.setdefault("%s - %d" % (participante, indice), []).append(numero)
+    for caso, suyas in sorted(rondas_del_caso.items()):
+        if len(suyas) > 1:
+            problemas.append("el caso %s esta en las rondas %s" % (caso, suyas))
+    de_la_ronda = {caso: suyas[0] for caso, suyas in rondas_del_caso.items() if len(suyas) == 1}
+    ultimo, fin_anterior = {}, None
+    pools = set(rondas[min(rondas)]["casos"])
+    for numero in sorted(rondas):
+        ronda = rondas[numero]
+        if set(ronda["casos"]) != pools:
+            problemas.append("ronda %d: tiene casos de %s y la primera de %s"
+                             % (numero, sorted(ronda["casos"]), sorted(pools)))
+        for participante, indices in sorted(ronda["casos"].items()):
+            previo = ultimo.get(participante, 0)
+            cuantos = len(rondas[min(rondas)]["casos"].get(participante, []))
+            if sorted(indices) != list(range(previo + 1, previo + cuantos + 1)):
+                problemas.append("ronda %d: %s trae los casos %s, y tocaban %d nuevos desde el %d"
+                                 % (numero, participante, sorted(indices), cuantos, previo + 1))
+            ultimo[participante] = max(indices + [previo])
+        for evento in ronda["eventos"]:
+            if evento.get("bpmn:convocatoria") != str(numero):
+                problemas.append("ronda %d: el evento %s de %s dice ser de la %s"
+                                 % (numero, evento.get("bpmn:id"), evento.get("time:timestamp"),
+                                    evento.get("bpmn:convocatoria")))
+            for clave in ("bpmn:messageTarget", "bpmn:messageSender"):
+                otro = evento.get(clave)
+                if otro and otro not in rondas_del_caso:
+                    problemas.append("ronda %d: %s en %s tiene %s %s, que no tiene traza"
+                                     % (numero, evento.get("bpmn:id"), evento.get("time:timestamp"), clave, otro))
+                elif otro and otro in de_la_ronda and de_la_ronda[otro] != numero:
+                    problemas.append("ronda %d: %s en %s tiene %s %s, de la ronda %s"
+                                     % (numero, evento.get("bpmn:id"), evento.get("time:timestamp"),
+                                        clave, otro, de_la_ronda.get(otro)))
+        instantes = [datetime.fromisoformat(evento[clave]) for evento in ronda["eventos"]
+                     for clave in ("time:timestamp", "time:endTime") if evento.get(clave)]
+        if not instantes:
+            problemas.append("ronda %d sin eventos" % numero)
+            continue
+        inicio, fin = min(instantes), max(instantes)
+        if fin_anterior is not None and inicio != fin_anterior:
+            como = "antes" if inicio < fin_anterior else "despues"
+            problemas.append("la ronda %d empieza en %s, %s de que acabe la %d en %s"
+                             % (numero, inicio.isoformat(), como, numero - 1, fin_anterior.isoformat()))
+        fin_anterior = fin
+    return problemas
+
+
+def revisa_convocatorias():
+    """(lineas, fallos) de las convocatorias en serie, con la semilla del banco y otras."""
+    lineas, fallos, ejecuciones = [], 0, 0
+    con_rondas = [(ruta, admite) for ruta, admite in modelos()
+                  if ruta_xes(ruta, admite).exists()
+                  and len(lee_convocatorias(ruta_xes(ruta, admite).read_text(encoding="utf-8"))) > 1]
+    criterio = CRITERIO_DE_LAS_CONVOCATORIAS
+    if criterio["modelo"] not in {ruta.stem for ruta, _ in con_rondas}:
+        lineas.append("el modelo %s no existe o no tiene varias rondas" % criterio["modelo"])
+        fallos += 1
+    vistos = {}
+    for ruta, admite in con_rondas:
+        texto = ruta.read_text(encoding="utf-8")
+        resultados = [("la referencia", ruta_xes(ruta, admite).read_text(encoding="utf-8"))]
+        semillas = sorted(set(SEMILLAS_SIN_BLOQUEO)
+                          | (set(criterio["semillas"]) if ruta.stem == criterio["modelo"] else set()))
+        for semilla in semillas:
+            ejecuciones += 1
+            try:
+                resultados.append(("semilla %d" % semilla, processSimulation(texto, seed=semilla).simulation))
+            except Exception as error:
+                lineas.append("%s, semilla %d: %s: %s" % (ruta.stem, semilla, type(error).__name__, error))
+                fallos += 1
+        for cual, xes in resultados:
+            for problema in problemas_de_las_convocatorias(xes)[:6]:
+                lineas.append("%s, %s: %s" % (ruta.stem, cual, problema))
+                fallos += 1
+            if ruta.stem != criterio["modelo"] or cual == "la referencia":
+                continue
+            for ronda in sorted(lee_convocatorias(xes)):
+                reclamadas = cuenta_eventos(xes, *criterio["cuenta"], convocatoria=ronda)
+                vistos[reclamadas] = vistos.get(reclamadas, 0) + 1
+                for ident, tipo in criterio["iguales"]:
+                    hechas = cuenta_eventos(xes, ident, tipo, convocatoria=ronda)
+                    if hechas != reclamadas:
+                        lineas.append("%s, %s, ronda %d: %d %s y %d %s"
+                                      % (ruta.stem, cual, ronda, reclamadas, criterio["cuenta"][0], hechas, ident))
+                        fallos += 1
+    faltan = [n for n in criterio["tienen_que_salir"] if n not in vistos]
+    if faltan:
+        lineas.append("ninguna ronda de %s da %s reclamaciones" % (criterio["modelo"], " ni ".join(map(str, faltan))))
+        fallos += 1
+    reparto = ", ".join("%d: %d" % par for par in sorted(vistos.items()))
+    lineas.insert(0, "%d modelos con varias rondas: %d ejecuciones; en %s, rondas por reclamaciones "
+                  "(cuantas: rondas) %s" % (len(con_rondas), ejecuciones, criterio["modelo"], reparto))
     return lineas, fallos

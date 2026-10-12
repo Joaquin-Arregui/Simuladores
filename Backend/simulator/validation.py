@@ -270,8 +270,8 @@ def resolve_participant_instances(elements, root):
     lo lleva vale 1.
 
     Las instancias del orquestador son convocatorias sucesivas y las del
-    orquestado, casos por convocatoria; esa diferencia la aplica la tarea 4.1,
-    aqui solo se cuenta cuantos casos hay.
+    orquestado, casos por convocatoria; esa diferencia la aplica
+    resolve_convocatorias, aqui solo se cuenta cuantas declara cada pool.
     """
     participants = [elements[pid] for _, pid in elements.get("participants", [])]
     if not participants:
@@ -281,6 +281,29 @@ def resolve_participant_instances(elements, root):
         return {p.id_bpmn: heredado for p in participants}
     return {p.id_bpmn: (p.instances if getattr(p, "multiplicity", False) else 1)
             for p in participants}
+
+
+def resolve_convocatorias(elements, root, simulados):
+    """Cuantas convocatorias se simulan, y cuantos casos tiene cada pool en cada una.
+
+    Las instancias del pool orquestador son convocatorias sucesivas, y las de
+    los demas, casos por convocatoria (D2, D12): un orquestador de 3 y un
+    orquestado de 10 son tres rondas de un orquestador y diez orquestados, y
+    treinta orquestados en total. Hace falta que el orquestador lleve el
+    marcador, porque sin el su numero no cuenta, y que se simule: un pool sin
+    proceso se ignora con un aviso. Si no, hay una sola convocatoria con los
+    casos de siempre, que es lo que se hacia antes de la tarea 4.1.
+
+    `simulados` son los participantes que tienen casos, en su orden.
+    """
+    instancias = resolve_participant_instances(elements, root)
+    por_convocatoria = {pid: instancias[pid] for pid in simulados}
+    orquestador = next((pid for pid in simulados
+                        if getattr(elements[pid], "role", None) == "orchestrator"
+                        and getattr(elements[pid], "multiplicity", False)), None)
+    if orquestador is None:
+        return 1, por_convocatoria
+    return por_convocatoria[orquestador], {**por_convocatoria, orquestador: 1}
 
 
 def _pesos_de_las_ramas(flows):

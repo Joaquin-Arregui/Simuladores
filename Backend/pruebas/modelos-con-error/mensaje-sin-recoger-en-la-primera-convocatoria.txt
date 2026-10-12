@@ -1,0 +1,19 @@
+# El mensaje-sin-recoger con tres convocatorias: en la primera ya se quedan dos
+# solicitudes en el buzon. Al cerrar una convocatoria su estado se tira entero,
+# buzones incluidos, para que nada pase a la siguiente; antes hay que mirar que
+# no se ha perdido ningun sobre, o la perdida desapareceria con el. El motor se
+# para al cerrar la primera y lo dice, sin abrir las otras dos.
+Element: [type=bpmn:Collaboration, id_bpmn='Colaboracion', name='Mensaje sin recoger en la primera convocatoria', instances=1]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Orquestador', name='Orquestador', frequency=0, userWithoutRole=['Ana'], instances=3, participantMultiplicity='true', orchestrationRole='orchestrator', containedElements=['Ini_O', 'Recoger', 'Fin_O', 'o1', 'o2']]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Orquestado', name='Orquestado', frequency=25, userWithoutRole=['Beto'], instances=3, participantMultiplicity='true', orchestrationRole='orchestrated', containedElements=['Ini_R', 'Solicitar', 'Fin_R', 'r1', 'r2']]
+Element: [type=bpmn:StartEvent, id_bpmn='Ini_O', name='Arranca la convocatoria', subTask='Recoger']
+Element: [type=bpmn:ReceiveTask, id_bpmn='Recoger', name='Recoger una solicitud', userTask='Ana', numberOfExecutions=1, minimumTime=5, maximumTime=10, subTask='Fin_O']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_O', name='Fin del orquestador', subTask='']
+Element: [type=bpmn:StartEvent, id_bpmn='Ini_R', name='Arranca el solicitante', subTask='Solicitar']
+Element: [type=bpmn:SendTask, id_bpmn='Solicitar', name='Enviar la solicitud', userTask='Beto', numberOfExecutions=1, minimumTime=10, maximumTime=20, subTask='Fin_R']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_R', name='Fin del solicitante', subTask='']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o1', name='', superElement='Ini_O', subElement='Recoger']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o2', name='', superElement='Recoger', subElement='Fin_O']
+Element: [type=bpmn:SequenceFlow, id_bpmn='r1', name='', superElement='Ini_R', subElement='Solicitar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='r2', name='', superElement='Solicitar', subElement='Fin_R']
+Element: [type=bpmn:MessageFlow, id_bpmn='Solicitud', name='Solicitud', superElement='Solicitar', subElement='Recoger']

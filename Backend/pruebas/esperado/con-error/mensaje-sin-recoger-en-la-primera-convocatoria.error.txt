@@ -1,0 +1,1 @@
+SimulationExecutionError: Simulación bloqueada o incompleta; mensajes enviados que nadie ha recogido: Solicitar -> Recoger (Pool_Orquestador - 1); se ha parado en la convocatoria 1 de 3.
