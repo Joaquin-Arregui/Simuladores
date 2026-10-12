@@ -18,6 +18,7 @@ Hay tres categorias de modelo:
   los errores previstos (ver ERRORES_PREVISTOS); un error interno es un fallo
   del motor y no se congela nunca.
 """
+import functools
 import os
 import sys
 import tracemalloc
@@ -59,6 +60,7 @@ class MemoriaExcesiva(Exception):
     """Un modelo ha hecho gastar al proceso principal mas de MEMORIA_MAXIMA."""
 
 from simulator.main import processSimulation  # noqa: E402
+from simulator.registros import Registro, metadatos, reune_registros  # noqa: E402
 
 
 def faltan_grupos(*grupos):
@@ -107,8 +109,56 @@ def carpeta(admite_avisos):
     return ESPERADO_CON_AVISOS if admite_avisos else ESPERADO
 
 
-def ruta_xes(ruta, admite_avisos):
-    return carpeta(admite_avisos) / (ruta.stem + ".xes")
+def carpeta_de_referencia(ruta, admite_avisos):
+    """Donde se congelan los registros de un modelo: uno por pool, <pool>.xes (D10)."""
+    return carpeta(admite_avisos) / ruta.stem
+
+
+def lee_referencia(ruta, admite_avisos):
+    """Los registros congelados de un modelo, en el orden de sus pools esperados;
+    None si no hay ninguno."""
+    ficheros = sorted(carpeta_de_referencia(ruta, admite_avisos).glob("*.xes"))
+    if not ficheros:
+        return None
+    registros = []
+    for fichero in ficheros:
+        texto = fichero.read_text(encoding="utf-8")
+        datos = metadatos(texto)
+        registros.append(Registro(datos.get("pool:id") or fichero.stem, datos.get("pool:name"), texto))
+    esperados = [pool.strip() for pool in (metadatos(registros[0].xes).get("simulation:participants") or "").split(",")]
+    orden = {pool: posicion for posicion, pool in enumerate(esperados)}
+    return sorted(registros, key=lambda registro: (orden.get(registro.pool, len(orden)), registro.pool))
+
+
+def escribe_referencia(ruta, admite_avisos, registros):
+    """Sustituye los registros congelados de un modelo por estos: escribe los de
+    ahora y retira los de pools que ya no salen, por ejemplo porque se les ha
+    cambiado el ID. Si se quedaran, la referencia tendria registros de dos
+    versiones del modelo. Devuelve los ficheros retirados."""
+    carpeta_ = carpeta_de_referencia(ruta, admite_avisos)
+    carpeta_.mkdir(parents=True, exist_ok=True)
+    vigentes = {registro.pool + ".xes" for registro in registros}
+    for registro in registros:
+        (carpeta_ / (registro.pool + ".xes")).write_text(registro.xes, encoding="utf-8")
+    retirados = []
+    for fichero in sorted(carpeta_.glob("*.xes")):
+        if fichero.name not in vigentes:
+            fichero.unlink()
+            retirados.append(fichero)
+    return retirados
+
+
+@functools.lru_cache(maxsize=None)
+def referencia_reunida(ruta, admite_avisos):
+    """La ejecucion completa congelada de un modelo, en un solo XES; None si no
+    hay, o si sus registros no se pueden reunir: eso lo dice la regresion."""
+    registros = lee_referencia(ruta, admite_avisos)
+    if registros is None:
+        return None
+    try:
+        return reune_registros(registros)
+    except ValueError:
+        return None
 
 
 def ruta_avisos(ruta):
@@ -175,13 +225,17 @@ def ejecuta_con_error(ruta):
 
 
 def referencias_huerfanas():
-    """Ficheros congelados cuyo modelo ya no existe."""
-    esperadas = {ruta_xes(r, a) for r, a in modelos()}
+    """Referencias congeladas cuyo modelo ya no existe, y registros sueltos del
+    tiempo en que habia uno solo por modelo. Un pool que sobra dentro de la
+    carpeta de un modelo lo dice la regresion, que sabe que pools salen."""
+    esperadas = {carpeta_de_referencia(r, a) for r, a in modelos()}
     esperadas |= {ruta_avisos(r) for r, a in modelos() if a}
     esperadas |= {ruta_error(r) for r in modelos_con_error()}
+    especiales = {ESPERADO_CON_AVISOS, ESPERADO_CON_ERROR, ESPERADO / "integracion"}
     sueltas = set()
     for carpeta_ in (ESPERADO, ESPERADO_CON_AVISOS, ESPERADO_CON_ERROR):
         if carpeta_.is_dir():
+            sueltas |= {p for p in carpeta_.iterdir() if p.is_dir() and p not in especiales}
             sueltas |= {p for p in carpeta_.glob("*.xes")}
             sueltas |= {p for p in carpeta_.glob("*.avisos.txt")}
             sueltas |= {p for p in carpeta_.glob("*.error.txt")}
@@ -383,9 +437,9 @@ def problemas_de_las_convocatorias(xes):
 def revisa_convocatorias():
     """(lineas, fallos) de las convocatorias en serie, con la semilla del banco y otras."""
     lineas, fallos, ejecuciones = [], 0, 0
-    con_rondas = [(ruta, admite) for ruta, admite in modelos()
-                  if ruta_xes(ruta, admite).exists()
-                  and len(lee_convocatorias(ruta_xes(ruta, admite).read_text(encoding="utf-8"))) > 1]
+    reunidas = {(ruta, admite): referencia_reunida(ruta, admite) for ruta, admite in modelos()}
+    con_rondas = [(ruta, admite) for (ruta, admite), xes in reunidas.items()
+                  if xes is not None and len(lee_convocatorias(xes)) > 1]
     criterio = CRITERIO_DE_LAS_CONVOCATORIAS
     if criterio["modelo"] not in {ruta.stem for ruta, _ in con_rondas}:
         lineas.append("el modelo %s no existe o no tiene varias rondas" % criterio["modelo"])
@@ -393,7 +447,7 @@ def revisa_convocatorias():
     vistos = {}
     for ruta, admite in con_rondas:
         texto = ruta.read_text(encoding="utf-8")
-        resultados = [("la referencia", ruta_xes(ruta, admite).read_text(encoding="utf-8"))]
+        resultados = [("la referencia", reunidas[(ruta, admite)])]
         semillas = sorted(set(SEMILLAS_SIN_BLOQUEO)
                           | (set(criterio["semillas"]) if ruta.stem == criterio["modelo"] else set()))
         for semilla in semillas:
@@ -535,11 +589,10 @@ def revisa_llegadas():
     criterio = CRITERIO_DE_LAS_LLEGADAS
     todos = modelos()
     for ruta, admite in todos:
-        referencia = ruta_xes(ruta, admite)
-        if not referencia.exists():
+        referencia = referencia_reunida(ruta, admite)
+        if referencia is None:
             continue
-        problemas, _ = problemas_de_las_llegadas(ruta.read_text(encoding="utf-8"),
-                                                 referencia.read_text(encoding="utf-8"))
+        problemas, _ = problemas_de_las_llegadas(ruta.read_text(encoding="utf-8"), referencia)
         for problema in problemas[:6]:
             lineas.append("%s, la referencia: %s" % (ruta.stem, problema))
             fallos += 1

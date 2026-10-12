@@ -1,7 +1,7 @@
 # Banco de pruebas
 
 Modelos de referencia congelados. Son el punto de comparación del refactor:
-mientras el comportamiento no deba cambiar, su XES no debe cambiar.
+mientras el comportamiento no deba cambiar, sus XES no deben cambiar.
 
 ## Qué hay aquí
 
@@ -10,9 +10,10 @@ mientras el comportamiento no deba cambiar, su XES no debe cambiar.
   con exactamente los avisos congelados.
 - `modelos-con-error/` — modelos que tienen que **fallar**, con el tipo y el
   mensaje de error congelados.
-- `esperado/` — el XES congelado de cada modelo; en `esperado/con-avisos/`
-  también la lista de avisos esperados, y en `esperado/con-error/` el error
-  esperado. **No se editan a mano.**
+- `esperado/` — los registros congelados de cada modelo, uno por pool en
+  `esperado/<modelo>/<pool>.xes`, como los escribe el motor desde la 4.4 (D10);
+  en `esperado/con-avisos/` también la lista de avisos esperados, y en
+  `esperado/con-error/` el error esperado. **No se editan a mano.**
 - `banco.py` — lo que comparten los dos scripts: dónde están los modelos y cómo
   se ejecutan. Si cada uno los descubriera por su cuenta, acabarían discrepando.
 - `congelar.py` — reejecuta los modelos y reescribe `esperado/`.
@@ -22,6 +23,8 @@ mientras el comportamiento no deba cambiar, su XES no debe cambiar.
 - `integracion.py` — manda reglas y diagrama por la API y compara.
 - `bpmn_desde_reglas.py` — genera el diagrama de un modelo; `valida_bpmn.mjs`
   lo comprueba con bpmn-moddle.
+- `lee_con_pm4py.py` — lee con PM4Py los registros congelados, los reúne y
+  saca de ellos quién está libre (ver más abajo).
 
 ## Los modelos
 
@@ -146,7 +149,7 @@ python3 pruebas/regresion.py
 python3 pruebas/regresion.py --acepta-reorganizacion
 ```
 
-Compara cuatro cosas que no conviene confundir, y vigila cinco más:
+Compara cinco cosas que no conviene confundir, y vigila cinco más:
 
 - **Comportamiento** — qué le ocurre a **cada caso**: qué eventos tiene, cuándo,
   con qué recurso y qué rama elige cada compuerta. Cualquier diferencia es un
@@ -154,6 +157,15 @@ Compara cuatro cosas que no conviene confundir, y vigila cinco más:
 - **Organización** — en cuántas trazas se reparten los eventos de un caso y cómo
   se llaman. Eso cambió en las tareas 1.5 y 1.6 a propósito: se informa aparte y
   se acepta con `--acepta-reorganizacion`.
+- **Metadatos** — desde la 4.4 cada modelo tiene un registro por pool, y cada
+  uno se compara con el suyo: que falte o sobre uno es un cambio de
+  comportamiento. Antes de comparar, los registros congelados de un modelo
+  tienen que formar un conjunto: si se ha quedado el de un pool que ya no
+  existe, la referencia es incoherente. `congelar.py` sustituye el conjunto
+  entero, y retira los registros de pools que ya no salen. Su cabecera —la
+  simulación, la referencia del modelo, el pool y su plantilla— tiene que ser la
+  congelada. La huella de las reglas no cuenta los comentarios, así que comentar
+  un modelo no cambia su referencia.
 - **Avisos** — como se explica arriba.
 - **Errores** — los modelos de `modelos-con-error/` tienen que seguir fallando
   con el mismo tipo y el mismo mensaje. Que dejen de fallar, que cambie el
@@ -235,12 +247,34 @@ Modeler —`content` **y** `diagramXML`— por `POST /simulate`, con el cliente 
 pruebas de Flask: pasa por `server.py` entero, JSON y códigos HTTP incluidos,
 sin abrir ningún puerto.
 
-- `integracion/<modelo>.bpmn` tiene que responder **200 con el mismo XES** que
-  ejecutando directamente las reglas de `<modelo>`, y con los mismos avisos.
-  Aquí no hay nada congelado: la referencia es la ejecución directa. Si el
-  modelo tiene tareas multiinstancia, se manda **otra vez sin ningún
-  `multiInstanceType` en las reglas**: la marca tiene que llegar del dibujo
-  (3.1) y el XES tiene que ser el mismo.
+- `integracion/<modelo>.bpmn` tiene que responder **200 con un registro por
+  pool** (`logs`, cada uno con el ID y el nombre de su pool) que esté completo
+  y sea coherente, con las **mismas trazas y metadatos** que ejecutando
+  directamente las reglas de `<modelo>`, y con los mismos avisos. Solo cambia
+  la referencia del modelo: por la API incluye la huella del diagrama, y tiene
+  que ser la de lo mandado, igual que `simulationId`, `model` y
+  `formatVersion` tienen que ser los de sus registros. `simulation`, el XES
+  reunido que el Modeler muestra hasta la 5.5, tiene que ser la reunión de los
+  registros. Aquí no hay nada congelado: la referencia es la ejecución
+  directa. Si el modelo tiene tareas multiinstancia, se manda **otra vez sin
+  ningún `multiInstanceType` en las reglas**: la marca tiene que llegar del
+  dibujo (3.1) y las trazas tienen que ser las mismas.
+- Con la primera respuesta que trae varios registros se comprueba que la
+  revisión de un conjunto (`simulator.registros.revisa_registros`) detecta los
+  rotos —que no haya ninguno, que falte uno, que esté duplicado o mal formado,
+  que no sea un XES, que sea de otra simulación, que traiga una traza de otro
+  pool, que diga ser de otro, que a todos les falte la identificación, que a
+  uno le falte la plantilla o que sean de otro formato— y que con ellos no se
+  puede reunir la ejecución. Los metadatos obligatorios se exigen uno a uno:
+  compararlos entre registros no basta, porque si faltan en todos coinciden.
+  Los identificadores no pueden estar vacíos; los nombres sí, porque el parser
+  admite `name=''`: la colaboración y un pool del 02 sin nombre se simulan por
+  la API. Y que los mismos registros escritos de otra manera válida —en una
+  sola línea, o con las etiquetas en `xes:`— se reúnen en un XES legible con
+  las mismas trazas: las trazas se localizan por su posición en el XML, no por
+  las líneas, y se copian con los espacios de nombres que necesitan.
+- La identificación de la simulación se puede reproducir: el mismo modelo con
+  la misma semilla da la misma, y con otra semilla, o sin el diagrama, otra.
 - `integracion-con-error/<modelo>--<variante>.bpmn` es un diagrama roto, o uno
   que no cuenta lo mismo que las reglas de `<modelo>`. Tiene que fallar con un
   400 o un 422 y el mensaje congelado en `esperado/integracion/`. Un 200 o un
@@ -281,6 +315,24 @@ en Camunda o Bizagi es la 5.2.
 Si cambia un modelo que tiene diagrama, se regenera con
 `python3 pruebas/bpmn_desde_reglas.py pruebas/modelos/<modelo>.txt` y se vuelve
 a pasar `valida_bpmn.mjs`.
+
+## Los registros con PM4Py
+
+```
+python3 pruebas/lee_con_pm4py.py
+```
+
+Necesita `pip install pm4py`, que no es una dependencia del Backend. Como
+`valida_bpmn.mjs` con los diagramas, mira con una herramienta ajena que los
+registros congelados se pueden usar sin el motor: PM4Py lee cada uno, con
+tantas trazas y eventos como tiene el fichero y las fechas como fechas; los de
+un mismo modelo son de la misma simulación, están todos los pools esperados y,
+reunidos, tienen todos los casos; y la plantilla de cada pool sale de su
+registro, así que se sabe quién está libre en cada instante sin consultar unas
+reglas que pueden haber cambiado. En el `32` Carla no trabaja en ninguna ronda,
+y tiene que salir libre de principio a fin. Los metadatos que tienen partes
+—la plantilla, los carriles, los roles— son listas XES anidadas y no
+contenedores, porque PM4Py lee las listas y se salta los contenedores.
 
 ## Un banco vacío no es un banco en verde
 

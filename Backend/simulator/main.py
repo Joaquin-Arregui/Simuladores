@@ -6,11 +6,12 @@ import secrets
 import subprocess
 import sys
 from tempfile import TemporaryDirectory
-from typing import List, NamedTuple
-import xml.etree.ElementTree as ET
+from typing import Dict, List, NamedTuple, Tuple
 
 from simulator.parser import aplica_marcas_del_diagrama, parse_bpmn_elements
 from simulator.generateScript import DEFAULT_START_DATE, generateScript
+from simulator.registros import (COMUNES, Registro, huella_de_las_reglas, huella_del_diagrama,
+                                 metadatos, reune_registros)
 from simulator.validation import (validate_diagram_correspondence, validate_diagram_xml,
                                   validate_simulation)
 
@@ -21,9 +22,19 @@ MAX_SEED = 2**53 - 1
 
 
 class SimulationResult(NamedTuple):
+    """Lo que devuelve una simulacion.
+
+    `registros` es un XES por pool, en el orden de los pools (D10), y
+    `comunes`, los metadatos que comparten: la identificacion de la simulacion,
+    la referencia del modelo, la version del formato... `simulation` es el XES
+    reunido, todas las trazas en un solo registro, para el Modeler mientras no
+    sepa ofrecer los registros por separado (5.5).
+    """
     simulation: str
     warnings: List[str]
     seed: int
+    registros: Tuple[Registro, ...] = ()
+    comunes: Dict[str, str] = {}
 
 
 class SimulationConfigurationError(RuntimeError):
@@ -135,8 +146,11 @@ def processSimulation(rules: str, *, diagram_xml=None, timeout_seconds=None, see
     # Con las dos cosas validadas por separado, que cuenten el mismo modelo.
     if diagram_root is not None:
         validate_diagram_correspondence(elements, diagram_root, process)
+    # La referencia del modelo: lo que se ha simulado, reglas y diagrama.
+    huellas = {"reglas": huella_de_las_reglas(rules),
+               "diagrama": huella_del_diagrama(diagram_xml) if diagram_xml is not None else None}
     script, _ = generateScript(elements, process, starts, message_starts,
-                               start_date=start_date, seed=seed)
+                               start_date=start_date, seed=seed, huellas=huellas)
 
     with TemporaryDirectory(prefix="simbpmn-") as directory:
         workdir = Path(directory)
@@ -171,14 +185,25 @@ def processSimulation(rules: str, *, diagram_xml=None, timeout_seconds=None, see
                     raise SimulationExecutionError(failure["message"]) from error
             raise SimulationInternalError(error.stderr or "El proceso de simulación falló.") from error
 
-        result_path = workdir / "resultSimulation.xes"
-        if not result_path.is_file():
-            raise SimulationInternalError("La simulación terminó sin generar el registro XES.")
-        result = result_path.read_text(encoding="utf-8")
+        registros = _lee_registros(workdir / "registros")
+        # Un conjunto incompleto o incoherente es un fallo del motor, no del
+        # modelo: no se devuelve a medias. reune_registros lo revisa antes.
         try:
-            document = ET.fromstring(result)
-        except ET.ParseError as error:
-            raise SimulationInternalError("El simulador generó un registro XES no válido.") from error
-        if document.tag != "{http://www.xes-standard.org/}log":
-            raise SimulationInternalError("El resultado no es un registro XES.")
-        return SimulationResult(result, warnings, seed)
+            reunido = reune_registros(registros)
+        except ValueError as error:
+            raise SimulationInternalError("El simulador generó unos registros que no cuadran. "
+                                          + str(error)) from error
+        datos = metadatos(min(registros, key=lambda registro: len(registro.xes)).xes)
+        comunes = {clave: datos[clave] for clave in COMUNES if datos.get(clave) is not None}
+        return SimulationResult(reunido, warnings, seed, tuple(registros), comunes)
+
+
+def _lee_registros(carpeta):
+    """Los registros que ha escrito el runtime, en el orden de su indice."""
+    try:
+        indice = json.loads((carpeta / "indice.json").read_text(encoding="utf-8"))
+        return [Registro(entrada["pool"], entrada["nombre"],
+                         (carpeta / entrada["fichero"]).read_text(encoding="utf-8"))
+                for entrada in indice]
+    except (OSError, ValueError, KeyError, TypeError) as error:
+        raise SimulationInternalError("La simulación terminó sin dejar sus registros XES.") from error

@@ -7,35 +7,80 @@ from simulator.simulationFunctions.generateFunction import generateFunction
 from simulator.validation import (TASK_TYPES, resolve_batch_receives, resolve_convocatorias,
                                   resolve_reply_contexts, resolve_send_cycles, resolve_send_reach,
                                   resolve_takeable_flows, task_base_users)
+from simulator.registros import FORMATO_DEL_REGISTRO, id_de_simulacion
 
 DEFAULT_START_DATE = '2026-01-01T00:00:00+00:00'
 
 
-def _metadata(element, elements):
-    root = ET.Element('global')
-    for key, value in [('type', element.bpmn_type), ('name', element.name),
-                       ('id_bpmn', element.id_bpmn)]:
-        ET.SubElement(root, 'string', key=key, value=str(value))
-    ET.SubElement(root, 'int', key='instances', value=str(element.instances))
-    if element.bpmn_type == 'bpmn:Process':
-        ET.SubElement(root, 'int' if isinstance(element.frequency, int) else 'float',
-                      key='frequency', value=str(element.frequency))
-        users = ET.SubElement(ET.SubElement(root, 'list', key='userWithoutRole'), 'values')
-        for user in element.userWithoutRole:
-            ET.SubElement(users, 'string', value=str(user))
-        roles = ET.SubElement(root, 'container', key='userWithRole')
-        for role, members in element.userWithRole.items():
-            values = ET.SubElement(ET.SubElement(roles, 'list', key=str(role)), 'values')
-            for user in members:
-                ET.SubElement(values, 'string', value=str(user))
-    else:
-        for lane_id in elements['lanes']:
-            lane = elements[lane_id]
-            container = ET.SubElement(root, 'container', key=lane.bpmn_type)
-            for key, value in [('bpmn:name', lane.name), ('bpmn:id', lane.id_bpmn),
-                               ('bpmn:users', lane.users), ('bpmn:elements', lane.contained_elements)]:
-                ET.SubElement(container, 'string', key=key, value=str(value))
-    return ET.tostring(root, encoding='unicode')
+def _atributo(tipo, clave, valor):
+    return ET.Element(tipo, key=clave, value=str(valor))
+
+
+def _lista(clave, hijos):
+    """Una lista XES. Para lo que tiene partes se usan listas anidadas y no
+    contenedores, porque PM4Py lee las listas y se salta los contenedores."""
+    lista = ET.Element('list', key=clave)
+    ET.SubElement(lista, 'values').extend(hijos)
+    return lista
+
+
+def _personas(clave, personas, antes=()):
+    return _lista(clave, list(antes) + [_atributo('string', 'person', persona) for persona in personas])
+
+
+def _cabeceras(elements, process, participants, element_participant, pool_users, infinite_pools,
+               convocatorias, seed, start_date, huellas):
+    """[(pool, nombre, cabecera)]: los atributos de cada registro, ya en XML (D10).
+
+    Primero los comunes a todos los registros de la simulacion: su
+    identificacion, que se puede reproducir; la version del formato, la
+    semilla, la base temporal, los pools esperados y cuantas convocatorias hubo;
+    y la referencia del modelo, con la huella de las reglas y, si lo hubo, la
+    del diagrama. Despues los del pool: su nombre y su rol, si sus recursos son
+    finitos o infinitos, la plantilla entera -tambien quien no llegue a
+    trabajar-, sus carriles con sus personas y, en un Process, sus roles. Con
+    eso un registro se entiende solo, sin las reglas, aunque cambien despues.
+    """
+    raiz = elements[process]
+    comunes = [
+        _atributo('string', 'simulation:id',
+                  id_de_simulacion(huellas['reglas'], huellas.get('diagrama'), seed, start_date)),
+        _atributo('string', 'simulation:formatVersion', FORMATO_DEL_REGISTRO),
+        _atributo('int', 'simulation:seed', seed),
+        _atributo('string', 'simulation:startDate', start_date),
+        _atributo('string', 'simulation:participants', ', '.join(participants)),
+        _atributo('int', 'simulation:convocatorias', convocatorias),
+        _atributo('string', 'model:id', raiz.id_bpmn),
+        _atributo('string', 'model:name', raiz.name),
+        _atributo('string', 'model:rulesSha256', huellas['reglas']),
+    ]
+    if huellas.get('diagrama'):
+        comunes.append(_atributo('string', 'model:diagramSha256', huellas['diagrama']))
+    cabeceras = []
+    for participant_id in participants:
+        pool = elements[participant_id]
+        propios = [_atributo('string', 'concept:name', pool.name),
+                   _atributo('string', 'pool:id', participant_id),
+                   _atributo('string', 'pool:name', pool.name)]
+        if getattr(pool, 'role', None):
+            propios.append(_atributo('string', 'pool:role', pool.role))
+        propios.append(_atributo('string', 'pool:resources',
+                                 'infinite' if infinite_pools[participant_id] else 'finite'))
+        propios.append(_personas('pool:staff', pool_users[participant_id]))
+        carriles = [lane_id for lane_id in elements['lanes'] if element_participant.get(lane_id) == participant_id]
+        if carriles:
+            propios.append(_lista('pool:lanes', [
+                _personas(lane_id, elements[lane_id].users, [_atributo('string', 'name', elements[lane_id].name)])
+                for lane_id in carriles]))
+        if getattr(pool, 'userWithRole', None):
+            propios.append(_lista('pool:roles', [_personas(rol, personas)
+                                                 for rol, personas in pool.userWithRole.items()]))
+        lineas = []
+        for atributo in comunes + propios:
+            ET.indent(atributo, space='  ', level=1)
+            lineas.append('  ' + ET.tostring(atributo, encoding='unicode'))
+        cabeceras.append((participant_id, pool.name, '\n'.join(lineas)))
+    return cabeceras
 
 
 def _assign_participant(elements, ids, participant, mapping, seen):
@@ -86,7 +131,7 @@ def _ejecuciones_maximas(envio):
     return bucle.get('Units')
 
 
-def generateScript(elements, process, starts, messageStarts, start_date=DEFAULT_START_DATE, *, seed):
+def generateScript(elements, process, starts, messageStarts, start_date=DEFAULT_START_DATE, *, seed, huellas):
     element = elements[process]
     is_process = element.bpmn_type == 'bpmn:Process'
     flows = {item.id_bpmn: (item.superElement, item.subElement)
@@ -237,7 +282,9 @@ def generateScript(elements, process, starts, messageStarts, start_date=DEFAULT_
                                if type(item).__name__ == 'BPMNSendTask' and item.multiInstanceType is None},
         'endEvents': [item.id_bpmn for item in elements.values()
                       if type(item).__name__ == 'BPMNEndEvent'],
-        'logMetadata': _metadata(element, elements),
+        # Un registro por pool, con su cabecera ya escrita (D10).
+        'registrosPorPool': _cabeceras(elements, process, participants, element_participant, pool_users,
+                                       infinite_pools, convocatorias, seed, start_date, huellas),
     }
     script = 'import simpy\nimport random\n'
     script += '\n'.join(f'{key} = {value!r}' for key, value in config.items()) + '\n'

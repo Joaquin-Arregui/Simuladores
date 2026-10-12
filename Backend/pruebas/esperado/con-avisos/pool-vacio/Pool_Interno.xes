@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<log xes.version="1.0" xes.features="nested-attributes" openxes.version="1.0RC7" xmlns="http://www.xes-standard.org/">
+  <extension name="Concept" prefix="concept" uri="http://www.xes-standard.org/concept.xesext"/>
+  <extension name="Time" prefix="time" uri="http://www.xes-standard.org/time.xesext"/>
+  <classifier name="Activity (by BPMN ID)" keys="bpmn:id" scope="event"/>
+  <classifier name="Case (by participant and instance)" keys="bpmn:participant bpmn:instance" scope="event"/>
+  <string key="simulation:id" value="81efc8d47db06cb9" />
+  <string key="simulation:formatVersion" value="1" />
+  <int key="simulation:seed" value="20260101" />
+  <string key="simulation:startDate" value="2026-01-01T00:00:00+00:00" />
+  <string key="simulation:participants" value="Pool_Interno" />
+  <int key="simulation:convocatorias" value="1" />
+  <string key="model:id" value="Colaboracion" />
+  <string key="model:name" value="Con pool externo" />
+  <string key="model:rulesSha256" value="36c5ad718259cb8e85d9498597f7863d59b380269ecf0eae98d99edf658f3996" />
+  <string key="concept:name" value="Oficina" />
+  <string key="pool:id" value="Pool_Interno" />
+  <string key="pool:name" value="Oficina" />
+  <string key="pool:resources" value="finite" />
+  <list key="pool:staff">
+    <values>
+      <string key="person" value="Ana" />
+    </values>
+  </list>
+  <trace>
+    <string key="concept:name" value="Pool_Interno - 1" />
+    <string key="bpmn:participant" value="Pool_Interno" />
+    <int key="bpmn:instance" value="1" />
+    <int key="bpmn:convocatoria" value="1" />
+    <event>
+      <string key="concept:name" value="Ini" />
+      <string key="bpmn:type" value="bpmn:StartEvent" />
+      <string key="bpmn:name" value="Inicio" />
+      <string key="bpmn:id" value="Ini" />
+      <string key="bpmn:subTask" value="Tramitar" />
+      <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="1" />
+      <string key="bpmn:participant" value="Pool_Interno" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Tramitar" />
+      <string key="bpmn:type" value="bpmn:Task" />
+      <string key="bpmn:name" value="Tramitar la solicitud" />
+      <string key="bpmn:id" value="Tramitar" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="26" />
+      <string key="bpmn:subTask" value="Fin" />
+      <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:26.000+00:00" />
+      <float key="time:duration" value="26.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="2" />
+      <string key="bpmn:participant" value="Pool_Interno" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Fin" />
+      <string key="bpmn:type" value="bpmn:EndEvent" />
+      <string key="bpmn:name" value="Fin" />
+      <string key="bpmn:id" value="Fin" />
+      <string key="bpmn:subTask" value="" />
+      <date key="time:timestamp" value="2026-01-01T00:00:26.000+00:00" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="3" />
+      <string key="bpmn:participant" value="Pool_Interno" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+  </trace>
+  <trace>
+    <string key="concept:name" value="Pool_Interno - 2" />
+    <string key="bpmn:participant" value="Pool_Interno" />
+    <int key="bpmn:instance" value="2" />
+    <int key="bpmn:convocatoria" value="1" />
+    <event>
+      <string key="concept:name" value="Ini" />
+      <string key="bpmn:type" value="bpmn:StartEvent" />
+      <string key="bpmn:name" value="Inicio" />
+      <string key="bpmn:id" value="Ini" />
+      <string key="bpmn:subTask" value="Tramitar" />
+      <date key="time:timestamp" value="2026-01-01T00:00:20.000+00:00" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="1" />
+      <string key="bpmn:participant" value="Pool_Interno" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandBy · Tramitar" />
+      <string key="bpmn:type" value="StandBy" />
+      <string key="bpmn:id" value="Tramitar" />
+      <string key="bpmn:execution" value="1" />
+      <date key="time:timestamp" value="2026-01-01T00:00:20.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:26.000+00:00" />
+      <float key="time:duration" value="6.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="2" />
+      <string key="bpmn:participant" value="Pool_Interno" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Tramitar" />
+      <string key="bpmn:type" value="bpmn:Task" />
+      <string key="bpmn:name" value="Tramitar la solicitud" />
+      <string key="bpmn:id" value="Tramitar" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="25" />
+      <string key="bpmn:subTask" value="Fin" />
+      <date key="time:timestamp" value="2026-01-01T00:00:26.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:51.000+00:00" />
+      <float key="time:duration" value="25.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="3" />
+      <string key="bpmn:participant" value="Pool_Interno" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Fin" />
+      <string key="bpmn:type" value="bpmn:EndEvent" />
+      <string key="bpmn:name" value="Fin" />
+      <string key="bpmn:id" value="Fin" />
+      <string key="bpmn:subTask" value="" />
+      <date key="time:timestamp" value="2026-01-01T00:00:51.000+00:00" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="4" />
+      <string key="bpmn:participant" value="Pool_Interno" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+  </trace>
+</log>

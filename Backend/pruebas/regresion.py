@@ -12,6 +12,10 @@ Compara tres cosas, y conviene no confundirlas:
 - ORGANIZACION: en cuantas trazas se reparten los eventos de un caso y como se
   llaman. Las tareas 1.5 y 1.6 las separaron por participante, y eso es
   legitimo: se informa aparte y se acepta con --acepta-reorganizacion.
+- METADATOS: los de cabecera de cada registro -la simulacion, el modelo y el
+  pool, con su plantilla- tienen que ser los congelados. Desde la 4.4 hay un
+  registro por pool, y cada uno se compara con el suyo; que falte o sobre uno
+  es un cambio de comportamiento.
 - AVISOS: los de `modelos/` tienen que correr limpios; los de
   `modelos-con-avisos/` tienen que emitir exactamente los congelados. Un aviso
   que aparece, que desaparece o que cambia de texto es un fallo.
@@ -34,6 +38,7 @@ from pathlib import Path
 from xml.etree import ElementTree as ET
 
 import banco
+from simulator.registros import revisa_registros
 
 # Atributos que dicen a que caso pertenece un evento.
 IDENTIDAD = ("bpmn:participant", "bpmn:instance")
@@ -162,6 +167,31 @@ def revisa(texto_ref, texto_obt, correspondencia):
     return comportamiento, organizacion
 
 
+def revisa_registros_del_modelo(referencia, obtenidos, correspondencia):
+    """(comportamiento, organizacion, metadatos) de un modelo, registro a registro."""
+    from simulator.registros import metadatos
+    comportamiento, organizacion, cabecera = [], [], []
+    de_referencia = {registro.pool: registro for registro in referencia}
+    nuevos = {registro.pool: registro for registro in obtenidos}
+    for pool in de_referencia:
+        if pool not in nuevos:
+            comportamiento.append("falta el registro de %s" % pool)
+    for pool in nuevos:
+        if pool not in de_referencia:
+            comportamiento.append("aparece un registro nuevo, de %s" % pool)
+    for pool in [pool for pool in de_referencia if pool in nuevos]:
+        ref, obt = de_referencia[pool].xes, nuevos[pool].xes
+        c, o = revisa(ref, obt, correspondencia)
+        comportamiento += c
+        organizacion += ["registro de %s: %s" % (pool, linea) for linea in o]
+        antes, ahora = metadatos(ref), metadatos(obt)
+        for clave in sorted(set(antes) | set(ahora)):
+            if antes.get(clave) != ahora.get(clave):
+                cabecera.append("registro de %s: %s esperaba %r y ha dado %r"
+                                % (pool, clave, antes.get(clave), ahora.get(clave)))
+    return comportamiento, organizacion, cabecera
+
+
 def carga_correspondencia(ruta):
     if ruta is None:
         return {}
@@ -207,9 +237,23 @@ def main():
     fallos = 0
     for ruta, admite_avisos in modelos:
         nombre = banco.etiqueta(ruta, admite_avisos)
-        referencia = banco.ruta_xes(ruta, admite_avisos)
-        if not referencia.exists():
+        try:
+            referencia = banco.lee_referencia(ruta, admite_avisos)
+        except Exception as error:
+            print("%-34s REFERENCIA ILEGIBLE  %s: %s" % (nombre, type(error).__name__, error))
+            fallos += 1
+            continue
+        if referencia is None:
             print("%-34s SIN REFERENCIA  ejecuta congelar.py" % nombre)
+            fallos += 1
+            continue
+        # Antes de compararla, que la referencia sea un conjunto: si se quedo un
+        # registro de un pool que ya no existe, no es la de ninguna simulacion.
+        incoherencias = revisa_registros(referencia)
+        if incoherencias:
+            print("%-34s REFERENCIA INCOHERENTE  vuelve a congelar" % nombre)
+            for linea in incoherencias[:6]:
+                print("         %s" % linea)
             fallos += 1
             continue
         try:
@@ -225,8 +269,8 @@ def main():
         elif resultado.warnings:
             problemas_aviso = ["aviso inesperado: %s" % a for a in resultado.warnings]
 
-        comportamiento, organizacion = revisa(
-            referencia.read_text(encoding="utf-8"), resultado.simulation, correspondencia)
+        comportamiento, organizacion, cabecera = revisa_registros_del_modelo(
+            referencia, resultado.registros, correspondencia)
 
         if problemas_aviso:
             print("%-34s CAMBIAN LOS AVISOS" % nombre)
@@ -240,6 +284,11 @@ def main():
             if len(comportamiento) > 12:
                 print("         ... y %d diferencias mas" % (len(comportamiento) - 12))
             fallos += 1
+        if cabecera:
+            print("%-34s CAMBIAN LOS METADATOS" % nombre)
+            for linea in cabecera[:8]:
+                print("         %s" % linea)
+            fallos += 1
         if organizacion:
             etiqueta = "reorganizacion aceptada" if argumentos.acepta_reorganizacion else "CAMBIA LA ORGANIZACION"
             print("%-34s %s" % (nombre, etiqueta))
@@ -247,7 +296,7 @@ def main():
                 print("         %s" % linea)
             if not argumentos.acepta_reorganizacion:
                 fallos += 1
-        if not (problemas_aviso or comportamiento or organizacion):
+        if not (problemas_aviso or comportamiento or cabecera or organizacion):
             print("%-34s ok" % nombre)
 
     for ruta in con_error:

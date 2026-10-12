@@ -31,11 +31,40 @@ validación de ese formato, sin la comprobación adicional del XML original.
 
 El campo opcional `seed` fija la semilla de la simulación; ver [Semilla](#semilla).
 
-Una simulación correcta devuelve el XES, los avisos y la semilla usada:
+Una simulación correcta devuelve un registro XES por pool, lo que comparten, los
+avisos y la semilla usada:
 
 ```json
-{ "simulation": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>...", "warnings": [], "seed": 2841937403 }
+{
+  "simulationId": "d271c85ff2dff9fb",
+  "formatVersion": "1",
+  "model": { "id": "Colaboracion", "name": "Cliente y servicio",
+             "rulesSha256": "85df…", "diagramSha256": "3a07…" },
+  "seed": 2841937403,
+  "logs": [ { "pool": "Pool_Cliente", "name": "Cliente", "xes": "<?xml …" },
+            { "pool": "Pool_Servicio", "name": "Servicio", "xes": "<?xml …" } ],
+  "simulation": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>…",
+  "warnings": []
+}
 ```
+
+Cada registro de `logs` lleva las trazas de los casos de su pool, de todas las
+convocatorias, y en su cabecera lo que hace falta para entenderlo sin las
+reglas: los metadatos comunes —`simulation:id`, `simulation:formatVersion`,
+`simulation:seed`, `simulation:startDate`, los pools esperados en
+`simulation:participants`, `simulation:convocatorias` y la referencia del modelo
+en `model:*`— y los de su pool: `pool:id`, `pool:name`, `pool:role`,
+`pool:resources` (`finite` o `infinite`) y la plantilla completa en
+`pool:staff`, también quien no llega a trabajar, con sus carriles en
+`pool:lanes` y, en un Process, sus roles en `pool:roles`. Con los metadatos
+comunes se comprueba que un conjunto de registros está completo y es de una sola
+simulación, y se reúne la ejecución entera (`simulator/registros.py`).
+
+`simulationId` es reproducible: sale de la huella de las reglas —sin
+comentarios ni líneas en blanco—, la del diagrama si se envía, la semilla, la
+fecha de inicio y la versión del formato. `simulation` es el XES reunido, con
+todas las trazas: el Modeler lo muestra mientras no sepa ofrecer los registros
+por separado.
 
 `warnings` enumera lo que el simulador ha ignorado para poder ejecutar el modelo,
 por ejemplo un flujo por defecto o un pool externo. El Modeler los muestra junto
@@ -51,7 +80,7 @@ Los errores devuelven un objeto con el campo `error`:
   en la consola del servidor.
 
 El motor genera y ejecuta un script en una carpeta temporal independiente para
-cada petición, usando el mismo intérprete Python que el servidor. Devuelve el
+cada petición, usando el mismo intérprete Python que el servidor. Devuelve los
 XES como texto y elimina sus archivos temporales al terminar, también si falla.
 No depende del directorio de arranque.
 Una tarea sin usuarios elegibles falla con un error en lugar de esperar
@@ -88,8 +117,8 @@ mismas reglas, la misma semilla y la misma fecha de inicio
 La semilla llega en el campo opcional `seed` de `POST /simulate`: un entero entre
 0 y 9007199254740991 (el mayor que JavaScript conserva exacto), como número o
 como texto. Si falta o llega vacío, el motor genera una entre 0 y 4294967295. En
-los dos casos la respuesta la devuelve en `seed` y el XES la guarda como atributo
-del log:
+los dos casos la respuesta la devuelve en `seed` y cada registro la guarda como
+atributo del log:
 
 ```xml
 <int key="simulation:seed" value="2841937403"/>
@@ -161,7 +190,7 @@ simulación.
 
 ## Registro XES
 
-Una unidad de tiempo simulado equivale a un segundo. Las fechas del registro
+Hay un registro por pool, con sus metadatos (ver [API](#api)). Una unidad de tiempo simulado equivale a un segundo. Las fechas del registro
 (`time:timestamp`, `time:endTime` y `time:generationTime`) se calculan sumando esos
 segundos a una fecha de inicio, por defecto `2026-01-01T00:00:00+00:00`. Para
 cambiarla, define `SIMULATION_START_DATE` antes de arrancar el Backend:

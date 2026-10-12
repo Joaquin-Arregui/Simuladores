@@ -7,6 +7,8 @@ One unit of simulated time is one second.
 """
 
 from collections import Counter, defaultdict, deque
+import json
+import os
 from typing import NamedTuple
 from datetime import datetime, timedelta, timezone
 from html import escape
@@ -1305,21 +1307,19 @@ def _run_simulation():
     _abre_convocatoria(1)
     env.run()
     _assert_complete()
-    metadata = ET.fromstring(logMetadata)
-    ET.indent(metadata, space='  ', level=1)
-    parts = ['<?xml version="1.0" encoding="UTF-8"?>',
-             '<log xes.version="1.0" xes.features="nested-attributes" openxes.version="1.0RC7" '
-             'xmlns="http://www.xes-standard.org/">',
-             '  <extension name="Concept" prefix="concept" uri="http://www.xes-standard.org/concept.xesext"/>',
-             '  <extension name="Time" prefix="time" uri="http://www.xes-standard.org/time.xesext"/>',
-             '  <classifier name="Activity (by BPMN ID)" keys="bpmn:id" scope="event"/>',
-             '  <classifier name="Case (by participant and instance)" '
-             'keys="bpmn:participant bpmn:instance" scope="event"/>',
-             '  ' + ET.tostring(metadata, encoding='unicode'),
-             f'  <int key="simulation:seed" value="{simulationSeed}"/>',
-             f'  <string key="simulation:startDate" value="{xml_value(simulationStartDate)}"/>',
-             f'  <string key="simulation:participants" '
-             f'value="{xml_value(", ".join(participantesOrden))}"/>']
+    _escribe_registros()
+
+
+def _escribe_registros():
+    """Un XES por pool en registros/, y registros/indice.json con su orden (D10).
+
+    Cada fichero lleva la cabecera que preparo generateScript -los metadatos
+    comunes a toda la simulacion y los de su pool- y las trazas de sus casos,
+    de todas las convocatorias, en el orden en que se crearon. Los eventos son
+    los mismos que antes, cuando habia un solo registro: lo que cambia es en que
+    fichero va cada traza.
+    """
+    trazas = {participante: [] for participante in participantesOrden}
     for caso, events in simulationResults.items():
         trace = ET.Element('trace')
         ET.SubElement(trace, 'string', key='concept:name', value=etiqueta_de_traza(caso))
@@ -1330,7 +1330,22 @@ def _run_simulation():
             _identifica(item, caso, ocurrencia)
             trace.append(_finalize_item(item))
         ET.indent(trace, space='  ', level=1)
-        parts.append('  ' + ET.tostring(trace, encoding='unicode'))
-    parts.append('</log>')
-    with open('resultSimulation.xes', 'w', encoding='utf-8') as output:
-        output.write('\n'.join(parts))
+        trazas[caso.participante].append('  ' + ET.tostring(trace, encoding='unicode'))
+    os.makedirs('registros', exist_ok=True)
+    indice = []
+    for posicion, (participante, nombre, cabecera) in enumerate(registrosPorPool, 1):
+        fichero = f'{posicion:02d}.xes'
+        partes = ['<?xml version="1.0" encoding="UTF-8"?>',
+                  '<log xes.version="1.0" xes.features="nested-attributes" openxes.version="1.0RC7" '
+                  'xmlns="http://www.xes-standard.org/">',
+                  '  <extension name="Concept" prefix="concept" uri="http://www.xes-standard.org/concept.xesext"/>',
+                  '  <extension name="Time" prefix="time" uri="http://www.xes-standard.org/time.xesext"/>',
+                  '  <classifier name="Activity (by BPMN ID)" keys="bpmn:id" scope="event"/>',
+                  '  <classifier name="Case (by participant and instance)" '
+                  'keys="bpmn:participant bpmn:instance" scope="event"/>',
+                  cabecera, *trazas[participante], '</log>']
+        with open(os.path.join('registros', fichero), 'w', encoding='utf-8') as output:
+            output.write('\n'.join(partes) + '\n')
+        indice.append({'pool': participante, 'nombre': nombre, 'fichero': fichero})
+    with open(os.path.join('registros', 'indice.json'), 'w', encoding='utf-8') as output:
+        json.dump(indice, output, ensure_ascii=False)

@@ -1,0 +1,860 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<log xes.version="1.0" xes.features="nested-attributes" openxes.version="1.0RC7" xmlns="http://www.xes-standard.org/">
+  <extension name="Concept" prefix="concept" uri="http://www.xes-standard.org/concept.xesext"/>
+  <extension name="Time" prefix="time" uri="http://www.xes-standard.org/time.xesext"/>
+  <classifier name="Activity (by BPMN ID)" keys="bpmn:id" scope="event"/>
+  <classifier name="Case (by participant and instance)" keys="bpmn:participant bpmn:instance" scope="event"/>
+  <string key="simulation:id" value="d8c967171cf37675" />
+  <string key="simulation:formatVersion" value="1" />
+  <int key="simulation:seed" value="20260101" />
+  <string key="simulation:startDate" value="2026-01-01T00:00:00+00:00" />
+  <string key="simulation:participants" value="Proceso" />
+  <int key="simulation:convocatorias" value="1" />
+  <string key="model:id" value="Proceso" />
+  <string key="model:name" value="Veinte comprobaciones" />
+  <string key="model:rulesSha256" value="07ff075050da4f9df3a79dd666bed35bdc99d534e5b2b7eb5e0a7369cd789d26" />
+  <string key="concept:name" value="Veinte comprobaciones" />
+  <string key="pool:id" value="Proceso" />
+  <string key="pool:name" value="Veinte comprobaciones" />
+  <string key="pool:resources" value="finite" />
+  <list key="pool:staff">
+    <values>
+      <string key="person" value="Ana" />
+      <string key="person" value="Beto" />
+    </values>
+  </list>
+  <trace>
+    <string key="concept:name" value="Instance 1" />
+    <string key="bpmn:participant" value="Proceso" />
+    <int key="bpmn:instance" value="1" />
+    <int key="bpmn:convocatoria" value="1" />
+    <event>
+      <string key="concept:name" value="Llega" />
+      <string key="bpmn:type" value="bpmn:StartEvent" />
+      <string key="bpmn:name" value="Llega el expediente" />
+      <string key="bpmn:id" value="Llega" />
+      <string key="bpmn:subTask" value="Abre" />
+      <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="1" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Abre" />
+      <string key="bpmn:type" value="bpmn:InclusiveGateway" />
+      <string key="bpmn:name" value="Que comprobar" />
+      <string key="bpmn:id" value="Abre" />
+      <string key="bpmn:subTask" value="['Comprobar_01', 'Comprobar_02', 'Comprobar_03', 'Comprobar_06', 'Comprobar_08', 'Comprobar_10', 'Comprobar_11', 'Comprobar_12', 'Comprobar_13', 'Comprobar_16', 'Comprobar_17']" />
+      <string key="bpmn:selectedFlow" value="a01, a02, a03, a06, a08, a10, a11, a12, a13, a16, a17" />
+      <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="2" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Comprobar_01" />
+      <string key="bpmn:type" value="bpmn:Task" />
+      <string key="bpmn:name" value="Comprobacion 1" />
+      <string key="bpmn:id" value="Comprobar_01" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="2" />
+      <string key="bpmn:subTask" value="Junta" />
+      <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:02.000+00:00" />
+      <float key="time:duration" value="2.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="3" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Comprobar_02" />
+      <string key="bpmn:type" value="bpmn:Task" />
+      <string key="bpmn:name" value="Comprobacion 2" />
+      <string key="bpmn:id" value="Comprobar_02" />
+      <string key="bpmn:userTask" value="Beto" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="2" />
+      <string key="bpmn:subTask" value="Junta" />
+      <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:02.000+00:00" />
+      <float key="time:duration" value="2.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="4" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandBy · Comprobar_03" />
+      <string key="bpmn:type" value="StandBy" />
+      <string key="bpmn:id" value="Comprobar_03" />
+      <string key="bpmn:execution" value="1" />
+      <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:02.000+00:00" />
+      <float key="time:duration" value="2.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="5" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandBy · Comprobar_06" />
+      <string key="bpmn:type" value="StandBy" />
+      <string key="bpmn:id" value="Comprobar_06" />
+      <string key="bpmn:execution" value="1" />
+      <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:02.000+00:00" />
+      <float key="time:duration" value="2.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="6" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandBy · Comprobar_08" />
+      <string key="bpmn:type" value="StandBy" />
+      <string key="bpmn:id" value="Comprobar_08" />
+      <string key="bpmn:execution" value="1" />
+      <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:04.000+00:00" />
+      <float key="time:duration" value="4.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="7" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandBy · Comprobar_10" />
+      <string key="bpmn:type" value="StandBy" />
+      <string key="bpmn:id" value="Comprobar_10" />
+      <string key="bpmn:execution" value="1" />
+      <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:04.000+00:00" />
+      <float key="time:duration" value="4.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="8" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandBy · Comprobar_11" />
+      <string key="bpmn:type" value="StandBy" />
+      <string key="bpmn:id" value="Comprobar_11" />
+      <string key="bpmn:execution" value="1" />
+      <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:06.000+00:00" />
+      <float key="time:duration" value="6.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="9" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandBy · Comprobar_12" />
+      <string key="bpmn:type" value="StandBy" />
+      <string key="bpmn:id" value="Comprobar_12" />
+      <string key="bpmn:execution" value="1" />
+      <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:07.000+00:00" />
+      <float key="time:duration" value="7.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="10" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandBy · Comprobar_13" />
+      <string key="bpmn:type" value="StandBy" />
+      <string key="bpmn:id" value="Comprobar_13" />
+      <string key="bpmn:execution" value="1" />
+      <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:09.000+00:00" />
+      <float key="time:duration" value="9.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="11" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandBy · Comprobar_16" />
+      <string key="bpmn:type" value="StandBy" />
+      <string key="bpmn:id" value="Comprobar_16" />
+      <string key="bpmn:execution" value="1" />
+      <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:09.000+00:00" />
+      <float key="time:duration" value="9.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="12" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandBy · Comprobar_17" />
+      <string key="bpmn:type" value="StandBy" />
+      <string key="bpmn:id" value="Comprobar_17" />
+      <string key="bpmn:execution" value="1" />
+      <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:11.000+00:00" />
+      <float key="time:duration" value="11.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="13" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Comprobar_03" />
+      <string key="bpmn:type" value="bpmn:Task" />
+      <string key="bpmn:name" value="Comprobacion 3" />
+      <string key="bpmn:id" value="Comprobar_03" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="2" />
+      <string key="bpmn:subTask" value="Junta" />
+      <date key="time:timestamp" value="2026-01-01T00:00:02.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:04.000+00:00" />
+      <float key="time:duration" value="2.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="14" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Comprobar_06" />
+      <string key="bpmn:type" value="bpmn:Task" />
+      <string key="bpmn:name" value="Comprobacion 6" />
+      <string key="bpmn:id" value="Comprobar_06" />
+      <string key="bpmn:userTask" value="Beto" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="2" />
+      <string key="bpmn:subTask" value="Junta" />
+      <date key="time:timestamp" value="2026-01-01T00:00:02.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:04.000+00:00" />
+      <float key="time:duration" value="2.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="15" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandByJoin · Junta" />
+      <string key="bpmn:type" value="StandByJoin" />
+      <string key="bpmn:id" value="Junta" />
+      <string key="bpmn:incomingFlow" value="b01" />
+      <date key="time:timestamp" value="2026-01-01T00:00:02.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:14.000+00:00" />
+      <float key="time:duration" value="12.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="16" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandByJoin · Junta" />
+      <string key="bpmn:type" value="StandByJoin" />
+      <string key="bpmn:id" value="Junta" />
+      <string key="bpmn:incomingFlow" value="b02" />
+      <date key="time:timestamp" value="2026-01-01T00:00:02.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:14.000+00:00" />
+      <float key="time:duration" value="12.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="17" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Comprobar_08" />
+      <string key="bpmn:type" value="bpmn:Task" />
+      <string key="bpmn:name" value="Comprobacion 8" />
+      <string key="bpmn:id" value="Comprobar_08" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="2" />
+      <string key="bpmn:subTask" value="Junta" />
+      <date key="time:timestamp" value="2026-01-01T00:00:04.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:06.000+00:00" />
+      <float key="time:duration" value="2.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="18" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Comprobar_10" />
+      <string key="bpmn:type" value="bpmn:Task" />
+      <string key="bpmn:name" value="Comprobacion 10" />
+      <string key="bpmn:id" value="Comprobar_10" />
+      <string key="bpmn:userTask" value="Beto" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="3" />
+      <string key="bpmn:subTask" value="Junta" />
+      <date key="time:timestamp" value="2026-01-01T00:00:04.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:07.000+00:00" />
+      <float key="time:duration" value="3.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="19" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandByJoin · Junta" />
+      <string key="bpmn:type" value="StandByJoin" />
+      <string key="bpmn:id" value="Junta" />
+      <string key="bpmn:incomingFlow" value="b03" />
+      <date key="time:timestamp" value="2026-01-01T00:00:04.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:14.000+00:00" />
+      <float key="time:duration" value="10.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="20" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandByJoin · Junta" />
+      <string key="bpmn:type" value="StandByJoin" />
+      <string key="bpmn:id" value="Junta" />
+      <string key="bpmn:incomingFlow" value="b06" />
+      <date key="time:timestamp" value="2026-01-01T00:00:04.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:14.000+00:00" />
+      <float key="time:duration" value="10.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="21" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Comprobar_11" />
+      <string key="bpmn:type" value="bpmn:Task" />
+      <string key="bpmn:name" value="Comprobacion 11" />
+      <string key="bpmn:id" value="Comprobar_11" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="3" />
+      <string key="bpmn:subTask" value="Junta" />
+      <date key="time:timestamp" value="2026-01-01T00:00:06.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:09.000+00:00" />
+      <float key="time:duration" value="3.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="22" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandByJoin · Junta" />
+      <string key="bpmn:type" value="StandByJoin" />
+      <string key="bpmn:id" value="Junta" />
+      <string key="bpmn:incomingFlow" value="b08" />
+      <date key="time:timestamp" value="2026-01-01T00:00:06.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:14.000+00:00" />
+      <float key="time:duration" value="8.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="23" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Comprobar_12" />
+      <string key="bpmn:type" value="bpmn:Task" />
+      <string key="bpmn:name" value="Comprobacion 12" />
+      <string key="bpmn:id" value="Comprobar_12" />
+      <string key="bpmn:userTask" value="Beto" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="2" />
+      <string key="bpmn:subTask" value="Junta" />
+      <date key="time:timestamp" value="2026-01-01T00:00:07.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:09.000+00:00" />
+      <float key="time:duration" value="2.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="24" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandByJoin · Junta" />
+      <string key="bpmn:type" value="StandByJoin" />
+      <string key="bpmn:id" value="Junta" />
+      <string key="bpmn:incomingFlow" value="b10" />
+      <date key="time:timestamp" value="2026-01-01T00:00:07.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:14.000+00:00" />
+      <float key="time:duration" value="7.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="25" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Comprobar_13" />
+      <string key="bpmn:type" value="bpmn:Task" />
+      <string key="bpmn:name" value="Comprobacion 13" />
+      <string key="bpmn:id" value="Comprobar_13" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="2" />
+      <string key="bpmn:subTask" value="Junta" />
+      <date key="time:timestamp" value="2026-01-01T00:00:09.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:11.000+00:00" />
+      <float key="time:duration" value="2.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="26" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Comprobar_16" />
+      <string key="bpmn:type" value="bpmn:Task" />
+      <string key="bpmn:name" value="Comprobacion 16" />
+      <string key="bpmn:id" value="Comprobar_16" />
+      <string key="bpmn:userTask" value="Beto" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="4" />
+      <string key="bpmn:subTask" value="Junta" />
+      <date key="time:timestamp" value="2026-01-01T00:00:09.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:13.000+00:00" />
+      <float key="time:duration" value="4.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="27" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandByJoin · Junta" />
+      <string key="bpmn:type" value="StandByJoin" />
+      <string key="bpmn:id" value="Junta" />
+      <string key="bpmn:incomingFlow" value="b11" />
+      <date key="time:timestamp" value="2026-01-01T00:00:09.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:14.000+00:00" />
+      <float key="time:duration" value="5.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="28" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandByJoin · Junta" />
+      <string key="bpmn:type" value="StandByJoin" />
+      <string key="bpmn:id" value="Junta" />
+      <string key="bpmn:incomingFlow" value="b12" />
+      <date key="time:timestamp" value="2026-01-01T00:00:09.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:14.000+00:00" />
+      <float key="time:duration" value="5.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="29" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Comprobar_17" />
+      <string key="bpmn:type" value="bpmn:Task" />
+      <string key="bpmn:name" value="Comprobacion 17" />
+      <string key="bpmn:id" value="Comprobar_17" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="3" />
+      <string key="bpmn:subTask" value="Junta" />
+      <date key="time:timestamp" value="2026-01-01T00:00:11.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:14.000+00:00" />
+      <float key="time:duration" value="3.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="30" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandByJoin · Junta" />
+      <string key="bpmn:type" value="StandByJoin" />
+      <string key="bpmn:id" value="Junta" />
+      <string key="bpmn:incomingFlow" value="b13" />
+      <date key="time:timestamp" value="2026-01-01T00:00:11.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:14.000+00:00" />
+      <float key="time:duration" value="3.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="31" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandByJoin · Junta" />
+      <string key="bpmn:type" value="StandByJoin" />
+      <string key="bpmn:id" value="Junta" />
+      <string key="bpmn:incomingFlow" value="b16" />
+      <date key="time:timestamp" value="2026-01-01T00:00:13.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:14.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="32" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Junta" />
+      <string key="bpmn:type" value="bpmn:InclusiveGateway" />
+      <string key="bpmn:name" value="Esperar a las abiertas" />
+      <string key="bpmn:id" value="Junta" />
+      <string key="bpmn:subTask" value="['Archiva']" />
+      <string key="bpmn:selectedFlow" value="f1" />
+      <date key="time:timestamp" value="2026-01-01T00:00:14.000+00:00" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="33" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Archiva" />
+      <string key="bpmn:type" value="bpmn:EndEvent" />
+      <string key="bpmn:name" value="Se archiva" />
+      <string key="bpmn:id" value="Archiva" />
+      <string key="bpmn:subTask" value="" />
+      <date key="time:timestamp" value="2026-01-01T00:00:14.000+00:00" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="34" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+  </trace>
+  <trace>
+    <string key="concept:name" value="Instance 2" />
+    <string key="bpmn:participant" value="Proceso" />
+    <int key="bpmn:instance" value="2" />
+    <int key="bpmn:convocatoria" value="1" />
+    <event>
+      <string key="concept:name" value="Llega" />
+      <string key="bpmn:type" value="bpmn:StartEvent" />
+      <string key="bpmn:name" value="Llega el expediente" />
+      <string key="bpmn:id" value="Llega" />
+      <string key="bpmn:subTask" value="Abre" />
+      <date key="time:timestamp" value="2026-01-01T00:00:10.000+00:00" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="1" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Abre" />
+      <string key="bpmn:type" value="bpmn:InclusiveGateway" />
+      <string key="bpmn:name" value="Que comprobar" />
+      <string key="bpmn:id" value="Abre" />
+      <string key="bpmn:subTask" value="['Comprobar_02', 'Comprobar_03', 'Comprobar_08', 'Comprobar_13', 'Comprobar_18', 'Comprobar_19', 'Comprobar_20']" />
+      <string key="bpmn:selectedFlow" value="a02, a03, a08, a13, a18, a19, a20" />
+      <date key="time:timestamp" value="2026-01-01T00:00:10.000+00:00" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="2" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandBy · Comprobar_02" />
+      <string key="bpmn:type" value="StandBy" />
+      <string key="bpmn:id" value="Comprobar_02" />
+      <string key="bpmn:execution" value="1" />
+      <date key="time:timestamp" value="2026-01-01T00:00:10.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:13.000+00:00" />
+      <float key="time:duration" value="3.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="3" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandBy · Comprobar_03" />
+      <string key="bpmn:type" value="StandBy" />
+      <string key="bpmn:id" value="Comprobar_03" />
+      <string key="bpmn:execution" value="1" />
+      <date key="time:timestamp" value="2026-01-01T00:00:10.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:14.000+00:00" />
+      <float key="time:duration" value="4.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="4" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandBy · Comprobar_08" />
+      <string key="bpmn:type" value="StandBy" />
+      <string key="bpmn:id" value="Comprobar_08" />
+      <string key="bpmn:execution" value="1" />
+      <date key="time:timestamp" value="2026-01-01T00:00:10.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:16.000+00:00" />
+      <float key="time:duration" value="6.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="5" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandBy · Comprobar_13" />
+      <string key="bpmn:type" value="StandBy" />
+      <string key="bpmn:id" value="Comprobar_13" />
+      <string key="bpmn:execution" value="1" />
+      <date key="time:timestamp" value="2026-01-01T00:00:10.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:16.000+00:00" />
+      <float key="time:duration" value="6.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="6" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandBy · Comprobar_18" />
+      <string key="bpmn:type" value="StandBy" />
+      <string key="bpmn:id" value="Comprobar_18" />
+      <string key="bpmn:execution" value="1" />
+      <date key="time:timestamp" value="2026-01-01T00:00:10.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:18.000+00:00" />
+      <float key="time:duration" value="8.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="7" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandBy · Comprobar_19" />
+      <string key="bpmn:type" value="StandBy" />
+      <string key="bpmn:id" value="Comprobar_19" />
+      <string key="bpmn:execution" value="1" />
+      <date key="time:timestamp" value="2026-01-01T00:00:10.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:19.000+00:00" />
+      <float key="time:duration" value="9.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="8" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandBy · Comprobar_20" />
+      <string key="bpmn:type" value="StandBy" />
+      <string key="bpmn:id" value="Comprobar_20" />
+      <string key="bpmn:execution" value="1" />
+      <date key="time:timestamp" value="2026-01-01T00:00:10.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:20.000+00:00" />
+      <float key="time:duration" value="10.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="9" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Comprobar_02" />
+      <string key="bpmn:type" value="bpmn:Task" />
+      <string key="bpmn:name" value="Comprobacion 2" />
+      <string key="bpmn:id" value="Comprobar_02" />
+      <string key="bpmn:userTask" value="Beto" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="3" />
+      <string key="bpmn:subTask" value="Junta" />
+      <date key="time:timestamp" value="2026-01-01T00:00:13.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:16.000+00:00" />
+      <float key="time:duration" value="3.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="10" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Comprobar_03" />
+      <string key="bpmn:type" value="bpmn:Task" />
+      <string key="bpmn:name" value="Comprobacion 3" />
+      <string key="bpmn:id" value="Comprobar_03" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="2" />
+      <string key="bpmn:subTask" value="Junta" />
+      <date key="time:timestamp" value="2026-01-01T00:00:14.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:16.000+00:00" />
+      <float key="time:duration" value="2.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="11" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Comprobar_13" />
+      <string key="bpmn:type" value="bpmn:Task" />
+      <string key="bpmn:name" value="Comprobacion 13" />
+      <string key="bpmn:id" value="Comprobar_13" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="2" />
+      <string key="bpmn:subTask" value="Junta" />
+      <date key="time:timestamp" value="2026-01-01T00:00:16.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:18.000+00:00" />
+      <float key="time:duration" value="2.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="12" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Comprobar_08" />
+      <string key="bpmn:type" value="bpmn:Task" />
+      <string key="bpmn:name" value="Comprobacion 8" />
+      <string key="bpmn:id" value="Comprobar_08" />
+      <string key="bpmn:userTask" value="Beto" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="3" />
+      <string key="bpmn:subTask" value="Junta" />
+      <date key="time:timestamp" value="2026-01-01T00:00:16.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:19.000+00:00" />
+      <float key="time:duration" value="3.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="13" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandByJoin · Junta" />
+      <string key="bpmn:type" value="StandByJoin" />
+      <string key="bpmn:id" value="Junta" />
+      <string key="bpmn:incomingFlow" value="b02" />
+      <date key="time:timestamp" value="2026-01-01T00:00:16.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:23.000+00:00" />
+      <float key="time:duration" value="7.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="14" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandByJoin · Junta" />
+      <string key="bpmn:type" value="StandByJoin" />
+      <string key="bpmn:id" value="Junta" />
+      <string key="bpmn:incomingFlow" value="b03" />
+      <date key="time:timestamp" value="2026-01-01T00:00:16.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:23.000+00:00" />
+      <float key="time:duration" value="7.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="15" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Comprobar_18" />
+      <string key="bpmn:type" value="bpmn:Task" />
+      <string key="bpmn:name" value="Comprobacion 18" />
+      <string key="bpmn:id" value="Comprobar_18" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="2" />
+      <string key="bpmn:subTask" value="Junta" />
+      <date key="time:timestamp" value="2026-01-01T00:00:18.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:20.000+00:00" />
+      <float key="time:duration" value="2.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="16" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandByJoin · Junta" />
+      <string key="bpmn:type" value="StandByJoin" />
+      <string key="bpmn:id" value="Junta" />
+      <string key="bpmn:incomingFlow" value="b13" />
+      <date key="time:timestamp" value="2026-01-01T00:00:18.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:23.000+00:00" />
+      <float key="time:duration" value="5.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="17" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Comprobar_19" />
+      <string key="bpmn:type" value="bpmn:Task" />
+      <string key="bpmn:name" value="Comprobacion 19" />
+      <string key="bpmn:id" value="Comprobar_19" />
+      <string key="bpmn:userTask" value="Beto" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="2" />
+      <string key="bpmn:subTask" value="Junta" />
+      <date key="time:timestamp" value="2026-01-01T00:00:19.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:21.000+00:00" />
+      <float key="time:duration" value="2.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="18" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandByJoin · Junta" />
+      <string key="bpmn:type" value="StandByJoin" />
+      <string key="bpmn:id" value="Junta" />
+      <string key="bpmn:incomingFlow" value="b08" />
+      <date key="time:timestamp" value="2026-01-01T00:00:19.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:23.000+00:00" />
+      <float key="time:duration" value="4.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="19" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Comprobar_20" />
+      <string key="bpmn:type" value="bpmn:Task" />
+      <string key="bpmn:name" value="Comprobacion 20" />
+      <string key="bpmn:id" value="Comprobar_20" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="3" />
+      <string key="bpmn:subTask" value="Junta" />
+      <date key="time:timestamp" value="2026-01-01T00:00:20.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:23.000+00:00" />
+      <float key="time:duration" value="3.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="20" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandByJoin · Junta" />
+      <string key="bpmn:type" value="StandByJoin" />
+      <string key="bpmn:id" value="Junta" />
+      <string key="bpmn:incomingFlow" value="b18" />
+      <date key="time:timestamp" value="2026-01-01T00:00:20.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:23.000+00:00" />
+      <float key="time:duration" value="3.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="21" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandByJoin · Junta" />
+      <string key="bpmn:type" value="StandByJoin" />
+      <string key="bpmn:id" value="Junta" />
+      <string key="bpmn:incomingFlow" value="b19" />
+      <date key="time:timestamp" value="2026-01-01T00:00:21.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:23.000+00:00" />
+      <float key="time:duration" value="2.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="22" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Junta" />
+      <string key="bpmn:type" value="bpmn:InclusiveGateway" />
+      <string key="bpmn:name" value="Esperar a las abiertas" />
+      <string key="bpmn:id" value="Junta" />
+      <string key="bpmn:subTask" value="['Archiva']" />
+      <string key="bpmn:selectedFlow" value="f1" />
+      <date key="time:timestamp" value="2026-01-01T00:00:23.000+00:00" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="23" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Archiva" />
+      <string key="bpmn:type" value="bpmn:EndEvent" />
+      <string key="bpmn:name" value="Se archiva" />
+      <string key="bpmn:id" value="Archiva" />
+      <string key="bpmn:subTask" value="" />
+      <date key="time:timestamp" value="2026-01-01T00:00:23.000+00:00" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="24" />
+      <string key="bpmn:participant" value="Proceso" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+  </trace>
+</log>

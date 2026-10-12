@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Ejecuta los modelos de referencia y congela su XES en pruebas/esperado/.
+"""Ejecuta los modelos de referencia y congela sus XES en pruebas/esperado/.
+
+Uno por pool, en esperado/<modelo>/<pool>.xes, que es lo que escribe el motor
+desde la tarea 4.4 (D10).
 
     python3 pruebas/congelar.py
 
@@ -91,8 +94,13 @@ def main():
     banco.ESPERADO_CON_AVISOS.mkdir(parents=True, exist_ok=True)
     if errores:
         banco.ESPERADO_CON_ERROR.mkdir(parents=True, exist_ok=True)
+    sin_retirar = []
     for ruta, admite_avisos, resultado in resultados:
-        banco.ruta_xes(ruta, admite_avisos).write_text(resultado.simulation, encoding="utf-8")
+        try:
+            for fichero in banco.escribe_referencia(ruta, admite_avisos, resultado.registros):
+                print("Retirado %s: su pool ya no sale." % fichero.relative_to(banco.ESPERADO))
+        except OSError as error:
+            sin_retirar.append("%s (%s)" % (banco.etiqueta(ruta, admite_avisos), error))
         if admite_avisos:
             banco.escribe_avisos(ruta, resultado.warnings)
     for ruta, texto in errores:
@@ -103,6 +111,10 @@ def main():
     if huerfanas:
         print("Quedan referencias sin modelo (borralas a mano): %s"
               % ", ".join(str(p) for p in huerfanas))
+    if sin_retirar:
+        print("No se han podido retirar registros de pools que ya no salen, y la regresion "
+              "dara esas referencias por incoherentes: %s" % "; ".join(sin_retirar))
+        return 1
     return 0
 
 

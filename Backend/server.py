@@ -54,7 +54,32 @@ def startSimulation():
         app.logger.exception("Unexpected simulation error.")
         return jsonify({"error": "Error interno del simulador. Consulta la consola del Backend."}), 500
 
-    return jsonify({"simulation": result.simulation, "warnings": result.warnings, "seed": result.seed})
+    return jsonify(respuesta_de(result))
+
+
+def respuesta_de(result):
+    """La respuesta de una simulacion: un registro por pool, con su ID y su nombre,
+    y lo que comparten todos -la identificacion de la simulacion, la referencia
+    del modelo y la version del formato- (D10).
+
+    `simulation` es el XES reunido, con todas las trazas: es lo que el Modeler
+    muestra mientras no sepa ofrecer los registros por separado (5.5).
+    """
+    comunes = result.comunes
+    modelo = {"id": comunes.get("model:id"), "name": comunes.get("model:name"),
+              "rulesSha256": comunes.get("model:rulesSha256")}
+    if comunes.get("model:diagramSha256"):
+        modelo["diagramSha256"] = comunes["model:diagramSha256"]
+    return {
+        "simulationId": comunes.get("simulation:id"),
+        "formatVersion": comunes.get("simulation:formatVersion"),
+        "model": modelo,
+        "seed": result.seed,
+        "logs": [{"pool": registro.pool, "name": registro.nombre, "xes": registro.xes}
+                 for registro in result.registros],
+        "simulation": result.simulation,
+        "warnings": result.warnings,
+    }
 
 if __name__ == '__main__':
     app.run(port=3000, debug=False)

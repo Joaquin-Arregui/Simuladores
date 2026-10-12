@@ -1,0 +1,1444 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<log xes.version="1.0" xes.features="nested-attributes" openxes.version="1.0RC7" xmlns="http://www.xes-standard.org/">
+  <extension name="Concept" prefix="concept" uri="http://www.xes-standard.org/concept.xesext"/>
+  <extension name="Time" prefix="time" uri="http://www.xes-standard.org/time.xesext"/>
+  <classifier name="Activity (by BPMN ID)" keys="bpmn:id" scope="event"/>
+  <classifier name="Case (by participant and instance)" keys="bpmn:participant bpmn:instance" scope="event"/>
+  <string key="simulation:id" value="e162054ecdc0a23a" />
+  <string key="simulation:formatVersion" value="1" />
+  <int key="simulation:seed" value="20260101" />
+  <string key="simulation:startDate" value="2026-01-01T00:00:00+00:00" />
+  <string key="simulation:participants" value="Pool_Orquestador, Pool_Orquestado" />
+  <int key="simulation:convocatorias" value="3" />
+  <string key="model:id" value="Colaboracion" />
+  <string key="model:name" value="Tres convocatorias" />
+  <string key="model:rulesSha256" value="bad0450f482502aee0631a959a8bbd1366cad26dbdf23cf857874ed474f353fd" />
+  <string key="concept:name" value="Orquestador" />
+  <string key="pool:id" value="Pool_Orquestador" />
+  <string key="pool:name" value="Orquestador" />
+  <string key="pool:role" value="orchestrator" />
+  <string key="pool:resources" value="finite" />
+  <list key="pool:staff">
+    <values>
+      <string key="person" value="Ana" />
+    </values>
+  </list>
+  <trace>
+    <string key="concept:name" value="Pool_Orquestador - 1" />
+    <string key="bpmn:participant" value="Pool_Orquestador" />
+    <int key="bpmn:instance" value="1" />
+    <int key="bpmn:convocatoria" value="1" />
+    <event>
+      <string key="concept:name" value="Ini_O" />
+      <string key="bpmn:type" value="bpmn:StartEvent" />
+      <string key="bpmn:name" value="Abre la convocatoria" />
+      <string key="bpmn:id" value="Ini_O" />
+      <string key="bpmn:subTask" value="Convocar" />
+      <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="1" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Convocar" />
+      <string key="bpmn:type" value="bpmn:SendTask" />
+      <string key="bpmn:name" value="Publicar la convocatoria" />
+      <string key="bpmn:id" value="Convocar" />
+      <string key="bpmn:messageDestiny" value="Esperar_Convocatoria" />
+      <string key="bpmn:messageTarget" value="Pool_Orquestado - 1" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="1" />
+      <string key="bpmn:subTask" value="Recoger_Solicitudes" />
+      <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:01.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="2" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandBy · Convocar" />
+      <string key="bpmn:type" value="StandBy" />
+      <string key="bpmn:id" value="Convocar" />
+      <string key="bpmn:execution" value="2" />
+      <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:01.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="3" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandBy · Convocar" />
+      <string key="bpmn:type" value="StandBy" />
+      <string key="bpmn:id" value="Convocar" />
+      <string key="bpmn:execution" value="3" />
+      <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:02.000+00:00" />
+      <float key="time:duration" value="2.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="4" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Convocar" />
+      <string key="bpmn:type" value="bpmn:SendTask" />
+      <string key="bpmn:name" value="Publicar la convocatoria" />
+      <string key="bpmn:id" value="Convocar" />
+      <string key="bpmn:messageDestiny" value="Esperar_Convocatoria" />
+      <string key="bpmn:messageTarget" value="Pool_Orquestado - 2" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="2" />
+      <int key="bpmn:time" value="1" />
+      <string key="bpmn:subTask" value="Recoger_Solicitudes" />
+      <date key="time:timestamp" value="2026-01-01T00:00:01.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:02.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="5" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Convocar" />
+      <string key="bpmn:type" value="bpmn:SendTask" />
+      <string key="bpmn:name" value="Publicar la convocatoria" />
+      <string key="bpmn:id" value="Convocar" />
+      <string key="bpmn:messageDestiny" value="Esperar_Convocatoria" />
+      <string key="bpmn:messageTarget" value="Pool_Orquestado - 3" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="3" />
+      <int key="bpmn:time" value="1" />
+      <string key="bpmn:subTask" value="Recoger_Solicitudes" />
+      <date key="time:timestamp" value="2026-01-01T00:00:02.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:03.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="6" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandByMessage · Recoger_Solicitudes" />
+      <string key="bpmn:type" value="StandByMessage" />
+      <string key="bpmn:id" value="Recoger_Solicitudes" />
+      <string key="bpmn:execution" value="1" />
+      <date key="time:timestamp" value="2026-01-01T00:00:03.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:06.000+00:00" />
+      <float key="time:duration" value="3.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="7" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandByMessage · Recoger_Solicitudes" />
+      <string key="bpmn:type" value="StandByMessage" />
+      <string key="bpmn:id" value="Recoger_Solicitudes" />
+      <string key="bpmn:execution" value="2" />
+      <date key="time:timestamp" value="2026-01-01T00:00:03.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:07.000+00:00" />
+      <float key="time:duration" value="4.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="8" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandByMessage · Recoger_Solicitudes" />
+      <string key="bpmn:type" value="StandByMessage" />
+      <string key="bpmn:id" value="Recoger_Solicitudes" />
+      <string key="bpmn:execution" value="3" />
+      <date key="time:timestamp" value="2026-01-01T00:00:03.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:09.000+00:00" />
+      <float key="time:duration" value="6.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="9" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Recoger_Solicitudes" />
+      <string key="bpmn:type" value="bpmn:ReceiveTask" />
+      <string key="bpmn:name" value="Recoger una solicitud" />
+      <string key="bpmn:id" value="Recoger_Solicitudes" />
+      <string key="bpmn:messageOrigin" value="Solicitar" />
+      <string key="bpmn:messageSender" value="Pool_Orquestado - 1" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="1" />
+      <string key="bpmn:subTask" value="Evaluar" />
+      <date key="time:timestamp" value="2026-01-01T00:00:06.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:07.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="10" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Recoger_Solicitudes" />
+      <string key="bpmn:type" value="bpmn:ReceiveTask" />
+      <string key="bpmn:name" value="Recoger una solicitud" />
+      <string key="bpmn:id" value="Recoger_Solicitudes" />
+      <string key="bpmn:messageOrigin" value="Solicitar" />
+      <string key="bpmn:messageSender" value="Pool_Orquestado - 2" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="2" />
+      <int key="bpmn:time" value="1" />
+      <string key="bpmn:subTask" value="Evaluar" />
+      <date key="time:timestamp" value="2026-01-01T00:00:07.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:08.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="11" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Recoger_Solicitudes" />
+      <string key="bpmn:type" value="bpmn:ReceiveTask" />
+      <string key="bpmn:name" value="Recoger una solicitud" />
+      <string key="bpmn:id" value="Recoger_Solicitudes" />
+      <string key="bpmn:messageOrigin" value="Solicitar" />
+      <string key="bpmn:messageSender" value="Pool_Orquestado - 3" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="3" />
+      <int key="bpmn:time" value="1" />
+      <string key="bpmn:subTask" value="Evaluar" />
+      <date key="time:timestamp" value="2026-01-01T00:00:09.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:10.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="12" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Evaluar" />
+      <string key="bpmn:type" value="bpmn:Task" />
+      <string key="bpmn:name" value="Evaluar una solicitud" />
+      <string key="bpmn:id" value="Evaluar" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="10" />
+      <string key="bpmn:subTask" value="Resolver" />
+      <date key="time:timestamp" value="2026-01-01T00:00:10.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:20.000+00:00" />
+      <float key="time:duration" value="10.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="13" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandBy · Evaluar" />
+      <string key="bpmn:type" value="StandBy" />
+      <string key="bpmn:id" value="Evaluar" />
+      <string key="bpmn:execution" value="2" />
+      <date key="time:timestamp" value="2026-01-01T00:00:10.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:20.000+00:00" />
+      <float key="time:duration" value="10.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="14" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandBy · Evaluar" />
+      <string key="bpmn:type" value="StandBy" />
+      <string key="bpmn:id" value="Evaluar" />
+      <string key="bpmn:execution" value="3" />
+      <date key="time:timestamp" value="2026-01-01T00:00:10.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:33.000+00:00" />
+      <float key="time:duration" value="23.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="15" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Evaluar" />
+      <string key="bpmn:type" value="bpmn:Task" />
+      <string key="bpmn:name" value="Evaluar una solicitud" />
+      <string key="bpmn:id" value="Evaluar" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="2" />
+      <int key="bpmn:time" value="13" />
+      <string key="bpmn:subTask" value="Resolver" />
+      <date key="time:timestamp" value="2026-01-01T00:00:20.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:33.000+00:00" />
+      <float key="time:duration" value="13.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="16" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Evaluar" />
+      <string key="bpmn:type" value="bpmn:Task" />
+      <string key="bpmn:name" value="Evaluar una solicitud" />
+      <string key="bpmn:id" value="Evaluar" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="3" />
+      <int key="bpmn:time" value="11" />
+      <string key="bpmn:subTask" value="Resolver" />
+      <date key="time:timestamp" value="2026-01-01T00:00:33.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:44.000+00:00" />
+      <float key="time:duration" value="11.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="17" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Resolver" />
+      <string key="bpmn:type" value="bpmn:SendTask" />
+      <string key="bpmn:name" value="Comunicar la resolucion" />
+      <string key="bpmn:id" value="Resolver" />
+      <string key="bpmn:messageDestiny" value="Esperar_Resolucion" />
+      <string key="bpmn:messageTarget" value="Pool_Orquestado - 1" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="1" />
+      <string key="bpmn:subTask" value="Recoger_Reclamaciones" />
+      <date key="time:timestamp" value="2026-01-01T00:00:44.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:45.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="18" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandBy · Resolver" />
+      <string key="bpmn:type" value="StandBy" />
+      <string key="bpmn:id" value="Resolver" />
+      <string key="bpmn:execution" value="2" />
+      <date key="time:timestamp" value="2026-01-01T00:00:44.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:45.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="19" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandBy · Resolver" />
+      <string key="bpmn:type" value="StandBy" />
+      <string key="bpmn:id" value="Resolver" />
+      <string key="bpmn:execution" value="3" />
+      <date key="time:timestamp" value="2026-01-01T00:00:44.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:46.000+00:00" />
+      <float key="time:duration" value="2.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="20" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Resolver" />
+      <string key="bpmn:type" value="bpmn:SendTask" />
+      <string key="bpmn:name" value="Comunicar la resolucion" />
+      <string key="bpmn:id" value="Resolver" />
+      <string key="bpmn:messageDestiny" value="Esperar_Resolucion" />
+      <string key="bpmn:messageTarget" value="Pool_Orquestado - 2" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="2" />
+      <int key="bpmn:time" value="1" />
+      <string key="bpmn:subTask" value="Recoger_Reclamaciones" />
+      <date key="time:timestamp" value="2026-01-01T00:00:45.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:46.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="21" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Resolver" />
+      <string key="bpmn:type" value="bpmn:SendTask" />
+      <string key="bpmn:name" value="Comunicar la resolucion" />
+      <string key="bpmn:id" value="Resolver" />
+      <string key="bpmn:messageDestiny" value="Esperar_Resolucion" />
+      <string key="bpmn:messageTarget" value="Pool_Orquestado - 3" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="3" />
+      <int key="bpmn:time" value="1" />
+      <string key="bpmn:subTask" value="Recoger_Reclamaciones" />
+      <date key="time:timestamp" value="2026-01-01T00:00:46.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:47.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="22" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandByMessage · Recoger_Reclamaciones" />
+      <string key="bpmn:type" value="StandByMessage" />
+      <string key="bpmn:id" value="Recoger_Reclamaciones" />
+      <string key="bpmn:execution" value="1" />
+      <date key="time:timestamp" value="2026-01-01T00:00:47.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:49.000+00:00" />
+      <float key="time:duration" value="2.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="23" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandByMessage · Recoger_Reclamaciones" />
+      <string key="bpmn:type" value="StandByMessage" />
+      <string key="bpmn:id" value="Recoger_Reclamaciones" />
+      <string key="bpmn:execution" value="2" />
+      <date key="time:timestamp" value="2026-01-01T00:00:47.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:51.000+00:00" />
+      <float key="time:duration" value="4.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="24" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Recoger_Reclamaciones" />
+      <string key="bpmn:type" value="bpmn:ReceiveTask" />
+      <string key="bpmn:name" value="Recoger una reclamacion" />
+      <string key="bpmn:id" value="Recoger_Reclamaciones" />
+      <string key="bpmn:messageOrigin" value="Reclamar" />
+      <string key="bpmn:messageSender" value="Pool_Orquestado - 2" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="1" />
+      <string key="bpmn:subTask" value="Reevaluar" />
+      <date key="time:timestamp" value="2026-01-01T00:00:49.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:50.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="25" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Recoger_Reclamaciones" />
+      <string key="bpmn:type" value="bpmn:ReceiveTask" />
+      <string key="bpmn:name" value="Recoger una reclamacion" />
+      <string key="bpmn:id" value="Recoger_Reclamaciones" />
+      <string key="bpmn:messageOrigin" value="Reclamar" />
+      <string key="bpmn:messageSender" value="Pool_Orquestado - 3" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="2" />
+      <int key="bpmn:time" value="1" />
+      <string key="bpmn:subTask" value="Reevaluar" />
+      <date key="time:timestamp" value="2026-01-01T00:00:51.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:52.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="26" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Reevaluar" />
+      <string key="bpmn:type" value="bpmn:Task" />
+      <string key="bpmn:name" value="Reevaluar una solicitud" />
+      <string key="bpmn:id" value="Reevaluar" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="16" />
+      <string key="bpmn:subTask" value="Responder" />
+      <date key="time:timestamp" value="2026-01-01T00:00:52.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:01:08.000+00:00" />
+      <float key="time:duration" value="16.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="27" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandBy · Reevaluar" />
+      <string key="bpmn:type" value="StandBy" />
+      <string key="bpmn:id" value="Reevaluar" />
+      <string key="bpmn:execution" value="2" />
+      <date key="time:timestamp" value="2026-01-01T00:00:52.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:01:08.000+00:00" />
+      <float key="time:duration" value="16.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="28" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Reevaluar" />
+      <string key="bpmn:type" value="bpmn:Task" />
+      <string key="bpmn:name" value="Reevaluar una solicitud" />
+      <string key="bpmn:id" value="Reevaluar" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="2" />
+      <int key="bpmn:time" value="17" />
+      <string key="bpmn:subTask" value="Responder" />
+      <date key="time:timestamp" value="2026-01-01T00:01:08.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:01:25.000+00:00" />
+      <float key="time:duration" value="17.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="29" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Responder" />
+      <string key="bpmn:type" value="bpmn:SendTask" />
+      <string key="bpmn:name" value="Responder a una reclamacion" />
+      <string key="bpmn:id" value="Responder" />
+      <string key="bpmn:messageDestiny" value="Esperar_Respuesta" />
+      <string key="bpmn:messageTarget" value="Pool_Orquestado - 2" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="1" />
+      <string key="bpmn:subTask" value="Fin_O" />
+      <date key="time:timestamp" value="2026-01-01T00:01:25.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:01:26.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="30" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandBy · Responder" />
+      <string key="bpmn:type" value="StandBy" />
+      <string key="bpmn:id" value="Responder" />
+      <string key="bpmn:execution" value="2" />
+      <date key="time:timestamp" value="2026-01-01T00:01:25.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:01:26.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="31" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Responder" />
+      <string key="bpmn:type" value="bpmn:SendTask" />
+      <string key="bpmn:name" value="Responder a una reclamacion" />
+      <string key="bpmn:id" value="Responder" />
+      <string key="bpmn:messageDestiny" value="Esperar_Respuesta" />
+      <string key="bpmn:messageTarget" value="Pool_Orquestado - 3" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="2" />
+      <int key="bpmn:time" value="1" />
+      <string key="bpmn:subTask" value="Fin_O" />
+      <date key="time:timestamp" value="2026-01-01T00:01:26.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:01:27.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="32" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Fin_O" />
+      <string key="bpmn:type" value="bpmn:EndEvent" />
+      <string key="bpmn:name" value="Cierra la convocatoria" />
+      <string key="bpmn:id" value="Fin_O" />
+      <string key="bpmn:subTask" value="" />
+      <date key="time:timestamp" value="2026-01-01T00:01:27.000+00:00" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="33" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+  </trace>
+  <trace>
+    <string key="concept:name" value="Pool_Orquestador - 2" />
+    <string key="bpmn:participant" value="Pool_Orquestador" />
+    <int key="bpmn:instance" value="2" />
+    <int key="bpmn:convocatoria" value="2" />
+    <event>
+      <string key="concept:name" value="Ini_O" />
+      <string key="bpmn:type" value="bpmn:StartEvent" />
+      <string key="bpmn:name" value="Abre la convocatoria" />
+      <string key="bpmn:id" value="Ini_O" />
+      <string key="bpmn:subTask" value="Convocar" />
+      <date key="time:timestamp" value="2026-01-01T00:01:28.000+00:00" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="1" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="2" />
+    </event>
+    <event>
+      <string key="concept:name" value="Convocar" />
+      <string key="bpmn:type" value="bpmn:SendTask" />
+      <string key="bpmn:name" value="Publicar la convocatoria" />
+      <string key="bpmn:id" value="Convocar" />
+      <string key="bpmn:messageDestiny" value="Esperar_Convocatoria" />
+      <string key="bpmn:messageTarget" value="Pool_Orquestado - 4" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="1" />
+      <string key="bpmn:subTask" value="Recoger_Solicitudes" />
+      <date key="time:timestamp" value="2026-01-01T00:01:28.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:01:29.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="2" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="2" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandBy · Convocar" />
+      <string key="bpmn:type" value="StandBy" />
+      <string key="bpmn:id" value="Convocar" />
+      <string key="bpmn:execution" value="2" />
+      <date key="time:timestamp" value="2026-01-01T00:01:28.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:01:29.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="3" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="2" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandBy · Convocar" />
+      <string key="bpmn:type" value="StandBy" />
+      <string key="bpmn:id" value="Convocar" />
+      <string key="bpmn:execution" value="3" />
+      <date key="time:timestamp" value="2026-01-01T00:01:28.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:01:30.000+00:00" />
+      <float key="time:duration" value="2.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="4" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="2" />
+    </event>
+    <event>
+      <string key="concept:name" value="Convocar" />
+      <string key="bpmn:type" value="bpmn:SendTask" />
+      <string key="bpmn:name" value="Publicar la convocatoria" />
+      <string key="bpmn:id" value="Convocar" />
+      <string key="bpmn:messageDestiny" value="Esperar_Convocatoria" />
+      <string key="bpmn:messageTarget" value="Pool_Orquestado - 5" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="2" />
+      <int key="bpmn:time" value="1" />
+      <string key="bpmn:subTask" value="Recoger_Solicitudes" />
+      <date key="time:timestamp" value="2026-01-01T00:01:29.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:01:30.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="5" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="2" />
+    </event>
+    <event>
+      <string key="concept:name" value="Convocar" />
+      <string key="bpmn:type" value="bpmn:SendTask" />
+      <string key="bpmn:name" value="Publicar la convocatoria" />
+      <string key="bpmn:id" value="Convocar" />
+      <string key="bpmn:messageDestiny" value="Esperar_Convocatoria" />
+      <string key="bpmn:messageTarget" value="Pool_Orquestado - 6" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="3" />
+      <int key="bpmn:time" value="1" />
+      <string key="bpmn:subTask" value="Recoger_Solicitudes" />
+      <date key="time:timestamp" value="2026-01-01T00:01:30.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:01:31.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="6" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="2" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandByMessage · Recoger_Solicitudes" />
+      <string key="bpmn:type" value="StandByMessage" />
+      <string key="bpmn:id" value="Recoger_Solicitudes" />
+      <string key="bpmn:execution" value="1" />
+      <date key="time:timestamp" value="2026-01-01T00:01:31.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:01:32.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="7" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="2" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandByMessage · Recoger_Solicitudes" />
+      <string key="bpmn:type" value="StandByMessage" />
+      <string key="bpmn:id" value="Recoger_Solicitudes" />
+      <string key="bpmn:execution" value="2" />
+      <date key="time:timestamp" value="2026-01-01T00:01:31.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:01:34.000+00:00" />
+      <float key="time:duration" value="3.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="8" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="2" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandByMessage · Recoger_Solicitudes" />
+      <string key="bpmn:type" value="StandByMessage" />
+      <string key="bpmn:id" value="Recoger_Solicitudes" />
+      <string key="bpmn:execution" value="3" />
+      <date key="time:timestamp" value="2026-01-01T00:01:31.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:01:37.000+00:00" />
+      <float key="time:duration" value="6.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="9" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="2" />
+    </event>
+    <event>
+      <string key="concept:name" value="Recoger_Solicitudes" />
+      <string key="bpmn:type" value="bpmn:ReceiveTask" />
+      <string key="bpmn:name" value="Recoger una solicitud" />
+      <string key="bpmn:id" value="Recoger_Solicitudes" />
+      <string key="bpmn:messageOrigin" value="Solicitar" />
+      <string key="bpmn:messageSender" value="Pool_Orquestado - 4" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="1" />
+      <string key="bpmn:subTask" value="Evaluar" />
+      <date key="time:timestamp" value="2026-01-01T00:01:32.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:01:33.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="10" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="2" />
+    </event>
+    <event>
+      <string key="concept:name" value="Recoger_Solicitudes" />
+      <string key="bpmn:type" value="bpmn:ReceiveTask" />
+      <string key="bpmn:name" value="Recoger una solicitud" />
+      <string key="bpmn:id" value="Recoger_Solicitudes" />
+      <string key="bpmn:messageOrigin" value="Solicitar" />
+      <string key="bpmn:messageSender" value="Pool_Orquestado - 5" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="2" />
+      <int key="bpmn:time" value="1" />
+      <string key="bpmn:subTask" value="Evaluar" />
+      <date key="time:timestamp" value="2026-01-01T00:01:34.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:01:35.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="11" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="2" />
+    </event>
+    <event>
+      <string key="concept:name" value="Recoger_Solicitudes" />
+      <string key="bpmn:type" value="bpmn:ReceiveTask" />
+      <string key="bpmn:name" value="Recoger una solicitud" />
+      <string key="bpmn:id" value="Recoger_Solicitudes" />
+      <string key="bpmn:messageOrigin" value="Solicitar" />
+      <string key="bpmn:messageSender" value="Pool_Orquestado - 6" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="3" />
+      <int key="bpmn:time" value="1" />
+      <string key="bpmn:subTask" value="Evaluar" />
+      <date key="time:timestamp" value="2026-01-01T00:01:37.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:01:38.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="12" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="2" />
+    </event>
+    <event>
+      <string key="concept:name" value="Evaluar" />
+      <string key="bpmn:type" value="bpmn:Task" />
+      <string key="bpmn:name" value="Evaluar una solicitud" />
+      <string key="bpmn:id" value="Evaluar" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="9" />
+      <string key="bpmn:subTask" value="Resolver" />
+      <date key="time:timestamp" value="2026-01-01T00:01:38.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:01:47.000+00:00" />
+      <float key="time:duration" value="9.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="13" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="2" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandBy · Evaluar" />
+      <string key="bpmn:type" value="StandBy" />
+      <string key="bpmn:id" value="Evaluar" />
+      <string key="bpmn:execution" value="2" />
+      <date key="time:timestamp" value="2026-01-01T00:01:38.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:01:47.000+00:00" />
+      <float key="time:duration" value="9.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="14" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="2" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandBy · Evaluar" />
+      <string key="bpmn:type" value="StandBy" />
+      <string key="bpmn:id" value="Evaluar" />
+      <string key="bpmn:execution" value="3" />
+      <date key="time:timestamp" value="2026-01-01T00:01:38.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:01:58.000+00:00" />
+      <float key="time:duration" value="20.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="15" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="2" />
+    </event>
+    <event>
+      <string key="concept:name" value="Evaluar" />
+      <string key="bpmn:type" value="bpmn:Task" />
+      <string key="bpmn:name" value="Evaluar una solicitud" />
+      <string key="bpmn:id" value="Evaluar" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="2" />
+      <int key="bpmn:time" value="11" />
+      <string key="bpmn:subTask" value="Resolver" />
+      <date key="time:timestamp" value="2026-01-01T00:01:47.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:01:58.000+00:00" />
+      <float key="time:duration" value="11.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="16" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="2" />
+    </event>
+    <event>
+      <string key="concept:name" value="Evaluar" />
+      <string key="bpmn:type" value="bpmn:Task" />
+      <string key="bpmn:name" value="Evaluar una solicitud" />
+      <string key="bpmn:id" value="Evaluar" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="3" />
+      <int key="bpmn:time" value="11" />
+      <string key="bpmn:subTask" value="Resolver" />
+      <date key="time:timestamp" value="2026-01-01T00:01:58.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:02:09.000+00:00" />
+      <float key="time:duration" value="11.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="17" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="2" />
+    </event>
+    <event>
+      <string key="concept:name" value="Resolver" />
+      <string key="bpmn:type" value="bpmn:SendTask" />
+      <string key="bpmn:name" value="Comunicar la resolucion" />
+      <string key="bpmn:id" value="Resolver" />
+      <string key="bpmn:messageDestiny" value="Esperar_Resolucion" />
+      <string key="bpmn:messageTarget" value="Pool_Orquestado - 4" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="1" />
+      <string key="bpmn:subTask" value="Recoger_Reclamaciones" />
+      <date key="time:timestamp" value="2026-01-01T00:02:09.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:02:10.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="18" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="2" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandBy · Resolver" />
+      <string key="bpmn:type" value="StandBy" />
+      <string key="bpmn:id" value="Resolver" />
+      <string key="bpmn:execution" value="2" />
+      <date key="time:timestamp" value="2026-01-01T00:02:09.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:02:10.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="19" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="2" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandBy · Resolver" />
+      <string key="bpmn:type" value="StandBy" />
+      <string key="bpmn:id" value="Resolver" />
+      <string key="bpmn:execution" value="3" />
+      <date key="time:timestamp" value="2026-01-01T00:02:09.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:02:11.000+00:00" />
+      <float key="time:duration" value="2.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="20" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="2" />
+    </event>
+    <event>
+      <string key="concept:name" value="Resolver" />
+      <string key="bpmn:type" value="bpmn:SendTask" />
+      <string key="bpmn:name" value="Comunicar la resolucion" />
+      <string key="bpmn:id" value="Resolver" />
+      <string key="bpmn:messageDestiny" value="Esperar_Resolucion" />
+      <string key="bpmn:messageTarget" value="Pool_Orquestado - 5" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="2" />
+      <int key="bpmn:time" value="1" />
+      <string key="bpmn:subTask" value="Recoger_Reclamaciones" />
+      <date key="time:timestamp" value="2026-01-01T00:02:10.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:02:11.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="21" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="2" />
+    </event>
+    <event>
+      <string key="concept:name" value="Resolver" />
+      <string key="bpmn:type" value="bpmn:SendTask" />
+      <string key="bpmn:name" value="Comunicar la resolucion" />
+      <string key="bpmn:id" value="Resolver" />
+      <string key="bpmn:messageDestiny" value="Esperar_Resolucion" />
+      <string key="bpmn:messageTarget" value="Pool_Orquestado - 6" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="3" />
+      <int key="bpmn:time" value="1" />
+      <string key="bpmn:subTask" value="Recoger_Reclamaciones" />
+      <date key="time:timestamp" value="2026-01-01T00:02:11.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:02:12.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="22" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="2" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandByMessage · Recoger_Reclamaciones" />
+      <string key="bpmn:type" value="StandByMessage" />
+      <string key="bpmn:id" value="Recoger_Reclamaciones" />
+      <string key="bpmn:execution" value="1" />
+      <date key="time:timestamp" value="2026-01-01T00:02:12.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:02:14.000+00:00" />
+      <float key="time:duration" value="2.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="23" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="2" />
+    </event>
+    <event>
+      <string key="concept:name" value="Recoger_Reclamaciones" />
+      <string key="bpmn:type" value="bpmn:ReceiveTask" />
+      <string key="bpmn:name" value="Recoger una reclamacion" />
+      <string key="bpmn:id" value="Recoger_Reclamaciones" />
+      <string key="bpmn:messageOrigin" value="Reclamar" />
+      <string key="bpmn:messageSender" value="Pool_Orquestado - 5" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="1" />
+      <string key="bpmn:subTask" value="Reevaluar" />
+      <date key="time:timestamp" value="2026-01-01T00:02:14.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:02:15.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="24" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="2" />
+    </event>
+    <event>
+      <string key="concept:name" value="Reevaluar" />
+      <string key="bpmn:type" value="bpmn:Task" />
+      <string key="bpmn:name" value="Reevaluar una solicitud" />
+      <string key="bpmn:id" value="Reevaluar" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="14" />
+      <string key="bpmn:subTask" value="Responder" />
+      <date key="time:timestamp" value="2026-01-01T00:02:15.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:02:29.000+00:00" />
+      <float key="time:duration" value="14.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="25" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="2" />
+    </event>
+    <event>
+      <string key="concept:name" value="Responder" />
+      <string key="bpmn:type" value="bpmn:SendTask" />
+      <string key="bpmn:name" value="Responder a una reclamacion" />
+      <string key="bpmn:id" value="Responder" />
+      <string key="bpmn:messageDestiny" value="Esperar_Respuesta" />
+      <string key="bpmn:messageTarget" value="Pool_Orquestado - 5" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="1" />
+      <string key="bpmn:subTask" value="Fin_O" />
+      <date key="time:timestamp" value="2026-01-01T00:02:29.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:02:30.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="26" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="2" />
+    </event>
+    <event>
+      <string key="concept:name" value="Fin_O" />
+      <string key="bpmn:type" value="bpmn:EndEvent" />
+      <string key="bpmn:name" value="Cierra la convocatoria" />
+      <string key="bpmn:id" value="Fin_O" />
+      <string key="bpmn:subTask" value="" />
+      <date key="time:timestamp" value="2026-01-01T00:02:30.000+00:00" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="27" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="2" />
+    </event>
+  </trace>
+  <trace>
+    <string key="concept:name" value="Pool_Orquestador - 3" />
+    <string key="bpmn:participant" value="Pool_Orquestador" />
+    <int key="bpmn:instance" value="3" />
+    <int key="bpmn:convocatoria" value="3" />
+    <event>
+      <string key="concept:name" value="Ini_O" />
+      <string key="bpmn:type" value="bpmn:StartEvent" />
+      <string key="bpmn:name" value="Abre la convocatoria" />
+      <string key="bpmn:id" value="Ini_O" />
+      <string key="bpmn:subTask" value="Convocar" />
+      <date key="time:timestamp" value="2026-01-01T00:02:31.000+00:00" />
+      <int key="bpmn:instance" value="3" />
+      <int key="bpmn:occurrence" value="1" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="3" />
+    </event>
+    <event>
+      <string key="concept:name" value="Convocar" />
+      <string key="bpmn:type" value="bpmn:SendTask" />
+      <string key="bpmn:name" value="Publicar la convocatoria" />
+      <string key="bpmn:id" value="Convocar" />
+      <string key="bpmn:messageDestiny" value="Esperar_Convocatoria" />
+      <string key="bpmn:messageTarget" value="Pool_Orquestado - 7" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="1" />
+      <string key="bpmn:subTask" value="Recoger_Solicitudes" />
+      <date key="time:timestamp" value="2026-01-01T00:02:31.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:02:32.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="3" />
+      <int key="bpmn:occurrence" value="2" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="3" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandBy · Convocar" />
+      <string key="bpmn:type" value="StandBy" />
+      <string key="bpmn:id" value="Convocar" />
+      <string key="bpmn:execution" value="2" />
+      <date key="time:timestamp" value="2026-01-01T00:02:31.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:02:32.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="3" />
+      <int key="bpmn:occurrence" value="3" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="3" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandBy · Convocar" />
+      <string key="bpmn:type" value="StandBy" />
+      <string key="bpmn:id" value="Convocar" />
+      <string key="bpmn:execution" value="3" />
+      <date key="time:timestamp" value="2026-01-01T00:02:31.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:02:33.000+00:00" />
+      <float key="time:duration" value="2.0" />
+      <int key="bpmn:instance" value="3" />
+      <int key="bpmn:occurrence" value="4" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="3" />
+    </event>
+    <event>
+      <string key="concept:name" value="Convocar" />
+      <string key="bpmn:type" value="bpmn:SendTask" />
+      <string key="bpmn:name" value="Publicar la convocatoria" />
+      <string key="bpmn:id" value="Convocar" />
+      <string key="bpmn:messageDestiny" value="Esperar_Convocatoria" />
+      <string key="bpmn:messageTarget" value="Pool_Orquestado - 8" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="2" />
+      <int key="bpmn:time" value="1" />
+      <string key="bpmn:subTask" value="Recoger_Solicitudes" />
+      <date key="time:timestamp" value="2026-01-01T00:02:32.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:02:33.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="3" />
+      <int key="bpmn:occurrence" value="5" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="3" />
+    </event>
+    <event>
+      <string key="concept:name" value="Convocar" />
+      <string key="bpmn:type" value="bpmn:SendTask" />
+      <string key="bpmn:name" value="Publicar la convocatoria" />
+      <string key="bpmn:id" value="Convocar" />
+      <string key="bpmn:messageDestiny" value="Esperar_Convocatoria" />
+      <string key="bpmn:messageTarget" value="Pool_Orquestado - 9" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="3" />
+      <int key="bpmn:time" value="1" />
+      <string key="bpmn:subTask" value="Recoger_Solicitudes" />
+      <date key="time:timestamp" value="2026-01-01T00:02:33.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:02:34.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="3" />
+      <int key="bpmn:occurrence" value="6" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="3" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandByMessage · Recoger_Solicitudes" />
+      <string key="bpmn:type" value="StandByMessage" />
+      <string key="bpmn:id" value="Recoger_Solicitudes" />
+      <string key="bpmn:execution" value="1" />
+      <date key="time:timestamp" value="2026-01-01T00:02:34.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:02:37.000+00:00" />
+      <float key="time:duration" value="3.0" />
+      <int key="bpmn:instance" value="3" />
+      <int key="bpmn:occurrence" value="7" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="3" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandByMessage · Recoger_Solicitudes" />
+      <string key="bpmn:type" value="StandByMessage" />
+      <string key="bpmn:id" value="Recoger_Solicitudes" />
+      <string key="bpmn:execution" value="2" />
+      <date key="time:timestamp" value="2026-01-01T00:02:34.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:02:37.000+00:00" />
+      <float key="time:duration" value="3.0" />
+      <int key="bpmn:instance" value="3" />
+      <int key="bpmn:occurrence" value="8" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="3" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandByMessage · Recoger_Solicitudes" />
+      <string key="bpmn:type" value="StandByMessage" />
+      <string key="bpmn:id" value="Recoger_Solicitudes" />
+      <string key="bpmn:execution" value="3" />
+      <date key="time:timestamp" value="2026-01-01T00:02:34.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:02:40.000+00:00" />
+      <float key="time:duration" value="6.0" />
+      <int key="bpmn:instance" value="3" />
+      <int key="bpmn:occurrence" value="9" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="3" />
+    </event>
+    <event>
+      <string key="concept:name" value="Recoger_Solicitudes" />
+      <string key="bpmn:type" value="bpmn:ReceiveTask" />
+      <string key="bpmn:name" value="Recoger una solicitud" />
+      <string key="bpmn:id" value="Recoger_Solicitudes" />
+      <string key="bpmn:messageOrigin" value="Solicitar" />
+      <string key="bpmn:messageSender" value="Pool_Orquestado - 7" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="1" />
+      <string key="bpmn:subTask" value="Evaluar" />
+      <date key="time:timestamp" value="2026-01-01T00:02:37.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:02:38.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="3" />
+      <int key="bpmn:occurrence" value="10" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="3" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandBy · Recoger_Solicitudes" />
+      <string key="bpmn:type" value="StandBy" />
+      <string key="bpmn:id" value="Recoger_Solicitudes" />
+      <string key="bpmn:execution" value="2" />
+      <date key="time:timestamp" value="2026-01-01T00:02:37.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:02:38.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="3" />
+      <int key="bpmn:occurrence" value="11" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="3" />
+    </event>
+    <event>
+      <string key="concept:name" value="Recoger_Solicitudes" />
+      <string key="bpmn:type" value="bpmn:ReceiveTask" />
+      <string key="bpmn:name" value="Recoger una solicitud" />
+      <string key="bpmn:id" value="Recoger_Solicitudes" />
+      <string key="bpmn:messageOrigin" value="Solicitar" />
+      <string key="bpmn:messageSender" value="Pool_Orquestado - 8" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="2" />
+      <int key="bpmn:time" value="1" />
+      <string key="bpmn:subTask" value="Evaluar" />
+      <date key="time:timestamp" value="2026-01-01T00:02:38.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:02:39.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="3" />
+      <int key="bpmn:occurrence" value="12" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="3" />
+    </event>
+    <event>
+      <string key="concept:name" value="Recoger_Solicitudes" />
+      <string key="bpmn:type" value="bpmn:ReceiveTask" />
+      <string key="bpmn:name" value="Recoger una solicitud" />
+      <string key="bpmn:id" value="Recoger_Solicitudes" />
+      <string key="bpmn:messageOrigin" value="Solicitar" />
+      <string key="bpmn:messageSender" value="Pool_Orquestado - 9" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="3" />
+      <int key="bpmn:time" value="1" />
+      <string key="bpmn:subTask" value="Evaluar" />
+      <date key="time:timestamp" value="2026-01-01T00:02:40.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:02:41.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="3" />
+      <int key="bpmn:occurrence" value="13" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="3" />
+    </event>
+    <event>
+      <string key="concept:name" value="Evaluar" />
+      <string key="bpmn:type" value="bpmn:Task" />
+      <string key="bpmn:name" value="Evaluar una solicitud" />
+      <string key="bpmn:id" value="Evaluar" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="11" />
+      <string key="bpmn:subTask" value="Resolver" />
+      <date key="time:timestamp" value="2026-01-01T00:02:41.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:02:52.000+00:00" />
+      <float key="time:duration" value="11.0" />
+      <int key="bpmn:instance" value="3" />
+      <int key="bpmn:occurrence" value="14" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="3" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandBy · Evaluar" />
+      <string key="bpmn:type" value="StandBy" />
+      <string key="bpmn:id" value="Evaluar" />
+      <string key="bpmn:execution" value="2" />
+      <date key="time:timestamp" value="2026-01-01T00:02:41.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:02:52.000+00:00" />
+      <float key="time:duration" value="11.0" />
+      <int key="bpmn:instance" value="3" />
+      <int key="bpmn:occurrence" value="15" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="3" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandBy · Evaluar" />
+      <string key="bpmn:type" value="StandBy" />
+      <string key="bpmn:id" value="Evaluar" />
+      <string key="bpmn:execution" value="3" />
+      <date key="time:timestamp" value="2026-01-01T00:02:41.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:03:02.000+00:00" />
+      <float key="time:duration" value="21.0" />
+      <int key="bpmn:instance" value="3" />
+      <int key="bpmn:occurrence" value="16" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="3" />
+    </event>
+    <event>
+      <string key="concept:name" value="Evaluar" />
+      <string key="bpmn:type" value="bpmn:Task" />
+      <string key="bpmn:name" value="Evaluar una solicitud" />
+      <string key="bpmn:id" value="Evaluar" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="2" />
+      <int key="bpmn:time" value="10" />
+      <string key="bpmn:subTask" value="Resolver" />
+      <date key="time:timestamp" value="2026-01-01T00:02:52.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:03:02.000+00:00" />
+      <float key="time:duration" value="10.0" />
+      <int key="bpmn:instance" value="3" />
+      <int key="bpmn:occurrence" value="17" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="3" />
+    </event>
+    <event>
+      <string key="concept:name" value="Evaluar" />
+      <string key="bpmn:type" value="bpmn:Task" />
+      <string key="bpmn:name" value="Evaluar una solicitud" />
+      <string key="bpmn:id" value="Evaluar" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="3" />
+      <int key="bpmn:time" value="11" />
+      <string key="bpmn:subTask" value="Resolver" />
+      <date key="time:timestamp" value="2026-01-01T00:03:02.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:03:13.000+00:00" />
+      <float key="time:duration" value="11.0" />
+      <int key="bpmn:instance" value="3" />
+      <int key="bpmn:occurrence" value="18" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="3" />
+    </event>
+    <event>
+      <string key="concept:name" value="Resolver" />
+      <string key="bpmn:type" value="bpmn:SendTask" />
+      <string key="bpmn:name" value="Comunicar la resolucion" />
+      <string key="bpmn:id" value="Resolver" />
+      <string key="bpmn:messageDestiny" value="Esperar_Resolucion" />
+      <string key="bpmn:messageTarget" value="Pool_Orquestado - 7" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="1" />
+      <string key="bpmn:subTask" value="Recoger_Reclamaciones" />
+      <date key="time:timestamp" value="2026-01-01T00:03:13.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:03:14.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="3" />
+      <int key="bpmn:occurrence" value="19" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="3" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandBy · Resolver" />
+      <string key="bpmn:type" value="StandBy" />
+      <string key="bpmn:id" value="Resolver" />
+      <string key="bpmn:execution" value="2" />
+      <date key="time:timestamp" value="2026-01-01T00:03:13.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:03:14.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="3" />
+      <int key="bpmn:occurrence" value="20" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="3" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandBy · Resolver" />
+      <string key="bpmn:type" value="StandBy" />
+      <string key="bpmn:id" value="Resolver" />
+      <string key="bpmn:execution" value="3" />
+      <date key="time:timestamp" value="2026-01-01T00:03:13.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:03:15.000+00:00" />
+      <float key="time:duration" value="2.0" />
+      <int key="bpmn:instance" value="3" />
+      <int key="bpmn:occurrence" value="21" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="3" />
+    </event>
+    <event>
+      <string key="concept:name" value="Resolver" />
+      <string key="bpmn:type" value="bpmn:SendTask" />
+      <string key="bpmn:name" value="Comunicar la resolucion" />
+      <string key="bpmn:id" value="Resolver" />
+      <string key="bpmn:messageDestiny" value="Esperar_Resolucion" />
+      <string key="bpmn:messageTarget" value="Pool_Orquestado - 8" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="2" />
+      <int key="bpmn:time" value="1" />
+      <string key="bpmn:subTask" value="Recoger_Reclamaciones" />
+      <date key="time:timestamp" value="2026-01-01T00:03:14.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:03:15.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="3" />
+      <int key="bpmn:occurrence" value="22" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="3" />
+    </event>
+    <event>
+      <string key="concept:name" value="Resolver" />
+      <string key="bpmn:type" value="bpmn:SendTask" />
+      <string key="bpmn:name" value="Comunicar la resolucion" />
+      <string key="bpmn:id" value="Resolver" />
+      <string key="bpmn:messageDestiny" value="Esperar_Resolucion" />
+      <string key="bpmn:messageTarget" value="Pool_Orquestado - 9" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="3" />
+      <int key="bpmn:time" value="1" />
+      <string key="bpmn:subTask" value="Recoger_Reclamaciones" />
+      <date key="time:timestamp" value="2026-01-01T00:03:15.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:03:16.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="3" />
+      <int key="bpmn:occurrence" value="23" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="3" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandByMessage · Recoger_Reclamaciones" />
+      <string key="bpmn:type" value="StandByMessage" />
+      <string key="bpmn:id" value="Recoger_Reclamaciones" />
+      <string key="bpmn:execution" value="1" />
+      <date key="time:timestamp" value="2026-01-01T00:03:16.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:03:18.000+00:00" />
+      <float key="time:duration" value="2.0" />
+      <int key="bpmn:instance" value="3" />
+      <int key="bpmn:occurrence" value="24" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="3" />
+    </event>
+    <event>
+      <string key="concept:name" value="Recoger_Reclamaciones" />
+      <string key="bpmn:type" value="bpmn:ReceiveTask" />
+      <string key="bpmn:name" value="Recoger una reclamacion" />
+      <string key="bpmn:id" value="Recoger_Reclamaciones" />
+      <string key="bpmn:messageOrigin" value="Reclamar" />
+      <string key="bpmn:messageSender" value="Pool_Orquestado - 8" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="1" />
+      <string key="bpmn:subTask" value="Reevaluar" />
+      <date key="time:timestamp" value="2026-01-01T00:03:18.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:03:19.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="3" />
+      <int key="bpmn:occurrence" value="25" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="3" />
+    </event>
+    <event>
+      <string key="concept:name" value="Reevaluar" />
+      <string key="bpmn:type" value="bpmn:Task" />
+      <string key="bpmn:name" value="Reevaluar una solicitud" />
+      <string key="bpmn:id" value="Reevaluar" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="16" />
+      <string key="bpmn:subTask" value="Responder" />
+      <date key="time:timestamp" value="2026-01-01T00:03:19.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:03:35.000+00:00" />
+      <float key="time:duration" value="16.0" />
+      <int key="bpmn:instance" value="3" />
+      <int key="bpmn:occurrence" value="26" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="3" />
+    </event>
+    <event>
+      <string key="concept:name" value="Responder" />
+      <string key="bpmn:type" value="bpmn:SendTask" />
+      <string key="bpmn:name" value="Responder a una reclamacion" />
+      <string key="bpmn:id" value="Responder" />
+      <string key="bpmn:messageDestiny" value="Esperar_Respuesta" />
+      <string key="bpmn:messageTarget" value="Pool_Orquestado - 8" />
+      <string key="bpmn:userTask" value="Ana" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="1" />
+      <string key="bpmn:subTask" value="Fin_O" />
+      <date key="time:timestamp" value="2026-01-01T00:03:35.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:03:36.000+00:00" />
+      <float key="time:duration" value="1.0" />
+      <int key="bpmn:instance" value="3" />
+      <int key="bpmn:occurrence" value="27" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="3" />
+    </event>
+    <event>
+      <string key="concept:name" value="Fin_O" />
+      <string key="bpmn:type" value="bpmn:EndEvent" />
+      <string key="bpmn:name" value="Cierra la convocatoria" />
+      <string key="bpmn:id" value="Fin_O" />
+      <string key="bpmn:subTask" value="" />
+      <date key="time:timestamp" value="2026-01-01T00:03:36.000+00:00" />
+      <int key="bpmn:instance" value="3" />
+      <int key="bpmn:occurrence" value="28" />
+      <string key="bpmn:participant" value="Pool_Orquestador" />
+      <int key="bpmn:convocatoria" value="3" />
+    </event>
+  </trace>
+</log>

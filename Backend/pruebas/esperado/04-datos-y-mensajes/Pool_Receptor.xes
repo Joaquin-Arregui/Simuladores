@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<log xes.version="1.0" xes.features="nested-attributes" openxes.version="1.0RC7" xmlns="http://www.xes-standard.org/">
+  <extension name="Concept" prefix="concept" uri="http://www.xes-standard.org/concept.xesext"/>
+  <extension name="Time" prefix="time" uri="http://www.xes-standard.org/time.xesext"/>
+  <classifier name="Activity (by BPMN ID)" keys="bpmn:id" scope="event"/>
+  <classifier name="Case (by participant and instance)" keys="bpmn:participant bpmn:instance" scope="event"/>
+  <string key="simulation:id" value="c4e9493f01150c9c" />
+  <string key="simulation:formatVersion" value="1" />
+  <int key="simulation:seed" value="20260101" />
+  <string key="simulation:startDate" value="2026-01-01T00:00:00+00:00" />
+  <string key="simulation:participants" value="Pool_Emisor, Pool_Receptor" />
+  <int key="simulation:convocatorias" value="1" />
+  <string key="model:id" value="Colaboracion" />
+  <string key="model:name" value="Datos y mensajes" />
+  <string key="model:rulesSha256" value="3e3365705b0c4ef5156e606852800ca5fad372da96efd10fb0f9c70bbca029f1" />
+  <string key="concept:name" value="Receptor" />
+  <string key="pool:id" value="Pool_Receptor" />
+  <string key="pool:name" value="Receptor" />
+  <string key="pool:resources" value="finite" />
+  <list key="pool:staff">
+    <values>
+      <string key="person" value="Beto" />
+      <string key="person" value="Clara" />
+    </values>
+  </list>
+  <trace>
+    <string key="concept:name" value="Pool_Receptor - 1" />
+    <string key="bpmn:participant" value="Pool_Receptor" />
+    <int key="bpmn:instance" value="1" />
+    <int key="bpmn:convocatoria" value="1" />
+    <event>
+      <string key="concept:name" value="StandByMessage · Ini_R" />
+      <string key="bpmn:type" value="StandByMessage" />
+      <string key="bpmn:id" value="Ini_R" />
+      <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:08.000+00:00" />
+      <float key="time:duration" value="8.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="1" />
+      <string key="bpmn:participant" value="Pool_Receptor" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <container key="dataObjects">
+      <string key="bpmn:id" value="Expediente" />
+      <string key="bpmn:name" value="Expediente" />
+      <date key="time:generationTime" value="2026-01-01T00:00:43.000+00:00" />
+      <int key="bpmn:occurrence" value="2" />
+      <string key="bpmn:participant" value="Pool_Receptor" />
+      <int key="bpmn:convocatoria" value="1" />
+    </container>
+    <event>
+      <string key="concept:name" value="Ini_R" />
+      <string key="bpmn:type" value="bpmn:MessageStartEvent" />
+      <string key="bpmn:name" value="Arranca al recibir el aviso" />
+      <string key="bpmn:id" value="Ini_R" />
+      <string key="bpmn:subTask" value="Bifurca" />
+      <date key="time:timestamp" value="2026-01-01T00:00:08.000+00:00" />
+      <int key="bpmn:instance" value="1" />
+      <string key="bpmn:messageOrigin" value="Avisar" />
+      <string key="bpmn:messageSender" value="Pool_Emisor - 1" />
+      <int key="bpmn:occurrence" value="3" />
+      <string key="bpmn:participant" value="Pool_Receptor" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Bifurca" />
+      <string key="bpmn:type" value="bpmn:ParallelGateway" />
+      <string key="bpmn:name" value="Abrir las dos ramas" />
+      <string key="bpmn:id" value="Bifurca" />
+      <string key="bpmn:subTask" value="Produce, Consume" />
+      <string key="bpmn:selectedFlow" value="r2, r3" />
+      <date key="time:timestamp" value="2026-01-01T00:00:08.000+00:00" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="4" />
+      <string key="bpmn:participant" value="Pool_Receptor" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Produce" />
+      <string key="bpmn:type" value="bpmn:Task" />
+      <string key="bpmn:name" value="Preparar el expediente" />
+      <string key="bpmn:id" value="Produce" />
+      <string key="bpmn:userTask" value="Beto" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="35" />
+      <string key="bpmn:subTask" value="Une" />
+      <date key="time:timestamp" value="2026-01-01T00:00:08.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:43.000+00:00" />
+      <float key="time:duration" value="35.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="5" />
+      <string key="bpmn:participant" value="Pool_Receptor" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandByData · Consume" />
+      <string key="bpmn:type" value="StandByData" />
+      <string key="bpmn:id" value="Consume" />
+      <date key="time:timestamp" value="2026-01-01T00:00:08.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:43.000+00:00" />
+      <float key="time:duration" value="35.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="6" />
+      <string key="bpmn:participant" value="Pool_Receptor" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Consume" />
+      <string key="bpmn:type" value="bpmn:Task" />
+      <string key="bpmn:name" value="Revisar el expediente" />
+      <string key="bpmn:id" value="Consume" />
+      <string key="bpmn:userTask" value="Clara" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="8" />
+      <string key="bpmn:subTask" value="Une" />
+      <date key="time:timestamp" value="2026-01-01T00:00:43.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:51.000+00:00" />
+      <float key="time:duration" value="8.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="7" />
+      <string key="bpmn:participant" value="Pool_Receptor" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandByJoin · Une" />
+      <string key="bpmn:type" value="StandByJoin" />
+      <string key="bpmn:id" value="Une" />
+      <string key="bpmn:incomingFlow" value="r4" />
+      <date key="time:timestamp" value="2026-01-01T00:00:43.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:51.000+00:00" />
+      <float key="time:duration" value="8.0" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="8" />
+      <string key="bpmn:participant" value="Pool_Receptor" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Une" />
+      <string key="bpmn:type" value="bpmn:ParallelGateway" />
+      <string key="bpmn:name" value="Esperar a las dos" />
+      <string key="bpmn:id" value="Une" />
+      <string key="bpmn:subTask" value="Fin_R" />
+      <string key="bpmn:selectedFlow" value="r6" />
+      <date key="time:timestamp" value="2026-01-01T00:00:51.000+00:00" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="9" />
+      <string key="bpmn:participant" value="Pool_Receptor" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Fin_R" />
+      <string key="bpmn:type" value="bpmn:EndEvent" />
+      <string key="bpmn:name" value="Fin del receptor" />
+      <string key="bpmn:id" value="Fin_R" />
+      <string key="bpmn:subTask" value="" />
+      <date key="time:timestamp" value="2026-01-01T00:00:51.000+00:00" />
+      <int key="bpmn:instance" value="1" />
+      <int key="bpmn:occurrence" value="10" />
+      <string key="bpmn:participant" value="Pool_Receptor" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+  </trace>
+  <trace>
+    <string key="concept:name" value="Pool_Receptor - 2" />
+    <string key="bpmn:participant" value="Pool_Receptor" />
+    <int key="bpmn:instance" value="2" />
+    <int key="bpmn:convocatoria" value="1" />
+    <event>
+      <string key="concept:name" value="StandByMessage · Ini_R" />
+      <string key="bpmn:type" value="StandByMessage" />
+      <string key="bpmn:id" value="Ini_R" />
+      <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:00:57.000+00:00" />
+      <float key="time:duration" value="57.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="1" />
+      <string key="bpmn:participant" value="Pool_Receptor" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <container key="dataObjects">
+      <string key="bpmn:id" value="Expediente" />
+      <string key="bpmn:name" value="Expediente" />
+      <date key="time:generationTime" value="2026-01-01T00:01:34.000+00:00" />
+      <int key="bpmn:occurrence" value="2" />
+      <string key="bpmn:participant" value="Pool_Receptor" />
+      <int key="bpmn:convocatoria" value="1" />
+    </container>
+    <event>
+      <string key="concept:name" value="Ini_R" />
+      <string key="bpmn:type" value="bpmn:MessageStartEvent" />
+      <string key="bpmn:name" value="Arranca al recibir el aviso" />
+      <string key="bpmn:id" value="Ini_R" />
+      <string key="bpmn:subTask" value="Bifurca" />
+      <date key="time:timestamp" value="2026-01-01T00:00:57.000+00:00" />
+      <int key="bpmn:instance" value="2" />
+      <string key="bpmn:messageOrigin" value="Avisar" />
+      <string key="bpmn:messageSender" value="Pool_Emisor - 2" />
+      <int key="bpmn:occurrence" value="3" />
+      <string key="bpmn:participant" value="Pool_Receptor" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Bifurca" />
+      <string key="bpmn:type" value="bpmn:ParallelGateway" />
+      <string key="bpmn:name" value="Abrir las dos ramas" />
+      <string key="bpmn:id" value="Bifurca" />
+      <string key="bpmn:subTask" value="Produce, Consume" />
+      <string key="bpmn:selectedFlow" value="r2, r3" />
+      <date key="time:timestamp" value="2026-01-01T00:00:57.000+00:00" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="4" />
+      <string key="bpmn:participant" value="Pool_Receptor" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Produce" />
+      <string key="bpmn:type" value="bpmn:Task" />
+      <string key="bpmn:name" value="Preparar el expediente" />
+      <string key="bpmn:id" value="Produce" />
+      <string key="bpmn:userTask" value="Beto" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="37" />
+      <string key="bpmn:subTask" value="Une" />
+      <date key="time:timestamp" value="2026-01-01T00:00:57.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:01:34.000+00:00" />
+      <float key="time:duration" value="37.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="5" />
+      <string key="bpmn:participant" value="Pool_Receptor" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandByData · Consume" />
+      <string key="bpmn:type" value="StandByData" />
+      <string key="bpmn:id" value="Consume" />
+      <date key="time:timestamp" value="2026-01-01T00:00:57.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:01:34.000+00:00" />
+      <float key="time:duration" value="37.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="6" />
+      <string key="bpmn:participant" value="Pool_Receptor" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Consume" />
+      <string key="bpmn:type" value="bpmn:Task" />
+      <string key="bpmn:name" value="Revisar el expediente" />
+      <string key="bpmn:id" value="Consume" />
+      <string key="bpmn:userTask" value="Clara" />
+      <int key="bpmn:execution" value="1" />
+      <int key="bpmn:time" value="6" />
+      <string key="bpmn:subTask" value="Une" />
+      <date key="time:timestamp" value="2026-01-01T00:01:34.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:01:40.000+00:00" />
+      <float key="time:duration" value="6.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="7" />
+      <string key="bpmn:participant" value="Pool_Receptor" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandByJoin · Une" />
+      <string key="bpmn:type" value="StandByJoin" />
+      <string key="bpmn:id" value="Une" />
+      <string key="bpmn:incomingFlow" value="r4" />
+      <date key="time:timestamp" value="2026-01-01T00:01:34.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:01:40.000+00:00" />
+      <float key="time:duration" value="6.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="8" />
+      <string key="bpmn:participant" value="Pool_Receptor" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Une" />
+      <string key="bpmn:type" value="bpmn:ParallelGateway" />
+      <string key="bpmn:name" value="Esperar a las dos" />
+      <string key="bpmn:id" value="Une" />
+      <string key="bpmn:subTask" value="Fin_R" />
+      <string key="bpmn:selectedFlow" value="r6" />
+      <date key="time:timestamp" value="2026-01-01T00:01:40.000+00:00" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="9" />
+      <string key="bpmn:participant" value="Pool_Receptor" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="Fin_R" />
+      <string key="bpmn:type" value="bpmn:EndEvent" />
+      <string key="bpmn:name" value="Fin del receptor" />
+      <string key="bpmn:id" value="Fin_R" />
+      <string key="bpmn:subTask" value="" />
+      <date key="time:timestamp" value="2026-01-01T00:01:40.000+00:00" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="10" />
+      <string key="bpmn:participant" value="Pool_Receptor" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+  </trace>
+</log>
