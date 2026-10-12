@@ -1,0 +1,1 @@
+ValueError: Pool_Uniforme (bpmn:Participant): arrivalWindow debe ser un entero mayor o igual que 0: las llegadas caen en segundos enteros.

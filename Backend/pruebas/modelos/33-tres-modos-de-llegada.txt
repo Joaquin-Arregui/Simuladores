@@ -1,0 +1,35 @@
+# Modelo de referencia 33 - los tres modos de llegada (4.3).
+# Dos convocatorias, y en cada una tres pools de orquestados que llegan de una
+# manera distinta, contando desde que se abre su convocatoria (D13): los del
+# Escalonado, uno cada 3 segundos; los del Simultaneo, los tres al abrirse; los
+# del Uniforme, cada uno en un segundo entero al azar entre 0 y 20, ambos
+# incluidos. Con la semilla del banco los uniformes llegan en t=1, 0, 9 y 0 en
+# la primera ronda, y en la segunda, que se abre en t=11, en t=21, 18, 19 y 22:
+# 10, 7, 8 y 11 segundos despues de abrirse.
+# regresion.py comprueba ademas, con diez semillas, que ninguna llegada uniforme
+# sale de su ventana y que entre todas la llenan.
+Element: [type=bpmn:Collaboration, id_bpmn='Colaboracion', name='Tres modos de llegada', instances=1]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Orquestador', name='Orquestador', frequency=0, userWithoutRole=['Ana'], instances=2, participantMultiplicity='true', orchestrationRole='orchestrator', containedElements=['Ini_O', 'Abrir', 'Fin_O', 'o1', 'o2']]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Escalonado', name='Escalonado', frequency=3, userWithoutRole=['Beto'], instances=3, participantMultiplicity='true', orchestrationRole='orchestrated', infiniteResources='true', arrivalMode='staggered', containedElements=['Ini_E', 'Atender_E', 'Fin_E', 'e1', 'e2']]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Simultaneo', name='Simultaneo', frequency=0, userWithoutRole=['Carla'], instances=3, participantMultiplicity='true', orchestrationRole='orchestrated', infiniteResources='true', arrivalMode='simultaneous', containedElements=['Ini_S', 'Atender_S', 'Fin_S', 's1', 's2']]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Uniforme', name='Uniforme', frequency=0, userWithoutRole=['Dario'], instances=4, participantMultiplicity='true', orchestrationRole='orchestrated', infiniteResources='true', arrivalMode='uniform', arrivalWindow=20, containedElements=['Ini_U', 'Atender_U', 'Fin_U', 'u1', 'u2']]
+Element: [type=bpmn:StartEvent, id_bpmn='Ini_O', name='Abre la convocatoria', subTask='Abrir']
+Element: [type=bpmn:Task, id_bpmn='Abrir', name='Abrir el plazo', userTask='Ana', numberOfExecutions=1, minimumTime=1, maximumTime=1, subTask='Fin_O']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_O', name='Fin del orquestador', subTask='']
+Element: [type=bpmn:StartEvent, id_bpmn='Ini_E', name='Llega escalonado', subTask='Atender_E']
+Element: [type=bpmn:Task, id_bpmn='Atender_E', name='Atender', userTask='Beto', numberOfExecutions=1, minimumTime=2, maximumTime=2, subTask='Fin_E']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_E', name='Fin', subTask='']
+Element: [type=bpmn:StartEvent, id_bpmn='Ini_S', name='Llega a la vez', subTask='Atender_S']
+Element: [type=bpmn:Task, id_bpmn='Atender_S', name='Atender', userTask='Carla', numberOfExecutions=1, minimumTime=2, maximumTime=2, subTask='Fin_S']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_S', name='Fin', subTask='']
+Element: [type=bpmn:StartEvent, id_bpmn='Ini_U', name='Llega al azar', subTask='Atender_U']
+Element: [type=bpmn:Task, id_bpmn='Atender_U', name='Atender', userTask='Dario', numberOfExecutions=1, minimumTime=2, maximumTime=2, subTask='Fin_U']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_U', name='Fin', subTask='']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o1', name='', superElement='Ini_O', subElement='Abrir']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o2', name='', superElement='Abrir', subElement='Fin_O']
+Element: [type=bpmn:SequenceFlow, id_bpmn='e1', name='', superElement='Ini_E', subElement='Atender_E']
+Element: [type=bpmn:SequenceFlow, id_bpmn='e2', name='', superElement='Atender_E', subElement='Fin_E']
+Element: [type=bpmn:SequenceFlow, id_bpmn='s1', name='', superElement='Ini_S', subElement='Atender_S']
+Element: [type=bpmn:SequenceFlow, id_bpmn='s2', name='', superElement='Atender_S', subElement='Fin_S']
+Element: [type=bpmn:SequenceFlow, id_bpmn='u1', name='', superElement='Ini_U', subElement='Atender_U']
+Element: [type=bpmn:SequenceFlow, id_bpmn='u2', name='', superElement='Atender_U', subElement='Fin_U']

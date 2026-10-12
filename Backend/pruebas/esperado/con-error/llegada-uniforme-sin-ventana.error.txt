@@ -1,0 +1,1 @@
+ValueError: Pool_Uniforme (bpmn:Participant): la llegada uniforme necesita arrivalWindow, el ancho de la ventana en segundos.

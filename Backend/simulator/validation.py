@@ -261,6 +261,38 @@ def _check_participant_multiplicity(participant, warnings, any_marked):
             add_warning(warnings, f"{etiqueta}: se ignora instances porque ningún pool lleva el marcador; se usa el número de la colaboración.")
 
 
+def _check_participant_arrival(participant, warnings):
+    """El modo de llegada de un pool, y lo que se ha puesto y no se va a usar (D13).
+
+    Las llegadas caen en segundos enteros, como las duraciones, asi que la
+    ventana de la uniforme es un entero. Se avisa de lo que se ignora en vez de
+    simular en silencio otra cosa: frequency fuera de la escalonada, la ventana
+    fuera de la uniforme, y todo en el orquestador, que tiene un caso por
+    convocatoria y llega al abrirse.
+    """
+    etiqueta = f"{participant.id_bpmn} (bpmn:Participant)"
+    modo = getattr(participant, "arrival_mode", None)
+    ventana = getattr(participant, "arrival_window", None)
+    if ventana is not None and (type(ventana) is not int or ventana < 0):
+        _fail(participant, "arrivalWindow debe ser un entero mayor o igual que 0: las llegadas caen en segundos enteros.")
+    if getattr(participant, "role", None) == "orchestrator" and getattr(participant, "multiplicity", False):
+        ignorados = [campo for campo, puesto in (("frequency", participant.frequency != 0),
+                                                 ("arrivalMode", modo is not None),
+                                                 ("arrivalWindow", ventana is not None)) if puesto]
+        if ignorados:
+            lista = ignorados[0] if len(ignorados) == 1 else ", ".join(ignorados[:-1]) + " y " + ignorados[-1]
+            add_warning(warnings, f"{etiqueta}: el orquestador tiene un caso por convocatoria y llega al "
+                                  f"abrirse; se {'ignora' if len(ignorados) == 1 else 'ignoran'} {lista}.")
+        return
+    modo = modo or "staggered"
+    if modo == "uniform" and ventana is None:
+        _fail(participant, "la llegada uniforme necesita arrivalWindow, el ancho de la ventana en segundos.")
+    if modo != "uniform" and ventana is not None:
+        add_warning(warnings, f"{etiqueta}: arrivalWindow solo se usa con la llegada uniforme; se ignora.")
+    if modo != "staggered" and participant.frequency != 0:
+        add_warning(warnings, f"{etiqueta}: frequency solo se usa con la llegada escalonada; se ignora.")
+
+
 def resolve_participant_instances(elements, root):
     """Cuantas instancias simula cada pool.
 
@@ -294,7 +326,8 @@ def resolve_convocatorias(elements, root, simulados):
     proceso se ignora con un aviso. Si no, hay una sola convocatoria con los
     casos de siempre, que es lo que se hacia antes de la tarea 4.1.
 
-    `simulados` son los participantes que tienen casos, en su orden.
+    `simulados` son los participantes que tienen casos, en su orden. Devuelve
+    tambien el orquestador, o None si no hay rondas.
     """
     instancias = resolve_participant_instances(elements, root)
     por_convocatoria = {pid: instancias[pid] for pid in simulados}
@@ -302,8 +335,8 @@ def resolve_convocatorias(elements, root, simulados):
                         if getattr(elements[pid], "role", None) == "orchestrator"
                         and getattr(elements[pid], "multiplicity", False)), None)
     if orquestador is None:
-        return 1, por_convocatoria
-    return por_convocatoria[orquestador], {**por_convocatoria, orquestador: 1}
+        return 1, por_convocatoria, None
+    return por_convocatoria[orquestador], {**por_convocatoria, orquestador: 1}, orquestador
 
 
 def _pesos_de_las_ramas(flows):
@@ -1061,6 +1094,7 @@ def validate_simulation(elements, process, starts, message_starts, warnings=None
             simulated += 1
             _number(participant, "frequency")
             _check_participant_multiplicity(participant, warnings, any_marked)
+            _check_participant_arrival(participant, warnings)
             if not (contained_nodes & set(starts + message_starts)):
                 _fail(participant, "necesita un proceso visible con al menos un evento de inicio.")
             for child in contained_nodes:

@@ -1,0 +1,32 @@
+# Modelo de referencia 34 - llegadas con decimales (4.3).
+# frequency admite decimales: los cuatro escalonados de cada ronda llegan uno
+# cada 0,1 segundos desde que se abre su convocatoria. En coma flotante el
+# cuarto toca a los 3 * 0,1 = 0.30000000000000004 segundos; el motor llega a
+# los 0,3, el XES guarda milisegundos y dice 00.300, y eso es llegar a tiempo:
+# la comprobacion de las llegadas compara con la precision del XES, no con la
+# de la coma flotante, y sin eso este modelo daria un falso error en las dos
+# rondas. La primera acaba en t=5,3, cuando termina el ultimo escalonado, asi
+# que la segunda se abre en un instante con decimales, y los dos uniformes, que
+# llegan en segundos enteros contados desde ahi -con la semilla del banco, en
+# t=5,3 y 7,3-, tambien se comparan con esa precision.
+# Las duraciones del XES de este modelo llevan el ruido de la coma flotante
+# (5.000000000000001): el motor las escribe asi y se congelan tal cual.
+Element: [type=bpmn:Collaboration, id_bpmn='Colaboracion', name='Llegadas con decimales', instances=1]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Orquestador', name='Orquestador', frequency=0, userWithoutRole=['Ana'], instances=2, participantMultiplicity='true', orchestrationRole='orchestrator', containedElements=['Ini_O', 'Abrir', 'Fin_O', 'o1', 'o2']]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Escalonado', name='Escalonado', frequency=0.1, userWithoutRole=['Beto'], instances=4, participantMultiplicity='true', orchestrationRole='orchestrated', infiniteResources='true', arrivalMode='staggered', containedElements=['Ini_E', 'Atender_E', 'Fin_E', 'e1', 'e2']]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Uniforme', name='Uniforme', frequency=0, userWithoutRole=['Dario'], instances=2, participantMultiplicity='true', orchestrationRole='orchestrated', infiniteResources='true', arrivalMode='uniform', arrivalWindow=3, containedElements=['Ini_U', 'Atender_U', 'Fin_U', 'u1', 'u2']]
+Element: [type=bpmn:StartEvent, id_bpmn='Ini_O', name='Abre la convocatoria', subTask='Abrir']
+Element: [type=bpmn:Task, id_bpmn='Abrir', name='Abrir el plazo', userTask='Ana', numberOfExecutions=1, minimumTime=1, maximumTime=1, subTask='Fin_O']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_O', name='Fin del orquestador', subTask='']
+Element: [type=bpmn:StartEvent, id_bpmn='Ini_E', name='Llega escalonado', subTask='Atender_E']
+Element: [type=bpmn:Task, id_bpmn='Atender_E', name='Atender', userTask='Beto', numberOfExecutions=1, minimumTime=5, maximumTime=5, subTask='Fin_E']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_E', name='Fin', subTask='']
+Element: [type=bpmn:StartEvent, id_bpmn='Ini_U', name='Llega al azar', subTask='Atender_U']
+Element: [type=bpmn:Task, id_bpmn='Atender_U', name='Atender', userTask='Dario', numberOfExecutions=1, minimumTime=1, maximumTime=1, subTask='Fin_U']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_U', name='Fin', subTask='']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o1', name='', superElement='Ini_O', subElement='Abrir']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o2', name='', superElement='Abrir', subElement='Fin_O']
+Element: [type=bpmn:SequenceFlow, id_bpmn='e1', name='', superElement='Ini_E', subElement='Atender_E']
+Element: [type=bpmn:SequenceFlow, id_bpmn='e2', name='', superElement='Atender_E', subElement='Fin_E']
+Element: [type=bpmn:SequenceFlow, id_bpmn='u1', name='', superElement='Ini_U', subElement='Atender_U']
+Element: [type=bpmn:SequenceFlow, id_bpmn='u2', name='', superElement='Atender_U', subElement='Fin_U']

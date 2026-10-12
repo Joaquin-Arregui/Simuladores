@@ -1224,8 +1224,15 @@ def _abre_convocatoria(convocatoria):
     conoce desde el principio, asi que no hay que esperar a que uno arranque
     para poder dirigirle un mensaje. En cada ronda el orquestador tiene un caso
     y los demas pools los suyos, con indices que siguen a los de la ronda
-    anterior (D3). Las llegadas cuentan desde que se abre la convocatoria
-    (D13): el caso i de un pool llega (i - 1) * frequency despues.
+    anterior (D3).
+
+    Las llegadas cuentan desde que se abre la convocatoria (D13), en uno de
+    tres modos por pool: escalonada, el caso i llega (i - 1) * frequency
+    despues; simultanea, todos al abrirse; uniforme, cada uno en un segundo
+    entero al azar entre 0 y T, ambos incluidos. Los sorteos salen del mismo
+    generador que todo lo demas, de pool en pool y de caso en caso por orden, y
+    antes de lanzar ningun evento de la ronda: la semilla los fija. Un caso con
+    varios eventos de inicio llega una sola vez, a la misma hora en todos.
     """
     global convocatoriaActual, casosPorParticipante, casosDeLaRonda
     convocatoriaActual = convocatoria
@@ -1242,9 +1249,19 @@ def _abre_convocatoria(convocatoria):
     for caso in casosDeLaRonda:
         simulationResults[caso] = []
     _estado_de_ronda(casosDeLaRonda)
+    llegadas = {}
+    for participante in participantesOrden:
+        modo, valor = llegadaPorParticipante[participante]
+        for posicion, caso in enumerate(casosPorParticipante[participante], 1):
+            if modo == 'uniform':
+                llegadas[caso] = random.randint(0, valor)
+            elif modo == 'staggered':
+                llegadas[caso] = (posicion - 1) * valor
+            else:
+                llegadas[caso] = 0
     # Waiting for messages never suspends other starts or later instances.
     for posicion in range(1, maximo + 1):
-        for node, item in startEvents.items():
+        for node in startEvents:
             casos = casosPorParticipante[elementParticipant[node]]
             if posicion > len(casos):
                 continue
@@ -1252,7 +1269,7 @@ def _abre_convocatoria(convocatoria):
             contexto = nuevo_contexto([])
             active_tokens[caso][node] += 1
             tokensVivos[caso][(node, contexto)] += 1
-            env.process(_start_event(node, caso, (posicion - 1) * item['frequency'], contexto))
+            env.process(_start_event(node, caso, llegadas[caso], contexto))
 
 
 def _revisa_convocatoria(caso):

@@ -1,0 +1,3 @@
+Pool_Orquestador (bpmn:Participant): el orquestador tiene un caso por convocatoria y llega al abrirse; se ignoran frequency, arrivalMode y arrivalWindow.
+Pool_Escalonado (bpmn:Participant): arrivalWindow solo se usa con la llegada uniforme; se ignora.
+Pool_Simultaneo (bpmn:Participant): frequency solo se usa con la llegada escalonada; se ignora.

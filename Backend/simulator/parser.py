@@ -41,13 +41,16 @@ FLOW_CLASSES = {
     "DataOutputAssociation": BPMNDataOutputAssociation,
 }
 COMMON_FIELDS = {"type", "id_bpmn", "name"}
+# Los modos de llegada de los casos de un pool (D13): uno cada frequency, todos
+# al abrirse la convocatoria, o cada uno al azar entre 0 y arrivalWindow.
+ARRIVAL_MODES = ("staggered", "simultaneous", "uniform")
 TASK_FIELDS = {"userTask", "numberOfExecutions", "minimumTime", "maximumTime", "loopParameter", "multiInstanceType", "subTask"}
 FIELDS_BY_TYPE = {
     "Process": {"instances", "frequency", "userWithoutRole", "userWithRole"},
     "Collaboration": {"instances"},
     "Participant": {"frequency", "userWithoutRole", "containedElements",
                     "instances", "participantMultiplicity", "orchestrationRole",
-                    "infiniteResources"},
+                    "infiniteResources", "arrivalMode", "arrivalWindow"},
     "Lane": {"userWithoutRole", "containedElements", "parentLane"},
     "SequenceFlow": {"superElement", "subElement", "percentageOfBranches"},
     "MessageFlow": {"superElement", "subElement"},
@@ -196,9 +199,17 @@ def parse_bpmn_elements(file_content: str, warnings=None):
                 infinitos = fields.get("infiniteResources")
                 if infinitos not in (None, "true", "false"):
                     raise ValueError(f"{element_id}: infiniteResources debe ser 'true' o 'false'.")
+                # Como llegan sus casos en cada convocatoria (D13). Vacio es la
+                # escalonada de siempre; arrivalWindow lo comprueba la validacion.
+                llegada = fields.get("arrivalMode")
+                if llegada is not None and not isinstance(llegada, str):
+                    raise ValueError(f"{element_id}: arrivalMode debe ser texto, no {type(llegada).__name__}.")
+                llegada = (llegada or "").strip() or None
+                if llegada is not None and llegada not in ARRIVAL_MODES:
+                    raise ValueError(f"{element_id}: arrivalMode debe ser 'staggered', 'simultaneous' o 'uniform'.")
                 element = BPMNParticipant(*args, get("frequency"), users(), contained,
                                           fields.get("instances"), marcador == "true", rol,
-                                          infinitos == "true")
+                                          infinitos == "true", llegada, fields.get("arrivalWindow"))
         elif kind in FLOW_CLASSES:
             endpoints = (get("superElement", str), get("subElement", str))
             element = (BPMNSequenceFlow(*args, *endpoints, fields.get("percentageOfBranches"))

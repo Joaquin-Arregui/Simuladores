@@ -289,6 +289,14 @@ def main():
         print("         %s" % linea)
     fallos += fallos_rondas
 
+    # Los modos de llegada (4.3): cada caso llega cuando dice su modo, y ninguna
+    # llegada uniforme sale de la ventana de su ronda.
+    lineas, fallos_llegadas = banco.revisa_llegadas()
+    print("%-34s %s" % ("modos de llegada", "ok" if not fallos_llegadas else "FALLA"))
+    for linea in lineas:
+        print("         %s" % linea)
+    fallos += fallos_llegadas
+
     # Ningun modelo correcto se bloquea con otras semillas (3.4).
     lineas, fallos_bloqueo = banco.revisa_sin_bloqueos()
     print("%-34s %s" % ("sin bloqueos con otras semillas", "ok" if not fallos_bloqueo else "FALLA"))

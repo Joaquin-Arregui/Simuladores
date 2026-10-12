@@ -23,7 +23,8 @@ class BPMNParticipant(BPMNElement):
     def __init__(self, name: str, id_bpmn: str, bpmn_type: str, frequency: int, users: List[str],
                  contained_elements: List[str], instances: int = None,
                  multiplicity: bool = False, role: str = None,
-                 infinite_resources: bool = False):
+                 infinite_resources: bool = False, arrival_mode: str = None,
+                 arrival_window=None):
         super().__init__(name, id_bpmn, bpmn_type)
         self.frequency = frequency
         self.users = users
@@ -38,6 +39,11 @@ class BPMNParticipant(BPMNElement):
         # Casilla del pool: sus tareas no compiten por un recurso. El orquestado
         # se simula asi porque su contencion no es lo que se quiere medir.
         self.infinite_resources = infinite_resources
+        # Como llegan sus casos en cada convocatoria (D13): 'staggered', uno cada
+        # frequency; 'simultaneous', todos al abrirse; 'uniform', cada uno en un
+        # segundo entero al azar entre 0 y arrival_window. None es escalonada.
+        self.arrival_mode = arrival_mode
+        self.arrival_window = arrival_window
 
 class BPMNLane(BPMNElement):
     def __init__(self, name: str, id_bpmn: str, bpmn_type: str, users: List[str], contained_elements: List[str], parent_lane: str = None):

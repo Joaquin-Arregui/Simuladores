@@ -62,9 +62,12 @@ mientras el comportamiento no deba cambiar, su XES no debe cambiar.
 | `30-entrada-al-cero-por-ciento` | La rama de Recoger termina por su cuenta; su unica entrada a la union esta al 0 %, y Tribunal llega en t=1 | Que se compruebe el camino hasta el origen de la entrada pero no el peso de la entrada misma: la union debe disparar en t=1, sin esperar hasta t=11 a una rama que nunca la alcanzara |
 | `31-tres-convocatorias` | Las reclamaciones del 20 con un orquestador de 3 instancias: tres rondas en serie, cada una con su orquestador y tres solicitantes nuevos | Que las convocatorias se solapen, que la siguiente no empiece justo al acabar la anterior, que una ronda reutilice casos o que un mensaje, un lote o una anotacion pase de una ronda a otra |
 | `32-convocatorias-que-empiezan-de-cero` | Tres rondas de un orquestador con dos personas, y una tarea que la cola da a quien menos ha trabajado y que lee un dato por defecto | Que los contadores de la cola pasen de una ronda a otra (Preparar iria a Carla en la segunda), o que los casos de las rondas 2 y 3 se queden sin sus datos por defecto |
+| `33-tres-modos-de-llegada` | Dos convocatorias con tres pools de orquestados: uno escalonado cada 3 s, uno simultaneo y uno uniforme entre 0 y 20 | Que un modo se aplique como otro, que las llegadas cuenten desde el principio de la simulacion y no desde la apertura de su ronda, o que una llegada uniforme caiga fuera de su ventana o entre dos segundos |
+| `34-llegadas-con-decimales` | Escalonados cada 0,1 s en dos rondas, y uniformes en la segunda, que se abre en t=5,3 | Que la comprobacion de las llegadas compare con la precision de la coma flotante y no con la del XES: el cuarto escalonado llega a los 0,3 s y 3 * 0,1 es 0.30000000000000004, asi que daba un falso error en las dos rondas |
 | `con-avisos/envio-a-pool-externo` | Un mensaje dirigido al pool y no a un receptor | Que un envio que sale de la simulacion acabe en un error interno en vez de en un aviso |
 | `con-avisos/mismo-usuario-en-dos-pools` | El mismo nombre declarado en dos pools | Que dos pools vuelvan a competir por el mismo recurso |
 | `con-avisos/multiinstancia-con-numero-escrito` | Una convocatoria multiinstancia con numberOfExecutions=4 a dos casos | Que un numero que ya no se usa se ignore en silencio; N son los dos casos vivos |
+| `con-avisos/llegadas-que-no-se-usan` | El 33 con frequency, modo y ventana en el orquestador, una ventana en el escalonado y una frequency en el simultaneo | Que lo que no se usa se ignore en silencio, o que se use: el orquestador llega al abrirse y todo se simula igual que en el 33 |
 | `con-error/sin-destino` | Tres agencias escribiendo a cinco oficinas: ni 1 a N, ni N a 1, ni mismo numero | Que el motor se invente un emparejamiento en vez de decir que no hay ninguno |
 | `con-error/respuesta-ambigua` | Dos recepciones del mismo pool unidas antes de una sola respuesta | Que el motor elija por su cuenta a cual de las dos responde |
 | `con-error/respuesta-ambigua-desigual` | Lo mismo, con las dos recepciones a distinta distancia de la respuesta | Que la busqueda corte en la primera distancia y elija una rama en silencio |
@@ -88,6 +91,9 @@ mientras el comportamiento no deba cambiar, su XES no debe cambiar.
 | `con-error/ciclo-de-mensajes` | Dos casos que se esperan el mensaje el uno del otro, sin ninguna recepcion multiinstancia | Que el diagnostico solo sepa de lotes y no del ciclo de espera de siempre |
 | `con-error/respuesta-que-no-llega` | Cuatro parejas; con la semilla del banco el servicio 4 archiva sin responder | Que una espera sin salida se confunda con un ciclo: nadie espera al cliente 4, es su mensaje el que ya no puede llegar |
 | `con-error/union-que-no-dispara` | Una exclusiva que abre una rama y una paralela que espera las dos | Que el diagnostico se invente un ciclo donde solo hay una rama que ya no puede llegar |
+| `con-error/llegada-uniforme-sin-ventana` | Un pool con llegada uniforme y sin arrivalWindow | Que el motor se invente una ventana |
+| `con-error/modo-de-llegada-desconocido` | arrivalMode='poisson' | Que un modo que no existe se simule como escalonado |
+| `con-error/ventana-de-llegada-con-decimales` | arrivalWindow=2.5 | Que las llegadas dejen de caer en segundos enteros |
 
 ## Por qué existe `modelos-con-avisos/`
 
@@ -140,7 +146,7 @@ python3 pruebas/regresion.py
 python3 pruebas/regresion.py --acepta-reorganizacion
 ```
 
-Compara cuatro cosas que no conviene confundir, y vigila cuatro más:
+Compara cuatro cosas que no conviene confundir, y vigila cinco más:
 
 - **Comportamiento** — qué le ocurre a **cada caso**: qué eventos tiene, cuándo,
   con qué recurso y qué rama elige cada compuerta. Cualquier diferencia es un
@@ -183,6 +189,18 @@ Compara cuatro cosas que no conviene confundir, y vigila cuatro más:
   exactamente lo que se reclamó en ella; entre todas tiene que haber alguna en
   la que no reclama nadie, para que la recepción que cierra vacía esté
   cubierta (`banco.CRITERIO_DE_LAS_CONVOCATORIAS`).
+- **Modos de llegada** — cada caso llega, contando desde que se abre su
+  convocatoria, cuando dice el modo de su pool: escalonado, el i-ésimo
+  (i - 1) · `frequency` después; simultáneo, al abrirse; uniforme, en un segundo
+  entero entre 0 y `arrivalWindow`. El orquestador llega siempre al abrirse.
+  Lo esperado sale de las reglas y lo ocurrido del XES: un caso llega en el
+  primer instante de su traza. Se miran las referencias de todos los modelos,
+  porque todos llegan de alguna manera, y el `33` con las semillas 1 a 10:
+  ninguna llegada uniforme sale de su ventana y entre todas la llenan, con
+  alguna en el primer cuarto, alguna en el último y la media cerca del centro
+  (`banco.revisa_llegadas`). Los instantes se comparan con la precisión del
+  XES, un milisegundo (`banco.PRECISION_DEL_XES`), y no con la de la coma
+  flotante: el `34` llega cada 0,1 s.
 
 En las tareas multiinstancia del banco `numberOfExecutions` vale 1, que es lo
 que escribe el Modeler: desde la 3.2 N se calcula en ejecución y ese campo no se

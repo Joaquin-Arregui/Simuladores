@@ -112,8 +112,6 @@ def generateScript(elements, process, starts, messageStarts, start_date=DEFAULT_
         start_events[node] = {
             'type': item.bpmn_type, 'name': item.name, 'next': item.subTask,
             'origin': getattr(item, 'messageOrigin', None),
-            'frequency': element.frequency if is_process else
-                elements[elements['startsParticipant'][node]].frequency,
         }
     # Lane users are resolved here, so the runtime only looks up each task.
     task_users = {}
@@ -173,7 +171,17 @@ def generateScript(elements, process, starts, messageStarts, start_date=DEFAULT_
     # instancias del orquestador son rondas sucesivas, y las de los demas, casos
     # por ronda. Sin orquestador marcado hay una sola, y sin marcadores todos
     # heredan el numero de la colaboracion, como hasta la tarea 2.1.
-    convocatorias, por_convocatoria = resolve_convocatorias(elements, process, participants)
+    convocatorias, por_convocatoria, orquestador = resolve_convocatorias(elements, process, participants)
+    # Como llegan los casos de cada pool, contando desde que se abre su
+    # convocatoria (D13): (modo, valor), con la frequency de la escalonada o la
+    # ventana de la uniforme. Un Process escalona con la suya, como siempre, y
+    # el orquestador, con un caso por ronda, llega al abrirse.
+    llegadas = {}
+    for participant_id in participants:
+        item = elements[participant_id]
+        modo = 'simultaneous' if participant_id == orquestador else (getattr(item, 'arrival_mode', None) or 'staggered')
+        valor = {'staggered': item.frequency, 'uniform': getattr(item, 'arrival_window', None)}.get(modo, 0)
+        llegadas[participant_id] = (modo, valor)
     # La plantilla de cada pool y su casilla de recursos infinitos. Las colas
     # son por pool desde la tarea 2.3: dos pools que declaran el mismo nombre
     # tienen cada uno su persona.
@@ -196,6 +204,7 @@ def generateScript(elements, process, starts, messageStarts, start_date=DEFAULT_
         'participantesOrden': participants,
         'convocatorias': convocatorias,
         'casosPorConvocatoria': por_convocatoria,
+        'llegadaPorParticipante': llegadas,
         'elementParticipant': element_participant,
         'rolePool': element.userWithRole if is_process else {},
         'processUsers': process_users,

@@ -426,3 +426,166 @@ def revisa_convocatorias():
     lineas.insert(0, "%d modelos con varias rondas: %d ejecuciones; en %s, rondas por reclamaciones "
                   "(cuantas: rondas) %s" % (len(con_rondas), ejecuciones, criterio["modelo"], reparto))
     return lineas, fallos
+
+
+# Los modos de llegada (4.3, D13). Los casos de cada pool llegan, contando desde
+# que se abre su convocatoria, de una de tres maneras: escalonados, el i-esimo
+# (i - 1) * frequency despues; simultaneos, todos al abrirse; uniformes, cada
+# uno en un segundo entero al azar entre 0 y arrivalWindow. El orquestador, con
+# un caso por ronda, llega al abrirse. Lo que se espera sale de las reglas, no
+# del motor, y lo que ha pasado, del XES: un caso llega en el primer instante
+# de su traza. La primera ronda se abre en FECHA_INICIO y cada una de las
+# siguientes cuando acaba la anterior. Se miran las referencias de todos los
+# modelos, porque todos llegan de alguna manera, y el modelo de los tres modos
+# con varias semillas: ninguna llegada uniforme puede salir de su ventana, y
+# entre todas tienen que llenarla -alguna en su primer cuarto y alguna en el
+# ultimo- con una media cerca del centro.
+CRITERIO_DE_LAS_LLEGADAS = {
+    "modelo": "33-tres-modos-de-llegada",
+    "semillas": range(1, 11),
+}
+
+# El XES guarda los instantes en milisegundos: al escribirse, cada uno se
+# redondea al microsegundo y se corta al milisegundo, asi que pierde menos de
+# uno, y la distancia entre dos instantes leidos se aparta de la real menos de
+# uno tambien. Lo que se espera se compara con esa precision y no con la de la
+# coma flotante: con frequency=0.1 el cuarto caso tiene que llegar a los
+# 3 * 0.1 = 0.30000000000000004 segundos, el motor llega a los 0.3, el XES dice
+# 00.300, y eso es llegar a tiempo.
+PRECISION_DEL_XES = 0.001
+
+
+def mismo_instante(segundos, esperados):
+    """Si dos tiempos en segundos coinciden a la precision del XES."""
+    return abs(segundos - esperados) < PRECISION_DEL_XES
+
+
+def modos_de_llegada(texto):
+    """{participante: (modo, valor)} segun las reglas: la frequency de la escalonada
+    o la ventana de la uniforme."""
+    from simulator.parser import parse_bpmn_elements
+    elementos, raiz, _, _ = parse_bpmn_elements(texto, [])
+    participantes = [elementos[pid] for _, pid in elementos.get("participants", [])]
+    if not participantes:
+        return {raiz: ("staggered", elementos[raiz].frequency)}
+    modos = {}
+    for pool in participantes:
+        if pool.role == "orchestrator" and pool.multiplicity:
+            modos[pool.id_bpmn] = ("simultaneous", 0)
+            continue
+        modo = pool.arrival_mode or "staggered"
+        modos[pool.id_bpmn] = (modo, {"staggered": pool.frequency, "uniform": pool.arrival_window}.get(modo, 0))
+    return modos
+
+
+def problemas_de_las_llegadas(texto, xes):
+    """(problemas, {participante: [segundos tras abrirse su ronda]}) de los uniformes."""
+    import xml.etree.ElementTree as ET
+    from datetime import datetime, timedelta
+    ns = "{http://www.xes-standard.org/}"
+    modos = modos_de_llegada(texto)
+    rondas = {}
+    for traza in ET.fromstring(xes.encode("utf-8")).iter(ns + "trace"):
+        atributos = {hijo.get("key"): hijo.get("value") for hijo in traza if hijo.tag != ns + "event"}
+        eventos = list(traza.iter(ns + "event"))
+        instantes = [datetime.fromisoformat(hijo.get("value")) for evento in eventos
+                     for hijo in evento if hijo.get("key") == "time:timestamp"]
+        finales = [datetime.fromisoformat(hijo.get("value")) for evento in eventos
+                   for hijo in evento if hijo.get("key") in ("time:timestamp", "time:endTime")]
+        if not instantes:
+            continue
+        ronda = rondas.setdefault(int(atributos["bpmn:convocatoria"]), {"llegadas": {}, "fin": None})
+        ronda["llegadas"].setdefault(atributos["bpmn:participant"], []).append(
+            (int(atributos["bpmn:instance"]), min(instantes)))
+        ronda["fin"] = max(finales + ([ronda["fin"]] if ronda["fin"] else []))
+    problemas, uniformes = [], {}
+    apertura = datetime.fromisoformat(FECHA_INICIO)
+    for numero in sorted(rondas):
+        ronda = rondas[numero]
+        for participante, casos in sorted(ronda["llegadas"].items()):
+            if participante not in modos:
+                problemas.append("ronda %d: %s no esta en las reglas" % (numero, participante))
+                continue
+            modo, valor = modos[participante]
+            for posicion, (indice, llegada) in enumerate(sorted(casos), 1):
+                tras = (llegada - apertura).total_seconds()
+                if modo == "staggered":
+                    esperado = (posicion - 1) * valor
+                    if not mismo_instante(tras, esperado):
+                        problemas.append("ronda %d: %s - %d llega %gs despues de abrirse y, escalonado cada %g, "
+                                         "tocaba a los %g" % (numero, participante, indice, tras, valor, esperado))
+                elif modo == "simultaneous":
+                    if not mismo_instante(tras, 0):
+                        problemas.append("ronda %d: %s - %d llega %gs despues de abrirse y tenia que llegar al "
+                                         "abrirse" % (numero, participante, indice, tras))
+                else:
+                    uniformes.setdefault(participante, []).append(tras)
+                    if not (-PRECISION_DEL_XES < tras < valor + PRECISION_DEL_XES
+                            and mismo_instante(tras, round(tras))):
+                        problemas.append("ronda %d: %s - %d llega %gs despues de abrirse, fuera de su ventana "
+                                         "de 0 a %d en segundos enteros" % (numero, participante, indice, tras, valor))
+        apertura = ronda["fin"]
+    return problemas, uniformes
+
+
+def revisa_llegadas():
+    """(lineas, fallos) de los modos de llegada: las referencias de todos los
+    modelos, y el de los tres modos con varias semillas."""
+    lineas, fallos, ejecuciones = [], 0, 0
+    criterio = CRITERIO_DE_LAS_LLEGADAS
+    todos = modelos()
+    for ruta, admite in todos:
+        referencia = ruta_xes(ruta, admite)
+        if not referencia.exists():
+            continue
+        problemas, _ = problemas_de_las_llegadas(ruta.read_text(encoding="utf-8"),
+                                                 referencia.read_text(encoding="utf-8"))
+        for problema in problemas[:6]:
+            lineas.append("%s, la referencia: %s" % (ruta.stem, problema))
+            fallos += 1
+    ruta = MODELOS / (criterio["modelo"] + ".txt")
+    if not ruta.exists():
+        lineas.append("falta el modelo %s" % ruta.name)
+        return lineas, fallos + 1
+    texto = ruta.read_text(encoding="utf-8")
+    ventanas = {participante: valor for participante, (modo, valor) in modos_de_llegada(texto).items()
+                if modo == "uniform"}
+    if not ventanas:
+        lineas.append("%s no tiene ningun pool con llegada uniforme" % criterio["modelo"])
+        fallos += 1
+    sorteos = {}
+    for semilla in criterio["semillas"]:
+        ejecuciones += 1
+        try:
+            xes = processSimulation(texto, seed=semilla).simulation
+        except Exception as error:
+            lineas.append("%s, semilla %d: %s: %s" % (ruta.stem, semilla, type(error).__name__, error))
+            fallos += 1
+            continue
+        problemas, uniformes = problemas_de_las_llegadas(texto, xes)
+        for problema in problemas[:6]:
+            lineas.append("%s, semilla %d: %s" % (ruta.stem, semilla, problema))
+            fallos += 1
+        for participante, tras in uniformes.items():
+            sorteos.setdefault(participante, []).extend(tras)
+    resumen = []
+    for participante, ventana in sorted(ventanas.items()):
+        tras = sorteos.get(participante, [])
+        if not tras:
+            lineas.append("%s: ningun caso de %s ha llegado" % (criterio["modelo"], participante))
+            fallos += 1
+            continue
+        media = sum(tras) / len(tras)
+        resumen.append("%s: %d llegadas entre %g y %g, media %.1f de 0 a %d"
+                       % (participante, len(tras), min(tras), max(tras), media, ventana))
+        if min(tras) > ventana / 4 or max(tras) < 3 * ventana / 4:
+            lineas.append("%s: las llegadas de %s no llenan la ventana de 0 a %d: van de %g a %g"
+                          % (criterio["modelo"], participante, ventana, min(tras), max(tras)))
+            fallos += 1
+        if abs(media - ventana / 2) > ventana / 8:
+            lineas.append("%s: la media de las llegadas de %s es %.1f, lejos del centro de la ventana, %g"
+                          % (criterio["modelo"], participante, media, ventana / 2))
+            fallos += 1
+    lineas.insert(0, "%d referencias y %d ejecuciones de %s; %s" % (
+        len(todos), ejecuciones, criterio["modelo"], "; ".join(resumen)))
+    return lineas, fallos

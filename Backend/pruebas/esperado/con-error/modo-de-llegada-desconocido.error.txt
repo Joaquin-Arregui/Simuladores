@@ -1,0 +1,1 @@
+ValueError: Pool_Simultaneo: arrivalMode debe ser 'staggered', 'simultaneous' o 'uniform'.
