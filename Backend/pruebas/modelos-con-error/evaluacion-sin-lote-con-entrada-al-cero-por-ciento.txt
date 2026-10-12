@@ -1,0 +1,45 @@
+# Como el 30, pero lo que sigue a la union es una evaluacion multiinstancia, y
+# el token de Recoger no termina nunca: despues de recoger se queda en Junta_P,
+# una union paralela cuya otra entrada viene de una rama al 0 % y no llega
+# nunca. Desde Junta_P el token podria llegar a Elige_O, que es el origen de la
+# otra entrada de Une_O, pero esa entrada tambien esta al 0 %: no la alcanzara
+# nunca. Asi que la union dispara en t=1 solo con Tribunal y Evaluar arranca sin
+# lote. La validacion lo tiene que ver como el motor: si comprobara el camino
+# hasta el origen de la entrada pero no el peso de la entrada misma, la union
+# esperaria para siempre a un token atascado, nunca dispararia, el modelo
+# pasaria la validacion y el fallo llegaria al ejecutar. Solo un token que no
+# termina distingue las dos cosas: uno que termina acaba dejando disparar la
+# union en alguna ordenacion, y la validacion encuentra el fallo igualmente.
+Element: [type=bpmn:Collaboration, id_bpmn='Colaboracion', name='Entrada al cero por ciento con un token atascado', instances=1]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Orquestador', name='Orquestador', frequency=0, userWithoutRole=['Ana'], instances=1, participantMultiplicity='true', orchestrationRole='orchestrator', infiniteResources='true', containedElements=['Ini_O', 'Bifurca_O', 'Revisar', 'Desvia_O', 'Recoger', 'Junta_P', 'Elige_O', 'Tribunal', 'Une_O', 'Evaluar', 'Fin_O', 'o1', 'o2', 'o3', 'o4', 'o5', 'o6', 'o7', 'o8', 'o9', 'o10', 'o11', 'o12', 'o13']]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Orquestado', name='Orquestado', frequency=0, userWithoutRole=['Beto'], instances=2, participantMultiplicity='true', orchestrationRole='orchestrated', infiniteResources='true', containedElements=['Ini_R', 'Solicitar', 'Fin_R', 'r1', 'r2']]
+Element: [type=bpmn:StartEvent, id_bpmn='Ini_O', name='Abre la convocatoria', subTask='Bifurca_O']
+Element: [type=bpmn:ParallelGateway, id_bpmn='Bifurca_O', name='Recoger y montar el tribunal', subTask='Revisar,Tribunal']
+Element: [type=bpmn:Task, id_bpmn='Revisar', name='Revisar las bases', userTask='Ana', numberOfExecutions=1, minimumTime=5, maximumTime=5, subTask='Desvia_O']
+Element: [type=bpmn:ReceiveTask, id_bpmn='Recoger', name='Recoger una solicitud', userTask='Ana', numberOfExecutions=1, multiInstanceType='false', minimumTime=1, maximumTime=1, subTask='Junta_P']
+Element: [type=bpmn:ExclusiveGateway, id_bpmn='Desvia_O', name='Recoger o saltarse la recogida', subTask='Recoger,Junta_P']
+Element: [type=bpmn:ParallelGateway, id_bpmn='Junta_P', name='Esperar a las dos llegadas', subTask='Elige_O']
+Element: [type=bpmn:ExclusiveGateway, id_bpmn='Elige_O', name='Cerrar o ir a la union', subTask='Fin_O,Une_O']
+Element: [type=bpmn:Task, id_bpmn='Tribunal', name='Montar el tribunal', userTask='Ana', numberOfExecutions=1, minimumTime=1, maximumTime=1, subTask='Une_O']
+Element: [type=bpmn:InclusiveGateway, id_bpmn='Une_O', name='Seguir con las ramas posibles', subTask='Evaluar']
+Element: [type=bpmn:Task, id_bpmn='Evaluar', name='Evaluar una solicitud', userTask='Ana', numberOfExecutions=1, multiInstanceType='false', minimumTime=5, maximumTime=5, subTask='Fin_O']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_O', name='Termina la rama', subTask='']
+Element: [type=bpmn:StartEvent, id_bpmn='Ini_R', name='Entra el solicitante', subTask='Solicitar']
+Element: [type=bpmn:SendTask, id_bpmn='Solicitar', name='Enviar la solicitud', userTask='Beto', numberOfExecutions=1, minimumTime=10, maximumTime=10, subTask='Fin_R']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_R', name='Fin del solicitante', subTask='']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o1', name='', superElement='Ini_O', subElement='Bifurca_O']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o2', name='', superElement='Bifurca_O', subElement='Revisar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o3', name='', superElement='Bifurca_O', subElement='Tribunal']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o4', name='', superElement='Revisar', subElement='Desvia_O']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o5', name='Cerrar', superElement='Elige_O', subElement='Fin_O', percentageOfBranches=100]
+Element: [type=bpmn:SequenceFlow, id_bpmn='o6', name='No ir a la union', superElement='Elige_O', subElement='Une_O', percentageOfBranches=0]
+Element: [type=bpmn:SequenceFlow, id_bpmn='o7', name='', superElement='Recoger', subElement='Junta_P']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o8', name='', superElement='Tribunal', subElement='Une_O']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o9', name='', superElement='Une_O', subElement='Evaluar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o10', name='', superElement='Evaluar', subElement='Fin_O']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o11', name='Recoger', superElement='Desvia_O', subElement='Recoger', percentageOfBranches=100]
+Element: [type=bpmn:SequenceFlow, id_bpmn='o12', name='Saltarse la recogida', superElement='Desvia_O', subElement='Junta_P', percentageOfBranches=0]
+Element: [type=bpmn:SequenceFlow, id_bpmn='o13', name='', superElement='Junta_P', subElement='Elige_O']
+Element: [type=bpmn:SequenceFlow, id_bpmn='r1', name='', superElement='Ini_R', subElement='Solicitar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='r2', name='', superElement='Solicitar', subElement='Fin_R']
+Element: [type=bpmn:MessageFlow, id_bpmn='Solicitud', name='Solicitud', superElement='Solicitar', subElement='Recoger']

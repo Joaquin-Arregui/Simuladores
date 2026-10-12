@@ -438,6 +438,13 @@ def _juega_el_caso(componente, nodes, outgoing, flujos, todas, entradas, evaluac
         return {}, False
     uniones = {nodo: _kind(nodes[nodo]) for nodo in componente
                if _kind(nodes[nodo]) in {"ParallelGateway", "InclusiveGateway"} and len(entradas[nodo]) > 1}
+    # Por donde puede seguir un token: los flujos que el motor puede tomar, sin
+    # los de peso cero, igual que runtime._reachable.
+    tomables = {}
+    for nodo in componente:
+        siempre, a_veces = _reparto_de_salidas(nodes[nodo], outgoing[nodo])
+        tomados = set(siempre) | set(a_veces)
+        tomables[nodo] = [flujo for flujo in todas[nodo] if flujo in tomados]
 
     def encadenable(nodo):
         kind = _kind(nodes[nodo])
@@ -483,11 +490,13 @@ def _juega_el_caso(componente, nodes, outgoing, flujos, todas, entradas, evaluac
 
     def alcanza(vivo, flujo, union):
         # Lo mismo que runtime._reachable: llegar al origen de la entrada sin
-        # pasar antes por esta union.
+        # pasar antes por esta union, por flujos que el motor puede tomar.
         clave = (vivo, flujo, union)
         if clave not in alcance:
             origen, encontrado = flujos[flujo][0], False
-            vistos, pendientes = {union}, [vivo]
+            # La propia entrada tambien debe poder tomarse, no solo el camino
+            # hasta su origen; igual que en runtime._reachable.
+            vistos, pendientes = {union}, [vivo] if flujo in tomables[origen] else []
             while pendientes:
                 actual = pendientes.pop()
                 if actual in vistos:
@@ -496,7 +505,7 @@ def _juega_el_caso(componente, nodes, outgoing, flujos, todas, entradas, evaluac
                     encontrado = True
                     break
                 vistos.add(actual)
-                pendientes.extend(flujos[salida][1] for salida in todas[actual])
+                pendientes.extend(flujos[salida][1] for salida in tomables[actual])
             alcance[clave] = encontrado
         return alcance[clave]
 
@@ -795,6 +804,27 @@ def resolve_send_reach(elements, objetivos):
                     vistos.add(previo)
                     pendientes.append(previo)
     return {nodo: tuple(sorted(alcanzados)) for nodo, alcanzados in sorted(alcance.items())}
+
+
+def resolve_takeable_flows(elements):
+    """Los flujos de salida que el motor puede tomar, por nodo.
+
+    Solo se devuelven los nodos que tienen alguno que no puede tomar: los demas
+    pueden tomarlos todos. Un flujo no se toma nunca si su peso es cero, y eso
+    solo le pasa a una compuerta exclusiva o inclusiva, cuando su porcentaje es
+    0 o cuando los demas ya suman 100 y a los que no lo llevan no les queda
+    nada. La union inclusiva del motor los usa para saber a donde puede llegar
+    todavia un token, y si puede entrar por cada una de sus entradas
+    (runtime._reachable).
+    """
+    nodes, outgoing, _ = _grafo_de_secuencia(elements)
+    posibles = {}
+    for nodo, element in nodes.items():
+        siempre, a_veces = _reparto_de_salidas(element, outgoing[nodo])
+        tomados = set(siempre) | set(a_veces)
+        if len(tomados) < len(outgoing[nodo]):
+            posibles[nodo] = [flow.id_bpmn for flow in outgoing[nodo] if flow.id_bpmn in tomados]
+    return dict(sorted(posibles.items()))
 
 
 def resolve_send_cycles(elements, envios):

@@ -712,12 +712,21 @@ def _append_event(caso, values):
 
 
 def _reachable(node, incoming_flow, blocked_join):
-    """Reach an input without first passing this same join (including cycles)."""
+    """Reach an input without first passing this same join (including cycles).
+
+    Solo por flujos que el motor puede tomar: una rama al 0 % no se elige nunca,
+    asi que un token que solo llegaria por ella a una entrada de la union no
+    puede llegar, y no debe hacerla esperar ni dejar de esperar. BPMN mira el
+    dibujo; aqui el dibujo lleva porcentajes, y uno a cero apaga la rama.
+    """
     cache_key = (node, incoming_flow, blocked_join)
     if cache_key in reachability:
         return reachability[cache_key]
     source = sequenceFlows[incoming_flow][0]
-    visited, pending = {blocked_join}, [node]
+    # Tambien tiene que ser posible el ultimo flujo, el que entra en la union:
+    # llegar a su origen no basta si esa misma entrada tiene peso cero.
+    possible = salidasPosibles.get(source, outgoingFlows.get(source, []))
+    visited, pending = {blocked_join}, [node] if incoming_flow in possible else []
     while pending:
         current = pending.pop()
         if current in visited:
@@ -726,7 +735,8 @@ def _reachable(node, incoming_flow, blocked_join):
             reachability[cache_key] = True
             return True
         visited.add(current)
-        pending.extend(sequenceFlows[edge][1] for edge in outgoingFlows.get(current, []))
+        pending.extend(sequenceFlows[edge][1]
+                       for edge in salidasPosibles.get(current, outgoingFlows.get(current, [])))
     reachability[cache_key] = False
     return False
 

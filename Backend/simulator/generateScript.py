@@ -6,7 +6,7 @@ from xml.etree import ElementTree as ET
 from simulator.simulationFunctions.generateFunction import generateFunction
 from simulator.validation import (TASK_TYPES, resolve_batch_receives, resolve_participant_instances,
                                   resolve_reply_contexts, resolve_send_cycles, resolve_send_reach,
-                                  task_base_users)
+                                  resolve_takeable_flows, task_base_users)
 
 DEFAULT_START_DATE = '2026-01-01T00:00:00+00:00'
 
@@ -204,6 +204,10 @@ def generateScript(elements, process, starts, messageStarts, start_date=DEFAULT_
         'dataInfo': elements['dataInfo'], 'defaultData': elements['defaultData'],
         'sequenceFlows': flows, 'outgoingFlows': outgoing, 'incomingFlows': incoming,
         'joinTypes': joins, 'startEvents': start_events,
+        # Los flujos que el motor puede tomar, de los nodos que tienen alguno al
+        # 0 %: una union inclusiva no espera a un token que solo podria llegarle
+        # por una rama que nunca se toma.
+        'salidasPosibles': resolve_takeable_flows(elements),
         'destinosExternos': external_targets,
         'recepcionDeRespuesta': reply_contexts,
         # La cardinalidad en ejecucion (3.2): que lote evalua cada evaluacion
