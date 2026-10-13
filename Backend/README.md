@@ -73,8 +73,9 @@ simulación, y se reúne la ejecución entera (`simulator/registros.py`).
 `simulationId` es reproducible: sale de la huella de las reglas —sin
 comentarios ni líneas en blanco—, la del diagrama si se envía, la semilla, la
 fecha de inicio y la versión del formato. `simulation` es el XES reunido, con
-todas las trazas: el Modeler lo muestra mientras no sepa ofrecer los registros
-por separado.
+todas las trazas en un solo fichero. El Modeler ya no lo usa —desde la 5.5
+ofrece los registros por separado—, pero se conserva para quien quiera la
+ejecución entera de una vez.
 
 `warnings` enumera lo que el simulador ha ignorado para poder ejecutar el modelo,
 por ejemplo un flujo por defecto o un pool externo. El Modeler los muestra junto

@@ -13,6 +13,8 @@ npm start
 
 La aplicación se abre en `http://localhost:9000`. **Open Existing Model** abre un archivo local; también se puede arrastrar un BPMN al lienzo. **Simular** envía las reglas y el XML a `http://localhost:3000/simulate`. El Backend debe estar ejecutándose para simular. **Última simulación** muestra el último resultado correcto de la sesión. Los tiempos de las tareas, la frecuencia y los temporizadores se expresan en segundos.
 
+El resultado de una simulación es **un registro XES por pool** (ver abajo); **Ctrl+S** guarda el diagrama.
+
 Durante una ejecución se desactiva el botón de simulación. Los errores de
 validación, ejecución, conexión o tiempo máximo aparecen en la interfaz y no
 reemplazan el último resultado correcto. El límite predeterminado del Backend
@@ -43,6 +45,8 @@ La compilación genera exclusivamente `example/dist`; conserva los HTML y fuente
   llegada uniforme). El marcador de multiplicidad es el estándar,
   `bpmn:participantMultiplicity`. Se editan en el panel del pool (ver abajo) y
   se exportan a las reglas (ver más abajo).
+- `lib/logs`: los registros de una simulación, uno por pool, y el nombre de
+  fichero de cada uno.
 - `lib/numbers`: cómo validan, leen y muestran los números los paneles.
 - `lib/rules`: el exportador de las reglas que se mandan al simular.
 - `lib/people`: dónde se guardan las listas de personas (ver abajo) y la
@@ -86,6 +90,36 @@ Al simular, estos parámetros van en las reglas (ver abajo) y en el diagrama. El
 Backend lee además del diagrama la semilla, y lo que unas reglas no digan; si
 reglas y diagrama dicen cosas distintas, rechaza la simulación nombrando el
 pool y los dos valores.
+
+### Los registros de una simulación
+
+Una simulación correcta devuelve **un registro XES por pool** (D10), y la
+ventana de resultados los ofrece por separado: una fila por pool, con su
+nombre, cuántos casos tiene y el fichero con el que se descarga, y los botones
+**Ver** —enseña ese registro debajo de la tabla— y **Descargar**. **Descargar
+todos** los descarga uno detrás de otro; el navegador puede pedir permiso para
+descargar varios ficheros. Encima de la tabla están la identificación de la
+simulación, la semilla —con ella se repite— y el modelo, y los avisos si los
+hay. **Última simulación** vuelve a abrir esa ventana.
+
+Cada fichero se llama como su pool, `Cliente.xes`. Si el pool no tiene nombre,
+se usa su ID; si dos pools comparten nombre, los dos llevan además su ID,
+`Cliente (Pool_Cliente).xes`. Lo que Windows no admite en un nombre —`/`,
+`:`, `?`…, o un punto al final— pasa a `_`, y a un nombre de dispositivo
+reservado —`CON`, `AUX`, `NUL`, `COM1`…— se le antepone `_`. Windows los
+reserva también con extensión, porque mira lo que hay antes del primer punto:
+un pool «Aux. mantenimiento» se descarga como `_Aux. mantenimiento.xes`, y
+«CON.txt» como `_CON.txt.xes`. El registro dice
+dentro de qué pool es (`pool:id`, `pool:name`) y de qué simulación
+(`simulation:id`), así que un fichero renombrado se sigue pudiendo identificar.
+Un registro muy grande se enseña solo por el principio, para no bloquear la
+página; la descarga es siempre el registro entero.
+
+Los ficheros se guardan en UTF-8. Hasta la 5.5 no era así con nada que
+descargara el Modeler: `downloadjs` escribía un byte por carácter en cuanto
+había uno entre `\x80` y `\xff`, así que una «ó» o una «ñ» en un nombre dejaban
+el `.bpmn` guardado con **Ctrl+S** imposible de leer. Ahora se le pasa el texto
+ya codificado.
 
 ### Las reglas que se mandan al simular
 
@@ -144,8 +178,8 @@ ficheros; los paneles y la exportación de las reglas usan `lib/people`.
 
 El modelador ya no incluye chatbot, mapa de calor, biblioteca de animación de tokens ni Scheduler/CSV. Los archivos con Scheduler se rechazan al importarlos para evitar interpretarlos como tareas ordinarias. Usuarios y roles se conservan.
 
-El Backend recibe las reglas y devuelve `simulation` con el resultado XES y
-`warnings` con los avisos. Valida también el XML original para detectar funciones BPMN no soportadas;
+El Backend recibe las reglas y devuelve un registro XES por pool en `logs` y
+los avisos en `warnings`. Valida también el XML original para detectar funciones BPMN no soportadas;
 el mensaje identifica el elemento que necesita revisión. Poder editar un
 elemento no implica que el simulador lo implemente. Consulta el alcance en
 [Backend/README.md](../Backend/README.md). Chatbot, mapa de calor y Scheduler ya

@@ -43,12 +43,18 @@
 //    panel lo vuelve a aceptar con el mismo valor. JavaScript guarda 0.0000001
 //    como 1e-7, y un panel que solo admitiera decimales sin exponente marcaria
 //    como invalido lo que acaba de guardar. Lo que no vale se tiene que rechazar.
+// 8. Que el Modeler ofrece un registro por pool con el nombre de su pool (5.5):
+//    con los registros congelados de cada modelo (esperado/), como los
+//    devuelve la API, Modeler/lib/logs da uno por pool, en su orden, cada uno
+//    con un fichero distinto que lleva el nombre de su pool y con sus casos. Y
+//    con nombres que no sirven tal cual -vacios, repetidos, con caracteres
+//    que Windows no admite, reservados- los ficheros siguen siendo distintos.
 //
 // Es independiente de validation.py a proposito: si el generador y la
 // validacion del Backend compartieran un malentendido sobre el BPMN, aqui
 // saldria. Necesita las dependencias del Modeler (npm install en Modeler/).
 import { createRequire } from 'module';
-import { existsSync, readFileSync, readdirSync } from 'fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
 
@@ -70,6 +76,7 @@ const { migrateLegacyPeople, entriesOf, PEOPLE_TYPES } =
   await import(pathToFileURL(join(modeler, 'lib', 'people', 'people.js')).href);
 
 // Como valida, lee y muestra los numeros el panel.
+const { logsFromResponse } = await import(pathToFileURL(join(modeler, 'lib', 'logs', 'logs.js')).href);
 const { checkNumber, parseNumber, formatNumber } =
   await import(pathToFileURL(join(modeler, 'lib', 'numbers', 'numbers.js')).href);
 
@@ -386,6 +393,69 @@ if (problemasNumeros.length) {
   for (const p of problemasNumeros) console.log(`         ${p}`);
 } else {
   console.log(`${CAMPOS_NUMERICOS.length} campos      ok      ${probados} valores vuelven al panel validos e iguales; ${rechazados} que no valen, rechazados`);
+}
+
+// (8) Los registros que ofrece el Modeler, uno por pool, con el nombre de su pool.
+const problemasRegistros = [];
+const atributo = (xes, clave) => (xes.match(new RegExp(`key="${clave}" value="([^"]*)"`)) || [])[1];
+const esperado = join(aqui, 'esperado');
+let modelosConRegistros = 0, registrosOfrecidos = 0;
+const esCarpeta = ruta => existsSync(ruta) && statSync(ruta).isDirectory();
+const carpetasDeModelos = esCarpeta(esperado)
+  ? readdirSync(esperado).flatMap(d => (d === 'con-avisos' ? readdirSync(join(esperado, d)).map(e => join(d, e)) : [d]))
+    .filter(d => esCarpeta(join(esperado, d)) && readdirSync(join(esperado, d)).some(f => f.endsWith('.xes')))
+  : [];
+for (const carpeta of carpetasDeModelos.sort()) {
+  const xes = readdirSync(join(esperado, carpeta)).filter(f => f.endsWith('.xes'))
+    .map(f => readFileSync(join(esperado, carpeta, f), 'utf8'));
+  // En el orden de la respuesta: el de simulation:participants.
+  const orden = (atributo(xes[0], 'simulation:participants') || '').split(', ');
+  const logs = xes.map(x => ({ pool: atributo(x, 'pool:id'), name: atributo(x, 'pool:name') ?? '', xes: x }))
+    .sort((a, b) => orden.indexOf(a.pool) - orden.indexOf(b.pool));
+  let ofrecidos;
+  try {
+    ofrecidos = logsFromResponse({ logs });
+  } catch (error) {
+    problemasRegistros.push(`${carpeta}: ${error.message}`);
+    continue;
+  }
+  modelosConRegistros += 1;
+  registrosOfrecidos += ofrecidos.length;
+  const ficherosOfrecidos = new Set(ofrecidos.map(o => o.fileName.toLowerCase()));
+  if (ofrecidos.map(o => o.pool).join() !== logs.map(l => l.pool).join() || ficherosOfrecidos.size !== logs.length) {
+    problemasRegistros.push(`${carpeta}: no da un fichero distinto por pool, en su orden`);
+  }
+  for (const [o, l] of ofrecidos.map((o, i) => [o, logs[i]])) {
+    const trazas = (l.xes.match(/<trace>/g) || []).length;
+    if (l.name && !o.fileName.startsWith(l.name)) problemasRegistros.push(`${carpeta}: ${o.pool} se ofrece como ${o.fileName}, sin su nombre ${l.name}`);
+    if (o.cases !== trazas) problemasRegistros.push(`${carpeta}: ${o.pool} dice ${o.cases} casos y tiene ${trazas} trazas`);
+  }
+}
+const NOMBRES = [
+  [[['A', 'Cliente'], ['B', 'Servicio']], ['Cliente.xes', 'Servicio.xes']],
+  [[['A', 'Cliente'], ['B', 'cliente']], ['Cliente (A).xes', 'cliente (B).xes']],
+  [[['A', ''], ['B', '  ']], ['A.xes', 'B.xes']],
+  [[['A', 'a/b:c?'], ['B', 'Fin. ']], ['a_b_c_.xes', 'Fin.xes']],
+  [[['A', 'CON'], ['B', 'nul']], ['_CON.xes', '_nul.xes']],
+  // Reservados tambien con extension: Windows mira lo que hay antes del primer punto.
+  [[['A', 'Aux. mantenimiento'], ['B', 'CON.txt'], ['C', 'Com¹.x']], ['_Aux. mantenimiento.xes', '_CON.txt.xes', '_Com¹.x.xes']],
+  // Y lo que solo se les parece, no.
+  [[['A', 'Auxiliar'], ['B', 'Consola.log']], ['Auxiliar.xes', 'Consola.log.xes']],
+  [[['A', ''], ['B', 'A']], ['A.xes', 'A (2).xes']]
+];
+for (const [pools, ficherosEsperados] of NOMBRES) {
+  const ofrecidos = logsFromResponse({ logs: pools.map(([pool, name]) => ({ pool, name, xes: '<log/>' })) }).map(o => o.fileName);
+  if (JSON.stringify(ofrecidos) !== JSON.stringify(ficherosEsperados)) {
+    problemasRegistros.push(`nombres ${JSON.stringify(pools.map(p => p[1]))}: da ${JSON.stringify(ofrecidos)}, y tenia que dar ${JSON.stringify(ficherosEsperados)}`);
+  }
+}
+console.log('\nRegistros que ofrece el Modeler (Modeler/lib/logs), con los congelados de esperado/:');
+if (!modelosConRegistros) problemasRegistros.push(`no hay registros congelados en ${esperado}`);
+if (problemasRegistros.length) {
+  fallos += 1;
+  for (const p of problemasRegistros.slice(0, 12)) console.log(`         ${p}`);
+} else {
+  console.log(`${modelosConRegistros} modelos   ok      ${registrosOfrecidos} registros, uno por pool con su nombre; ${NOMBRES.length} casos de nombres que no sirven tal cual`);
 }
 
 const total = ficheros.length + anteriores.length;

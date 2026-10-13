@@ -216,9 +216,21 @@ a:link { text-decoration: none; }
   width: 80vw;  /* Fijar el ancho al 80% del viewport */
   height: 80vh; /* Fijar la altura al 80% del viewport */
   overflow-y: auto; /* Scroll en el modal si el contenido es muy largo */
+  /* El registro que se ve se desplaza dentro de su recuadro; la cabecera, la
+     tabla de registros y Cerrar quedan a la vista (5.5). */
+  display: flex;
+  flex-direction: column;
 }
 
+.modal > * { flex-shrink: 0; }
+.modal > button { align-self: flex-start; }
+
 .modal pre {
+  flex: 1 1 auto;
+  flex-shrink: 1;
+  min-height: 8em;
+  overflow: auto;
+  margin: 0;
   white-space: pre-wrap; /* Ajuste de texto largo */
   background-color: #EFEFEF; /* Fondo acorde */
   padding: 15px;
@@ -246,3 +258,107 @@ a:link { text-decoration: none; }
   color: #FFFFFF;
 }
 
+
+/* Los registros de una simulacion, uno por pool (5.5) */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.simulation-summary {
+  margin: -4px 0 12px;
+  color: #555;
+  font-size: 13px;
+}
+
+.simulation-logs {
+  margin: 0 0 16px;
+}
+
+.simulation-logs-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.simulation-logs-header h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.simulation-logs-table {
+  width: 100%;
+  margin-top: 8px;
+  border-collapse: collapse;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.simulation-logs-table th,
+.simulation-logs-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid #e2e2e2;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.simulation-logs-table thead th {
+  background: #f4f4f4;
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+}
+
+.simulation-logs-table tbody tr:last-child th,
+.simulation-logs-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.simulation-logs-number {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.simulation-logs-file {
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 13px;
+  word-break: break-all;
+}
+
+.simulation-logs-actions {
+  white-space: nowrap;
+  text-align: right;
+}
+
+.modal .simulation-logs button {
+  margin: 0 0 0 6px;
+  padding: 4px 12px;
+  font-size: 13px;
+}
+
+.modal .simulation-logs-header button {
+  margin: 0;
+}
+
+.modal .simulation-logs button[aria-pressed="true"] {
+  background-color: #164b76;
+  color: #fff;
+}
+
+.simulation-preview-title {
+  margin: 0 0 6px;
+  font-size: 14px;
+}
+
+.simulation-preview-note {
+  margin: 6px 0 0;
+  color: #7a4d00;
+  font-size: 13px;
+}

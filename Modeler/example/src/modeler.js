@@ -21,6 +21,7 @@ import participantWithoutLaneExtension from '../../descriptors/participantWithou
 import AddExporter from '@bpmn-io/add-exporter';
 
 import { exportToEsper } from './taskHandlers';
+import { logsFromResponse, preview } from '../../lib/logs/logs.js';
 
 document.addEventListener('DOMContentLoaded', function() {
 
@@ -114,11 +115,19 @@ document.addEventListener('DOMContentLoaded', function() {
     return xml;
   }
 
+  // Un fichero de texto, en UTF-8. downloadjs trata como binaria una cadena con
+  // algun caracter entre \x80 y \xff y escribe un byte por caracter: una «ó» o
+  // una «ñ» acababan en un byte suelto, y el fichero, que dice ser UTF-8, no se
+  // podia leer. Con un Blob la codificacion la hace el navegador.
+  function downloadText(text, fileName) {
+    download(new Blob([ text ], { type: 'application/xml;charset=utf-8' }), fileName, 'application/xml');
+  }
+
   async function downloadDiagram() {
     try {
       await sanitizeModel(bpmnModeler);
       const xml = await exportDefinitionsXML(bpmnModeler);
-      download(xml, 'diagram.bpmn', 'application/xml');
+      downloadText(xml, 'diagram.bpmn');
     } catch (err) {
       console.error('Error al guardar BPMN:', err);
     }
@@ -165,6 +174,13 @@ document.addEventListener('DOMContentLoaded', function() {
   const closeModalButton = document.getElementById('close-modal');
   const warningsBox = document.getElementById('simulation-warnings');
   const warningsList = warningsBox.querySelector('ul');
+  const summaryBox = document.getElementById('simulation-summary');
+  const logsSection = document.getElementById('simulation-logs');
+  const logsBody = logsSection.querySelector('tbody');
+  const downloadAllButton = document.getElementById('download-all-logs');
+  const resultsBox = document.getElementById('simulation-results');
+  const previewTitle = document.getElementById('simulation-preview-title');
+  const previewNote = document.getElementById('simulation-preview-note');
   let simulationRunning = false;
   let lastSimulation = null;
   let modalReturnFocus = null;
@@ -174,12 +190,11 @@ document.addEventListener('DOMContentLoaded', function() {
     simulationStatus.dataset.state = state;
   }
 
-  function showSimulationMessage(title, message, state, warnings = []) {
+  function openModal(title, state, warnings) {
     if (modalOverlay.style.display === 'none') {
       modalReturnFocus = document.activeElement === document.body ? simulateButton : document.activeElement;
     }
     document.getElementById('simulation-title').textContent = title;
-    document.getElementById('simulation-results').textContent = message;
     warningsList.replaceChildren(...warnings.map(warning => {
       const item = document.createElement('li');
       item.textContent = warning;
@@ -188,8 +203,92 @@ document.addEventListener('DOMContentLoaded', function() {
     warningsBox.hidden = warnings.length === 0;
     modal.dataset.state = state;
     modalOverlay.style.display = 'block';
-    closeModalButton.focus();
+    modal.scrollTop = 0;
+    resultsBox.scrollTop = 0;
+    closeModalButton.focus({ preventScroll: true });
   }
+
+  // Un error, o cualquier mensaje sin registros.
+  function showSimulationMessage(title, message, state, warnings = []) {
+    summaryBox.hidden = true;
+    logsSection.hidden = true;
+    previewTitle.hidden = true;
+    previewNote.hidden = true;
+    resultsBox.textContent = message;
+    openModal(title, state, warnings);
+  }
+
+  // Una simulacion correcta: un XES por pool (D10, 5.5), cada uno con su
+  // nombre de fichero (lib/logs), para verlo o descargarlo por separado.
+  function showSimulationResults(title, result) {
+    const summary = [
+      result.simulationId && `Simulación ${result.simulationId}`,
+      result.seed !== undefined && result.seed !== null && `semilla ${result.seed}`,
+      result.modelName && `modelo «${result.modelName}»`
+    ].filter(Boolean);
+    summaryBox.textContent = summary.join(' · ');
+    summaryBox.hidden = summary.length === 0;
+    logsBody.replaceChildren(...result.logs.map(logRow));
+    downloadAllButton.hidden = result.logs.length < 2;
+    logsSection.hidden = false;
+    showLog(result.logs[0]);
+    openModal(title, 'success', result.warnings);
+  }
+
+  function logRow(log) {
+    const row = document.createElement('tr');
+    const pool = document.createElement('th');
+    pool.scope = 'row';
+    pool.textContent = log.label;
+    pool.title = `Pool ${log.pool}`;
+    const cell = (text, className) => {
+      const td = document.createElement('td');
+      td.textContent = text;
+      if (className) td.className = className;
+      return td;
+    };
+    const actions = cell('', 'simulation-logs-actions');
+    const button = (text, label, onClick) => {
+      const element = document.createElement('button');
+      element.type = 'button';
+      element.textContent = text;
+      element.setAttribute('aria-label', label);
+      element.addEventListener('click', onClick);
+      return element;
+    };
+    const view = button('Ver', `Ver el registro de ${log.label}`, () => showLog(log));
+    view.dataset.pool = log.pool;
+    actions.append(view, button('Descargar', `Descargar ${log.fileName}`, () => downloadLog(log)));
+    row.append(pool, cell(String(log.cases), 'simulation-logs-number'), cell(log.fileName, 'simulation-logs-file'), actions);
+    return row;
+  }
+
+  function showLog(log) {
+    previewTitle.textContent = `Registro de ${log.label} · ${log.fileName}`;
+    previewTitle.hidden = false;
+    const { text, truncated } = preview(log.xes);
+    resultsBox.textContent = text;
+    previewNote.textContent = truncated
+      ? `Se muestra el principio del registro (${text.length.toLocaleString('es')} de ${log.xes.length.toLocaleString('es')} caracteres); descárgalo para verlo entero.`
+      : '';
+    previewNote.hidden = !truncated;
+    for (const view of logsBody.querySelectorAll('button[data-pool]')) {
+      view.setAttribute('aria-pressed', String(view.dataset.pool === log.pool));
+    }
+  }
+
+  function downloadLog(log) {
+    downloadText(log.xes, log.fileName);
+  }
+
+  // Uno detras de otro: el navegador puede pedir permiso para descargar varios.
+  downloadAllButton.addEventListener('click', async () => {
+    if (lastSimulation === null) return;
+    for (const [ index, log ] of lastSimulation.logs.entries()) {
+      if (index) await new Promise(resolve => window.setTimeout(resolve, 400));
+      downloadLog(log);
+    }
+  });
 
   function closeSimulationMessage() {
     modalOverlay.style.display = 'none';
@@ -292,22 +391,25 @@ document.addEventListener('DOMContentLoaded', function() {
           : `El Backend no pudo completar la simulación (HTTP ${response.status}).`;
         throw responseError(data, fallback);
       }
-      if (typeof data?.simulation !== 'string') {
-        throw new Error('El Backend devolvió una respuesta sin resultados válidos.');
-      }
 
+      // Un XES por pool (D10); el reunido, data.simulation, ya no se usa aqui.
+      const logs = logsFromResponse(data);
       const warnings = Array.isArray(data.warnings)
         ? data.warnings.filter(warning => typeof warning === 'string')
         : [];
-      lastSimulation = { xes: data.simulation, warnings };
+
+      lastSimulation = {
+        logs, warnings, simulationId: data.simulationId, seed: data.seed, modelName: data.model?.name
+      };
       lastSimulationButton.disabled = false;
+      const registros = logs.length === 1 ? '1 registro XES' : `${logs.length} registros XES, uno por pool`;
       if (warnings.length) {
         const count = warnings.length === 1 ? '1 aviso' : `${warnings.length} avisos`;
-        setSimulationStatus(`Simulación completada con ${count}. Puedes revisarlos en «Última simulación».`, 'warning');
+        setSimulationStatus(`Simulación completada con ${count}: ${registros}. Puedes revisarlos en «Última simulación».`, 'warning');
       } else {
-        setSimulationStatus('Simulación completada. Los resultados están disponibles en «Última simulación».', 'success');
+        setSimulationStatus(`Simulación completada: ${registros}. Están disponibles en «Última simulación».`, 'success');
       }
-      showSimulationMessage('Resultados de la simulación', lastSimulation.xes, 'success', warnings);
+      showSimulationResults('Resultados de la simulación', lastSimulation);
     } catch (err) {
       const preserved = lastSimulation !== null ? ' Se conserva la última simulación completada.' : '';
       setSimulationStatus(`No se pudo completar la simulación.${preserved}`, 'error');
@@ -323,7 +425,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   lastSimulationButton.addEventListener('click', () => {
     if (lastSimulation !== null) {
-      showSimulationMessage('Última simulación completada', lastSimulation.xes, 'success', lastSimulation.warnings);
+      showSimulationResults('Última simulación completada', lastSimulation);
     }
   });
 
@@ -332,8 +434,17 @@ document.addEventListener('DOMContentLoaded', function() {
     if (modalOverlay.style.display === 'none') return;
     if (event.key === 'Escape') closeSimulationMessage();
     if (event.key === 'Tab') {
+
+      // El foco no sale del dialogo: recorre sus botones visibles, en los dos sentidos.
+      const focusables = Array.from(modal.querySelectorAll('button:not([disabled])'))
+        .filter(element => element.offsetParent !== null);
       event.preventDefault();
-      closeModalButton.focus();
+      if (!focusables.length) return;
+      const index = focusables.indexOf(document.activeElement);
+      const next = event.shiftKey
+        ? (index <= 0 ? focusables.length - 1 : index - 1)
+        : (index + 1) % focusables.length;
+      focusables[next].focus();
     }
   });
 

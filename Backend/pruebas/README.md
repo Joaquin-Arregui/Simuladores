@@ -277,7 +277,7 @@ sin abrir ningún puerto.
   la referencia del modelo: por la API incluye la huella del diagrama, y tiene
   que ser la de lo mandado, igual que `simulationId`, `model` y
   `formatVersion` tienen que ser los de sus registros. `simulation`, el XES
-  reunido que el Modeler muestra hasta la 5.5, tiene que ser la reunión de los
+  reunido, que el Modeler mostraba hasta la 5.5, tiene que ser la reunión de los
   registros. Aquí no hay nada congelado: la referencia es la ejecución
   directa. Si el modelo tiene tareas multiinstancia, se manda **otra vez sin
   ningún `multiInstanceType` en las reglas**: la marca tiene que llegar del
@@ -417,6 +417,17 @@ aceptar con el mismo valor; y lo que no vale —negativos, `1e400`, enteros con
 decimales o mayores que 9007199254740991— se tiene que rechazar. JavaScript
 guarda 0.0000001 como `1e-7`, y un panel que solo admitiera decimales sin
 exponente marcaba como inválido lo que acababa de guardar.
+
+Y comprueba **los registros que ofrece el Modeler** (`Modeler/lib/logs/`, 5.5):
+con los registros congelados de cada modelo en `esperado/`, puestos como los
+devuelve la API, el Modeler tiene que ofrecer uno por pool, en su orden, con un
+fichero distinto que lleve el nombre de su pool y con tantos casos como trazas.
+Y con nombres que no sirven tal cual —vacíos, repetidos aunque sea con otras
+mayúsculas, con caracteres que Windows no admite, reservados como `CON` —también
+con extensión, como «Aux. mantenimiento» o «CON.txt», porque Windows mira lo
+que hay antes del primer punto—, o iguales al ID de otro pool— los ficheros
+tienen que seguir siendo distintos y ser los esperados; y lo que solo se parece
+a un reservado, como «Auxiliar», se queda como está.
 
 ### Lo que manda el Modeler
 
