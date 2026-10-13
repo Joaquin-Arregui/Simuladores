@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:collab="http://collaboration" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:participantWithoutLane="http://participantWithoutLane" xmlns:sequenceFlow="http://sequenceFlow" xmlns:user="http://user" id="Definitions_25_parejas_con_varias_respuestas" targetNamespace="http://bpmn.io/schema/bpmn" exporter="my-bpmn-exporter" exporterVersion="1.0.0">
-  <bpmn:collaboration id="Colaboracion" collab:instance="4">
+  <bpmn:collaboration id="Colaboracion" name="Parejas con varias respuestas" collab:instance="4">
     <bpmn:participant id="Pool_Cliente" name="Cliente" processRef="Process_Pool_Cliente" participantWithoutLane:frequency="30" participantWithoutLane:infiniteResources="true">
       <bpmn:extensionElements>
         <participantWithoutLane:userWithoutRole>Carla</participantWithoutLane:userWithoutRole>

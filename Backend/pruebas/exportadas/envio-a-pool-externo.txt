@@ -1,0 +1,13 @@
+### Esper Rules Export ###
+
+Element: [type=bpmn:Collaboration, name="Envio al exterior", id_bpmn="Colaboracion", instances=2]
+Element: [type=bpmn:Participant, name="Oficina", id_bpmn="Pool_Interno", frequency=20, participantMultiplicity="false", userWithoutRole=["Ana"], containedElements=["Ini", "Tramitar", "Comunicar", "Fin", "f1", "f2", "f3"]]
+Element: [type=bpmn:StartEvent, name="Inicio", id_bpmn="Ini", subTask="Tramitar"]
+Element: [type=bpmn:Task, name="Tramitar la solicitud", id_bpmn="Tramitar", userTask="Ana", numberOfExecutions=1, minimumTime=20, maximumTime=30, subTask="Comunicar"]
+Element: [type=bpmn:SendTask, name="Comunicar al organismo", id_bpmn="Comunicar", userTask="Ana", numberOfExecutions=1, minimumTime=5, maximumTime=10, subTask="Fin"]
+Element: [type=bpmn:EndEvent, name="Fin", id_bpmn="Fin", subTask=""]
+Element: [type=bpmn:Participant, name="Organismo externo", id_bpmn="Pool_Externo", frequency=0, participantMultiplicity="false", userWithoutRole=[], containedElements=[]]
+Element: [type=bpmn:SequenceFlow, name="Unnamed", id_bpmn="f1", superElement="Ini", subElement="Tramitar"]
+Element: [type=bpmn:SequenceFlow, name="Unnamed", id_bpmn="f2", superElement="Tramitar", subElement="Comunicar"]
+Element: [type=bpmn:SequenceFlow, name="Unnamed", id_bpmn="f3", superElement="Comunicar", subElement="Fin"]
+Element: [type=bpmn:MessageFlow, name="Comunicacion", id_bpmn="Comunicacion", superElement="Comunicar", subElement="Pool_Externo"]

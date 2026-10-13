@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:collab="http://collaboration" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:lane="http://lane" xmlns:participantWithoutLane="http://participantWithoutLane" xmlns:user="http://user" id="Definitions_08_carriles_y_subcarriles" targetNamespace="http://bpmn.io/schema/bpmn" exporter="my-bpmn-exporter" exporterVersion="1.0.0">
-  <bpmn:collaboration id="Colaboracion" collab:instance="2">
+  <bpmn:collaboration id="Colaboracion" name="Banco con carriles" collab:instance="2">
     <bpmn:participant id="Pool_Cliente" name="Cliente" processRef="Process_Pool_Cliente" participantWithoutLane:frequency="50">
       <bpmn:extensionElements>
         <participantWithoutLane:userWithoutRole>Carla</participantWithoutLane:userWithoutRole>

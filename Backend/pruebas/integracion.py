@@ -18,6 +18,10 @@ Dos grupos de diagramas:
   tiene que ser el mismo. Y si sus pools tienen parametros -instances, el
   marcador, el rol, los recursos infinitos, el modo de llegada y su ventana-,
   con las reglas SIN ellos: los aporta el dibujo (5.3), con el mismo XES.
+  Y por ultimo como lo manda el Modeler (5.4): el BPMN guardado y las reglas
+  exportadas de exportadas/<modelo>, que escribe exporta_reglas.mjs con el
+  codigo del Modeler. Tienen que dar el mismo XES, metadatos incluidos, y los
+  mismos avisos que las reglas de referencia con la misma semilla.
 - `integracion-con-error/<modelo>--<variante>.bpmn` -- el diagrama esta roto o
   no cuenta lo mismo que las reglas de <modelo>, y la API tiene que rechazarlo
   con un 400 o un 422 y el mensaje congelado en esperado/integracion/. Un 500 no
@@ -48,6 +52,8 @@ from simulator.registros import (XES, FORMATO_DEL_REGISTRO, Registro, huella_de_
 AQUI = Path(__file__).resolve().parent
 DIAGRAMAS = AQUI / "integracion"
 DIAGRAMAS_CON_ERROR = AQUI / "integracion-con-error"
+# Lo que el Modeler manda al simular cada diagrama de integracion/ (5.4).
+EXPORTADAS = AQUI / "exportadas"
 ESPERADO = banco.ESPERADO / "integracion"
 CODIGOS_PREVISTOS = (400, 422)
 
@@ -85,8 +91,8 @@ PARAMETROS_DEL_POOL = ("instances", "participantMultiplicity", "orchestrationRol
 
 
 def sin_parametros_del_pool(reglas):
-    """Las reglas sin los parametros de los pools, como las exporta el Modeler
-    hasta la 5.4; None si no tenian ninguno. Solo en las lineas de los
+    """Las reglas sin los parametros de los pools, como las exportaba el
+    Modeler hasta la 5.4; None si no tenian ninguno. Solo en las lineas de los
     Participant: instances tambien es de la colaboracion y del proceso."""
     patron = re.compile(r",\s*(?:%s)=(?:'[^']*'|\"[^\"]*\"|[^,\]\s]+)" % "|".join(PARAMETROS_DEL_POOL))
     texto = reglas.read_text(encoding="utf-8")
@@ -138,7 +144,8 @@ def compara_respuesta(datos, directo, content, diagrama_xml):
             problemas.append("los metadatos de %s no son los de la ejecucion directa: %s"
                              % (api.pool, ", ".join(distintos)))
     comunes = metadatos(registros[0].xes)
-    huellas = {"rulesSha256": huella_de_las_reglas(content), "diagramSha256": huella_del_diagrama(diagrama_xml)}
+    huellas = {"rulesSha256": huella_de_las_reglas(content),
+               "diagramSha256": huella_del_diagrama(diagrama_xml) if diagrama_xml is not None else None}
     esperado = {
         "simulationId": id_de_simulacion(huellas["rulesSha256"], huellas["diagramSha256"], banco.SEMILLA,
                                          comunes.get("simulation:startDate")),
@@ -370,7 +377,49 @@ def revisa_correctos(cliente):
                 fallos += 1
             else:
                 print("%-38s ok      %s %s del dibujo: mismas trazas" % (etiqueta, que, llega))
+        fallos += revisa_lo_que_manda_el_modeler(cliente, diagrama, directo)
     return fallos, varios
+
+
+def revisa_lo_que_manda_el_modeler(cliente, diagrama, directo):
+    """5.4: el BPMN guardado y las reglas exportadas por el Modeler, juntos por
+    la API, dan el XES de las reglas de referencia -trazas y metadatos, salvo la
+    referencia de lo mandado- y sus mismos avisos. Y las reglas solas, sin el
+    diagrama, tambien: desde la 5.3 el Backend lee del diagrama lo que las
+    reglas no dicen, asi que con el diagrama no se veria un parametro que el
+    exportador se dejara; sin el, las reglas tienen que llevarlo todo. Cuantos
+    fallos."""
+    etiqueta = "  ...desde el Modeler"
+    reglas, guardado = EXPORTADAS / (diagrama.stem + ".txt"), EXPORTADAS / (diagrama.stem + ".bpmn")
+    if not reglas.exists() or not guardado.exists():
+        print("%-38s FALTA   exportadas/%s: ejecuta node pruebas/exporta_reglas.mjs --congela"
+              % (etiqueta, diagrama.stem))
+        return 1
+    content, guardado_xml = reglas.read_text(encoding="utf-8"), guardado.read_text(encoding="utf-8")
+    fallos = 0
+    for etiqueta, diagram_xml, que in (("  ...desde el Modeler", guardado_xml, "el BPMN guardado y sus reglas"),
+                                       ("  ...sus reglas solas", None, "las reglas, sin el diagrama")):
+        cuerpo = {"content": content, "seed": banco.SEMILLA}
+        if diagram_xml is not None:
+            cuerpo["diagramXML"] = diagram_xml
+        respuesta = cliente.post("/simulate", json=cuerpo)
+        datos = respuesta.get_json(silent=True) or {}
+        if respuesta.status_code != 200:
+            print("%-38s HTTP %d   %s" % (etiqueta, respuesta.status_code, datos.get("error", "")))
+            fallos += 1
+            continue
+        problemas = compara_respuesta(datos, directo, content, diagram_xml)
+        if sorted(datos.get("warnings", [])) != sorted(directo.warnings):
+            problemas.append("avisos distintos: desde el Modeler %s, con las reglas de referencia %s"
+                             % (datos.get("warnings"), directo.warnings))
+        if problemas:
+            print("%-38s DISTINTO  %s no simulan el modelo de referencia" % (etiqueta, que))
+            for linea in problemas:
+                print("         %s" % linea)
+            fallos += 1
+        else:
+            print("%-38s ok      %s: el XES de referencia" % (etiqueta, que))
+    return fallos
 
 
 def con_semilla(xml, semilla):
@@ -477,7 +526,7 @@ def main():
                           help="escribe las respuestas de error esperadas, solo si todo pasa")
     argumentos = opciones.parse_args()
     # Sin diagramas no hay validacion: perder las carpetas no puede dar verde.
-    problemas = banco.faltan_grupos((DIAGRAMAS, "*.bpmn"), (DIAGRAMAS_CON_ERROR, "*.bpmn"))
+    problemas = banco.faltan_grupos((DIAGRAMAS, "*.bpmn"), (DIAGRAMAS_CON_ERROR, "*.bpmn"), (EXPORTADAS, "*.txt"))
     if problemas:
         for problema in problemas:
             print("Falta un grupo de diagramas: %s." % problema)
@@ -522,6 +571,10 @@ def main():
         if ESPERADO.is_dir() else []
     for huerfana in huerfanas:
         print("%-38s REFERENCIA HUERFANA  no existe su diagrama" % huerfana.name)
+        fallos += 1
+    diagramas = {diagrama.stem for diagrama in DIAGRAMAS.glob("*.bpmn")}
+    for resto in sorted(p for p in EXPORTADAS.iterdir() if p.stem not in diagramas):
+        print("%-38s SOBRA   no existe integracion/%s.bpmn" % ("exportadas/" + resto.name, resto.stem))
         fallos += 1
 
     total = len(list(DIAGRAMAS.glob("*.bpmn"))) + len(errores)

@@ -1,0 +1,10 @@
+### Esper Rules Export ###
+
+Element: [type=bpmn:Process, name="Proceso simple", id_bpmn="Proceso_simple", instances=2, frequency=30, userWithoutRole=["Ana", "Luis"], userWithRole={}]
+Element: [type=bpmn:StartEvent, name="Inicio", id_bpmn="Inicio", subTask="Preparar"]
+Element: [type=bpmn:Task, name="Preparar la solicitud", id_bpmn="Preparar", userTask="Ana", numberOfExecutions=1, minimumTime=30, maximumTime=60, subTask="Revisar"]
+Element: [type=bpmn:Task, name="Revisar la solicitud", id_bpmn="Revisar", userTask="Luis", numberOfExecutions=1, minimumTime=20, maximumTime=40, subTask="Fin"]
+Element: [type=bpmn:EndEvent, name="Fin", id_bpmn="Fin", subTask=""]
+Element: [type=bpmn:SequenceFlow, name="Inicio a Preparar", id_bpmn="Flujo_1", superElement="Inicio", subElement="Preparar"]
+Element: [type=bpmn:SequenceFlow, name="Preparar a Revisar", id_bpmn="Flujo_2", superElement="Preparar", subElement="Revisar"]
+Element: [type=bpmn:SequenceFlow, name="Revisar a Fin", id_bpmn="Flujo_3", superElement="Revisar", subElement="Fin"]

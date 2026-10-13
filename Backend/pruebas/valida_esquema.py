@@ -15,6 +15,8 @@ ficheros de pruebas/esquema-bpmn/ -los de OMG para BPMN 2.0, espacio de nombres
 - `integracion-con-error/` -- tambien: estan rotos para el simulador, no para
   BPMN. Salvo el que no es XML a proposito, `--xml-mal-formado`, que tiene que
   seguir sin poder leerse.
+- `exportadas/` -- tambien: son esos mismos diagramas tal como los guarda el
+  Modeler, con su propio codigo (exporta_reglas.mjs, 5.4).
 - `formato-anterior/` -- NO pueden cumplirlo, y el primer error tiene que ser
   una lista de personas del Modeler fuera de extensionElements: es la razon de
   la 5.2, y lo que demuestra que esta comprobacion distingue un fichero bueno
@@ -31,7 +33,8 @@ ESQUEMA = AQUI / "esquema-bpmn" / "BPMN20.xsd"
 # Los espacios de nombres de los descriptores del Modeler (Modeler/descriptors/).
 DEL_MODELER = ("http://user", "http://lane", "http://participantWithoutLane", "http://model",
                "http://collaboration", "http://sequenceFlow")
-GRUPOS = (("integracion", "cumple"), ("integracion-con-error", "cumple"), ("formato-anterior", "no cumple"))
+GRUPOS = (("integracion", "cumple"), ("integracion-con-error", "cumple"), ("exportadas", "cumple"),
+          ("formato-anterior", "no cumple"))
 
 
 def errores(esquema, ruta):

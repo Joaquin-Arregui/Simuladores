@@ -1,0 +1,11 @@
+### Esper Rules Export ###
+
+Element: [type=bpmn:Process, name="Reintento", id_bpmn="Proceso", instances=2, frequency=30, userWithoutRole=["Ana"], userWithRole={}]
+Element: [type=bpmn:StartEvent, name="Entra el expediente", id_bpmn="Ini", subTask="Trabajar"]
+Element: [type=bpmn:Task, name="Trabajar el expediente", id_bpmn="Trabajar", userTask="Ana", numberOfExecutions=1, minimumTime=10, maximumTime=20, subTask="Decidir"]
+Element: [type=bpmn:ExclusiveGateway, name="Vale o se repite", id_bpmn="Decidir", subTask="Trabajar, Fin"]
+Element: [type=bpmn:EndEvent, name="Expediente cerrado", id_bpmn="Fin", subTask=""]
+Element: [type=bpmn:SequenceFlow, name="Unnamed", id_bpmn="f1", superElement="Ini", subElement="Trabajar"]
+Element: [type=bpmn:SequenceFlow, name="Unnamed", id_bpmn="f2", superElement="Trabajar", subElement="Decidir"]
+Element: [type=bpmn:SequenceFlow, name="Unnamed", id_bpmn="f3", percentageOfBranches=40, superElement="Decidir", subElement="Trabajar"]
+Element: [type=bpmn:SequenceFlow, name="Unnamed", id_bpmn="f4", percentageOfBranches=60, superElement="Decidir", subElement="Fin"]

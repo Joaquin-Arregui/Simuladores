@@ -27,6 +27,9 @@ mientras el comportamiento no deba cambiar, sus XES no deben cambiar.
 - `formato-anterior/` — diagramas guardados por el Modeler de antes de la 5.2,
   con las listas de personas fuera de `extensionElements`: prueban que se
   siguen abriendo.
+- `exporta_reglas.mjs` y `exportadas/` — lo que el Modeler manda a la API al
+  simular cada diagrama de `integracion/`: el BPMN guardado y sus reglas
+  exportadas, con el código del Modeler (ver más abajo).
 - `lee_con_pm4py.py` — lee con PM4Py los registros congelados, los reúne y
   saca de ellos quién está libre (ver más abajo).
 
@@ -258,6 +261,8 @@ python3 pruebas/integracion.py
 python3 pruebas/integracion.py --congela
 node pruebas/valida_bpmn.mjs
 python3 pruebas/valida_esquema.py
+node pruebas/exporta_reglas.mjs
+node pruebas/exporta_reglas.mjs --congela
 ```
 
 El resto del banco ejecuta las reglas directamente. Este manda lo mismo que el
@@ -279,8 +284,15 @@ sin abrir ningún puerto.
   dibujo (3.1) y las trazas tienen que ser las mismas. Y si sus pools tienen
   parámetros, **otra vez sin ellos** —`instances`, `participantMultiplicity`,
   `orchestrationRole`, `infiniteResources`, `arrivalMode` y `arrivalWindow`,
-  como los exporta el Modeler hasta la 5.4—: los aporta el diagrama (5.3), con
-  las mismas trazas.
+  como los exportaba el Modeler hasta la 5.4—: los aporta el diagrama (5.3),
+  con las mismas trazas.
+- Y por último, **como lo manda el Modeler** (5.4): el BPMN guardado y las
+  reglas exportadas de `exportadas/<modelo>`, juntos, tienen que dar el mismo
+  XES —trazas y metadatos, salvo la referencia de lo mandado— y los mismos
+  avisos que las reglas de referencia con la misma semilla. Y **las reglas
+  exportadas solas**, sin el diagrama, también: con el diagrama no se vería un
+  parámetro que el exportador se dejara, porque desde la 5.3 el Backend lo
+  tomaría del dibujo; sin él, las reglas tienen que llevarlo todo.
 - Con la primera respuesta que trae varios registros se comprueba que la
   revisión de un conjunto (`simulator.registros.revisa_registros`) detecta los
   rotos —que no haya ninguno, que falte uno, que esté duplicado o mal formado,
@@ -322,8 +334,9 @@ de `validate_diagram_correspondence`, los cinco diagramas de correlación rota d
 
 Los diagramas están **generados** con `bpmn_desde_reglas.py` y congelados como
 ficheros, no dibujados: así cada diagrama cuenta exactamente lo mismo que las
-reglas de su modelo, y el Modeler no exporta aún a las reglas los atributos de
-los hitos 2 a 4 (5.4), aunque desde la 5.3 se pongan en sus paneles. Lo que sí llevan es lo
+reglas de su modelo. Lo que el Modeler hace con ellos —abrirlos, guardarlos y
+exportar sus reglas— lo comprueba `exporta_reglas.mjs` con el código del
+Modeler (ver [Lo que manda el Modeler](#lo-que-manda-el-modeler)). Lo que sí llevan es lo
 que el Modeler guarda hoy: la estructura BPMN, los atributos de sus
 descriptores —desde la 5.1 también los del pool: `instances`,
 `orchestrationRole`, `infiniteResources`, `arrivalMode` y `arrivalWindow`, con
@@ -388,7 +401,9 @@ estaría distinguiendo nada. Necesita `lxml`, que viene con PM4Py.
 Los ficheros de antes se siguen abriendo: el Modeler los migra al abrirlos
 (`Modeler/lib/people/`). `formato-anterior/` tiene cuatro, guardados por el
 Modeler de la 5.1 —el `10` con las tres marcas puestas desde el menú de
-reemplazo, y uno del `01` con un rol añadido desde el panel—, y
+reemplazo, y uno del `01` con un rol añadido desde el panel; al `08` y al `10`
+se les ha añadido después el nombre de la colaboración, como lo habría guardado
+aquel Modeler, cuando el generador empezó a escribirlo (5.4)—, y
 `valida_bpmn.mjs` les pasa esa misma migración: cada lista tiene que pasar
 entera a `extensionElements`, no quedar nada en el sitio antiguo, abrir sin
 avisos en las otras herramientas y, si hay uno del mismo nombre en
@@ -403,9 +418,36 @@ decimales o mayores que 9007199254740991— se tiene que rechazar. JavaScript
 guarda 0.0000001 como `1e-7`, y un panel que solo admitiera decimales sin
 exponente marcaba como inválido lo que acababa de guardar.
 
+### Lo que manda el Modeler
+
+`exporta_reglas.mjs` hace con cada diagrama de `integracion/` lo mismo que el
+Modeler al abrirlo y pulsar **Simular**, con su mismo código: lo abre con
+bpmn-moddle y los descriptores, migra las listas del formato anterior
+(`Modeler/lib/people`), recorre los elementos con el `BpmnTreeWalker` de
+bpmn-js —que decide el orden en que el Modeler los pinta y los exporta, y el
+motor depende de ese orden: barajar las líneas de las reglas cambia el XES de
+32 modelos— y exporta las reglas con `Modeler/lib/rules`, el exportador del
+Modeler. Guarda el diagrama como el Modeler, con `moddle.toXML`, y con lo único
+que bpmn-js cambia al pintarlo: `isMarkerVisible` en las compuertas
+exclusivas. El resultado, `exportadas/<modelo>.txt` y `exportadas/<modelo>.bpmn`,
+es byte a byte lo que manda el Modeler de verdad: así se comprobó en un
+navegador con los 22 diagramas.
+
+Sin argumentos compara lo exportado hoy con lo congelado y dice desde qué línea
+cambia; con `--congela` lo vuelve a escribir, y solo si todos los diagramas se
+abren sin avisos. `integracion.py` usa lo congelado —desde Python no se puede
+ejecutar el Modeler—, así que si cambia el exportador o un diagrama hay que
+pasar los dos: primero este, que muestra lo que cambia, y luego la integración,
+que dice si sigue simulando lo mismo. Necesita `npm install` hecho en
+`Modeler/`. `valida_esquema.py` comprueba también que lo guardado cumple el
+esquema de BPMN 2.0.
+
 Si cambia un modelo que tiene diagrama, se regenera con
-`python3 pruebas/bpmn_desde_reglas.py pruebas/modelos/<modelo>.txt` y se vuelve
-a pasar `valida_bpmn.mjs`.
+`python3 pruebas/bpmn_desde_reglas.py pruebas/modelos/<modelo>.txt`, se vuelve
+a pasar `valida_bpmn.mjs` y se congela otra vez lo exportado con
+`node pruebas/exporta_reglas.mjs --congela`. El generador escribe desde la 5.4
+el nombre de la colaboración: es el `model:name` de los registros, y sin él el
+Modeler exporta `"Unnamed"`.
 
 ## El coste del proceso base
 
@@ -457,9 +499,10 @@ contenedores, porque PM4Py lee las listas y se salta los contenedores.
 
 Los comandos se niegan a comparar o congelar si falta un grupo de casos o
 está vacío: `modelos/`, `modelos-con-avisos/` y `modelos-con-error/` en el banco
-del motor, `integracion/` e `integracion-con-error/` en el de integración, y la
-carpeta de diagramas y `formato-anterior/` en `valida_bpmn.mjs`, y las tres
-carpetas de diagramas en `valida_esquema.py`. Sin esa comprobación, perder una
+del motor, `integracion/`, `integracion-con-error/` y `exportadas/` en el de
+integración, la carpeta de diagramas y `formato-anterior/` en `valida_bpmn.mjs`,
+`integracion/` en `exporta_reglas.mjs`, y las cuatro carpetas de diagramas en
+`valida_esquema.py`. Sin esa comprobación, perder una
 carpeta entera —modelos y referencias a la vez, en un merge— daba verde con
 menos casos, o con ninguno, sin decir nada.
 

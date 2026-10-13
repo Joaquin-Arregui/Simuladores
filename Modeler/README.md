@@ -31,7 +31,8 @@ La compilación genera exclusivamente `example/dist`; conserva los HTML y fuente
 
 ## Estructura
 
-- `example/src`: inicio, editor y exportación de reglas para el simulador.
+- `example/src`: inicio y editor; al pulsar **Simular**, `taskHandlers.js`
+  exporta las reglas con `lib/rules`.
 - `provider` y `descriptors`: propiedades de simulación y su serialización BPMN.
   El pool guarda en el `.bpmn`, con el prefijo `participantWithoutLane`, los
   mismos atributos que lleva en las reglas: `frequency` (número, admite
@@ -40,9 +41,10 @@ La compilación genera exclusivamente `example/dist`; conserva los HTML y fuente
   (`orchestrator` u `orchestrated`), `infiniteResources` (booleano), `arrivalMode`
   (`staggered`, `simultaneous` o `uniform`) y `arrivalWindow` (entero, la T de la
   llegada uniforme). El marcador de multiplicidad es el estándar,
-  `bpmn:participantMultiplicity`. Se editan en el panel del pool (ver abajo); su
-  exportación a las reglas es la 5.4.
+  `bpmn:participantMultiplicity`. Se editan en el panel del pool (ver abajo) y
+  se exportan a las reglas (ver más abajo).
 - `lib/numbers`: cómo validan, leen y muestran los números los paneles.
+- `lib/rules`: el exportador de las reglas que se mandan al simular.
 - `lib/people`: dónde se guardan las listas de personas (ver abajo) y la
   migración de los ficheros anteriores a la 5.2.
 - `lib/resize-all-rules`: regla de redimensionado del editor.
@@ -78,11 +80,31 @@ en rojo y no se guarda. Los enteros llegan como mucho a 9007199254740991, el
 mayor que JavaScript guarda exacto. Las frecuencias admiten también notación
 científica, porque es como JavaScript las escribe en el `.bpmn` por debajo de
 1e-6 y desde 1e21 —0.0000001 se guarda como `1e-7`—; al mostrarlas, el panel
-las escribe sin exponente siempre que puede hacerlo sin perder nada. El Backend lee estos parámetros y la semilla del
-diagrama que recibe al simular cuando las reglas no los dicen, y los valida
-igual; si las reglas dicen otra cosa, rechaza la simulación nombrando el pool y
-los dos valores. Así lo que se pone en el panel llega al motor ya, aunque la
-exportación a las reglas sea la 5.4.
+las escribe sin exponente siempre que puede hacerlo sin perder nada.
+
+Al simular, estos parámetros van en las reglas (ver abajo) y en el diagrama. El
+Backend lee además del diagrama la semilla, y lo que unas reglas no digan; si
+reglas y diagrama dicen cosas distintas, rechaza la simulación nombrando el
+pool y los dos valores.
+
+### Las reglas que se mandan al simular
+
+**Simular** manda al Backend el diagrama tal como se guarda y sus reglas: una
+línea por elemento dibujado, con sus parámetros de simulación. Las exporta
+`lib/rules`, sin nada del navegador, para que el banco del Backend
+(`Backend/pruebas/exporta_reglas.mjs`) pueda exportar con el mismo código. Las
+líneas salen en el orden en que bpmn-js pinta los elementos, que es el que usa
+el motor.
+
+Cada tarea lleva quién la hace, sus tiempos y, si tiene la marca,
+`multiInstanceType` (`"false"` la paralela, `"true"` la secuencial). Cada pool
+lleva `frequency`, siempre `participantMultiplicity` —`"true"` o `"false"`,
+según tenga el marcador—, y los parámetros del panel que estén puestos:
+`instances`, `orchestrationRole`, `infiniteResources`, `arrivalMode` y
+`arrivalWindow`. Con eso las reglas se bastan solas: el banco comprueba que,
+con el diagrama y sin él, dan el mismo XES que las reglas de referencia de cada
+modelo con la misma semilla. La semilla no va en las reglas: la lee el Backend
+del diagrama.
 
 ### Multiinstancia
 

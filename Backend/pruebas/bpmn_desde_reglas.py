@@ -8,8 +8,10 @@ de integracion o al cambiar su modelo, y el resultado se congela como fichero:
 el banco de integracion lee el .bpmn, no lo regenera, para que un fallo de este
 generador no pueda taparse con uno igual en la validacion.
 
-Por que generado y no dibujado: el Modeler aun no tiene paneles para los
-atributos de los hitos 2 a 4 (5.3) ni los exporta a las reglas (5.4). Lo que si
+Por que generado y no dibujado: asi cada diagrama cuenta exactamente lo mismo
+que las reglas de su modelo, sin depender de dibujarlo a mano. Lo que el
+Modeler hace con el -abrirlo, guardarlo y exportar sus reglas- lo comprueba
+exporta_reglas.mjs con el codigo del Modeler (5.4). Lo que si
 lleva el dibujo es lo que el Modeler guarda hoy: la estructura BPMN, los
 atributos de sus descriptores -desde la 5.1 tambien los del pool: instances,
 orchestrationRole, infiniteResources, arrivalMode y arrivalWindow-, las listas
@@ -270,7 +272,10 @@ def genera(ruta_reglas):
         entrantes[flujo.subElement].append(flujo.id_bpmn)
 
     if es_colaboracion:
-        colaboracion = ET.SubElement(definiciones, q("bpmn", "collaboration"), {"id": raiz_id})
+        # Con su nombre: es el model:name de los registros (4.4), y el Modeler
+        # exporta "Unnamed" a una colaboracion sin nombre.
+        atributos = {"id": raiz_id, "name": raiz.name} if raiz.name else {"id": raiz_id}
+        colaboracion = ET.SubElement(definiciones, q("bpmn", "collaboration"), atributos)
         if raiz.instances is not None:
             colaboracion.set(q("collab", "instance"), str(raiz.instances))
         for p in participantes:
