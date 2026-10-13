@@ -22,7 +22,11 @@ mientras el comportamiento no deba cambiar, sus XES no deben cambiar.
   modelos de referencia, para el banco de integración (ver más abajo).
 - `integracion.py` — manda reglas y diagrama por la API y compara.
 - `bpmn_desde_reglas.py` — genera el diagrama de un modelo; `valida_bpmn.mjs`
-  lo comprueba con bpmn-moddle.
+  lo comprueba con bpmn-moddle, y `valida_esquema.py` contra el esquema de
+  BPMN 2.0, que está en `esquema-bpmn/`.
+- `formato-anterior/` — diagramas guardados por el Modeler de antes de la 5.2,
+  con las listas de personas fuera de `extensionElements`: prueban que se
+  siguen abriendo.
 - `lee_con_pm4py.py` — lee con PM4Py los registros congelados, los reúne y
   saca de ellos quién está libre (ver más abajo).
 
@@ -253,6 +257,7 @@ existe— para que `esperado/` no acumule restos.
 python3 pruebas/integracion.py
 python3 pruebas/integracion.py --congela
 node pruebas/valida_bpmn.mjs
+python3 pruebas/valida_esquema.py
 ```
 
 El resto del banco ejecuta las reglas directamente. Este manda lo mismo que el
@@ -305,7 +310,8 @@ los hitos 2 a 4 (5.3) ni los exporta a las reglas (5.4). Lo que sí llevan es lo
 que el Modeler guarda hoy: la estructura BPMN, los atributos de sus
 descriptores —desde la 5.1 también los del pool: `instances`,
 `orchestrationRole`, `infiniteResources`, `arrivalMode` y `arrivalWindow`, con
-los mismos nombres que en las reglas— y los dos marcadores estándar,
+los mismos nombres que en las reglas—, las listas de personas dentro de
+`bpmn:extensionElements` —desde la 5.2— y los dos marcadores estándar,
 `participantMultiplicity` y `multiInstanceLoopCharacteristics`. Que el XML es
 BPMN de verdad no lo dice el Backend sino `valida_bpmn.mjs`, con bpmn-moddle
 —la librería con la que bpmn-js abre un diagrama— y los descriptores del
@@ -313,11 +319,11 @@ Modeler; necesita `npm install` hecho en `Modeler/`. Se abren en el Modeler.
 
 `valida_bpmn.mjs` comprueba además que **abrir y guardar no cambia nada**, que
 es lo que pasa cada vez que alguien abre un diagrama en el Modeler y lo vuelve a
-guardar. Ahí es donde se vio que las listas de usuarios estaban mal escritas: en
-los descriptores `UserTask` y `userWithoutRole` son listas de elementos hijos, y
-escritas como un atributo con comas bpmn-moddle las abre como una cadena y las
-guarda letra a letra —Ana se convertía en A, n y a—. El generador escribe ahora
-un elemento por usuario en tareas, procesos, pools y carriles.
+guardar. Ahí es donde se vio que las listas de usuarios estaban mal escritas:
+son listas de elementos, y escritas como un atributo con comas bpmn-moddle las
+abre como una cadena y las guarda letra a letra —Ana se convertía en A, n y a—.
+El generador escribe un elemento por usuario en tareas, procesos, pools y
+carriles, dentro de `bpmn:extensionElements` desde la 5.2 (ver más abajo).
 
 `valida_bpmn.mjs` comprueba también que **los atributos propios de cada pool
 sobreviven a abrir y guardar** (5.1): leídos sin descriptores, tal como están
@@ -328,13 +334,48 @@ con lo reabierto no basta: con `frequency` declarada como entero, `0.1` se leía
 como `0` al abrir, y lo reabierto coincidía con ese `0`. Por eso el `34`, que
 llega cada 0,1 s, tiene diagrama.
 
-`valida_bpmn.mjs` abre cada diagrama, por último, **como otra herramienta**:
-con bpmn-moddle sin los descriptores del Modeler. Tienen que seguir ahí todos los
-elementos BPMN y todas las marcas, que son lo que el motor lee del dibujo; lo
-único que se tolera que no entienda son los elementos propios del Modeler, y los
-cuenta. Hoy son las listas de usuarios: el Modeler las escribe como elementos
-hijos sin `extensionElements`, y otra herramienta las descarta. Abrir sin avisos
-en Camunda o Bizagi es la 5.2.
+`valida_bpmn.mjs` abre cada diagrama, además, **como otras herramientas**: con
+bpmn-moddle sin los descriptores del Modeler, que es como lo ve cualquiera, y
+con los de Camunda 7 y Camunda 8 —`camunda-bpmn-moddle` y `zeebe-bpmn-moddle`,
+los que carga Camunda Modeler, y que vienen con las dependencias del Modeler—.
+Ninguna puede avisar de nada, tienen que ver todos los elementos BPMN y todas
+las marcas —lo que el motor lee del dibujo—, y lo que guardan, abierto otra vez
+con los descriptores del Modeler, tiene que ser lo mismo: guardar desde otra
+herramienta no pierde nada del simulador.
+
+Hasta la 5.1 no era así. Las listas de personas —quién hace cada tarea y la
+plantilla de cada carril, pool y proceso— se guardaban como elementos hijos
+directos, `<user:UserTask>Ana</user:UserTask>` dentro de la tarea, y el esquema
+de BPMN 2.0 solo admite elementos de otros espacios de nombres dentro de
+`bpmn:extensionElements`. Otra herramienta avisaba al abrir el fichero
+(*unparsable content*) y las descartaba. Desde la 5.2 van ahí, con las mismas
+etiquetas:
+
+```xml
+<bpmn:task id="Preparar" user:minimumTime="30" user:maximumTime="60">
+  <bpmn:extensionElements>
+    <user:userTask>Ana</user:userTask>
+  </bpmn:extensionElements>
+  ...
+```
+
+`valida_esquema.py` lo comprueba contra el **esquema oficial de BPMN 2.0**
+(`esquema-bpmn/`, los XSD de OMG con el espacio de nombres `20100524`), que es
+lo que mira una herramienta estricta antes de aceptar un fichero: todo
+`integracion/` y todo `integracion-con-error/` lo tiene que cumplir —están rotos
+para el simulador, no para BPMN—, salvo `--xml-mal-formado`, que sigue sin ser
+XML. Y todo `formato-anterior/` lo tiene que **incumplir**, por una lista del
+Modeler fuera de su sitio: si el esquema aceptara los ficheros de antes, no
+estaría distinguiendo nada. Necesita `lxml`, que viene con PM4Py.
+
+Los ficheros de antes se siguen abriendo: el Modeler los migra al abrirlos
+(`Modeler/lib/people/`). `formato-anterior/` tiene cuatro, guardados por el
+Modeler de la 5.1 —el `10` con las tres marcas puestas desde el menú de
+reemplazo, y uno del `01` con un rol añadido desde el panel—, y
+`valida_bpmn.mjs` les pasa esa misma migración: cada lista tiene que pasar
+entera a `extensionElements`, no quedar nada en el sitio antiguo, abrir sin
+avisos en las otras herramientas y, si hay uno del mismo nombre en
+`integracion/`, salir igual que él.
 
 Si cambia un modelo que tiene diagrama, se regenera con
 `python3 pruebas/bpmn_desde_reglas.py pruebas/modelos/<modelo>.txt` y se vuelve
@@ -388,10 +429,11 @@ contenedores, porque PM4Py lee las listas y se salta los contenedores.
 
 ## Un banco vacío no es un banco en verde
 
-Los tres comandos se niegan a comparar o congelar si falta un grupo de casos o
+Los comandos se niegan a comparar o congelar si falta un grupo de casos o
 está vacío: `modelos/`, `modelos-con-avisos/` y `modelos-con-error/` en el banco
 del motor, `integracion/` e `integracion-con-error/` en el de integración, y la
-carpeta de diagramas en `valida_bpmn.mjs`. Sin esa comprobación, perder una
+carpeta de diagramas y `formato-anterior/` en `valida_bpmn.mjs`, y las tres
+carpetas de diagramas en `valida_esquema.py`. Sin esa comprobación, perder una
 carpeta entera —modelos y referencias a la vez, en un merge— daba verde con
 menos casos, o con ninguno, sin decir nada.
 

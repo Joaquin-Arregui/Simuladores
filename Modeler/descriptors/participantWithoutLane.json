@@ -50,6 +50,18 @@
             "type": "String"
           }          
         ]
+      },
+      {
+        "name": "UserWithoutRole",
+        "superClass": [ "Element" ],
+        "meta": { "allowedIn": [ "bpmn:Participant" ] },
+        "properties": [
+          {
+            "name": "value",
+            "type": "String",
+            "isBody": true
+          }
+        ]
       }
     ]
   }

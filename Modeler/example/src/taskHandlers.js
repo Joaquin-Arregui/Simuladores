@@ -1,3 +1,5 @@
+import { PEOPLE_TYPES, entriesOf, peopleOf } from '../../lib/people/people.js';
+
 function getAllRelevantTasks(bpmnModeler) {
   const elementRegistry = bpmnModeler.get('elementRegistry');
   const canvas = bpmnModeler.get('canvas');
@@ -245,7 +247,8 @@ function getAllRelevantTasks(bpmnModeler) {
     const timerDef = evDefs.find((d) => d?.$type === 'bpmn:TimerEventDefinition');
     if (timerDef?.timeDuration?.body) time = (timerDef.timeDuration.body).trim();
 
-    const userTasks = arr(bo.UserTask).filter((s) => typeof s === 'string' && s.trim());
+    // Las listas de personas estan en extensionElements desde la 5.2 (lib/people).
+    const userTasks = peopleOf(bo, PEOPLE_TYPES.task).filter((s) => s.trim());
     const numberOfExecutions = bo.NumberOfExecutions ?? 1;
     const minimumTime = bo.minimumTime ?? 0;
 
@@ -285,10 +288,10 @@ function getAllRelevantTasks(bpmnModeler) {
         });
       }
       containedElements = [ ...new Set(containedElements) ].filter(id => relevantElementIds.has(id));
-      userWithoutRole = arr(bo.userWithoutRole).map((r) => String(r).trim()).filter(Boolean);
+      userWithoutRole = peopleOf(bo, PEOPLE_TYPES.participant).map((r) => r.trim()).filter(Boolean);
 
     } else if (isLane) {
-      userWithoutRole = arr(bo.userWithoutRole).map((r) => String(r).trim()).filter(Boolean);
+      userWithoutRole = peopleOf(bo, PEOPLE_TYPES.lane).map((r) => r.trim()).filter(Boolean);
       containedElements = ids(bo.flowNodeRef);
 
       // Un subcarril cuelga de un childLaneSet cuyo padre es otro carril.
@@ -298,23 +301,19 @@ function getAllRelevantTasks(bpmnModeler) {
     } else if (isProcess) {
       if (bo.instance !== undefined) instance = bo.instance;
 
-      if (Array.isArray(bo.userWithRole)) {
-        userWithRoleReturn = Object.fromEntries(
-          bo.userWithRole
-            .filter((kv) => kv?.key)
-            .map((kv) => [
-              kv.key,
-              String(kv.value ?? '')
-                .split(',')
-                .map((s) => s.trim())
-                .filter(Boolean)
-            ])
-        );
-      } else if (bo.userWithRole && typeof bo.userWithRole === 'object') {
-        userWithRoleReturn = bo.userWithRole;
-      }
+      userWithRoleReturn = Object.fromEntries(
+        entriesOf(bo, PEOPLE_TYPES.roles)
+          .filter((kv) => kv?.key)
+          .map((kv) => [
+            kv.key,
+            String(kv.value ?? '')
+              .split(',')
+              .map((s) => s.trim())
+              .filter(Boolean)
+          ])
+      );
 
-      userWithoutRole = [ ...new Set(arr(bo.userWithoutRole).filter(Boolean)) ];
+      userWithoutRole = [ ...new Set(peopleOf(bo, PEOPLE_TYPES.process).filter(Boolean)) ];
       if (bo.frequency !== undefined) frequency = bo.frequency;
 
       const defaults = defaultsByProcessId.get(bo.id) || {};

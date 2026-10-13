@@ -2,11 +2,15 @@
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:collab="http://collaboration" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:participantWithoutLane="http://participantWithoutLane" xmlns:user="http://user" id="Definitions_10_convocatoria_1_a_n" targetNamespace="http://bpmn.io/schema/bpmn" exporter="my-bpmn-exporter" exporterVersion="1.0.0">
   <bpmn:collaboration id="Colaboracion" collab:instance="1">
     <bpmn:participant id="Pool_Orquestador" name="Orquestador" processRef="Process_Pool_Orquestador" participantWithoutLane:frequency="0">
-      <participantWithoutLane:userWithoutRole>Ana</participantWithoutLane:userWithoutRole>
+      <bpmn:extensionElements>
+        <participantWithoutLane:userWithoutRole>Ana</participantWithoutLane:userWithoutRole>
+      </bpmn:extensionElements>
       <bpmn:participantMultiplicity />
     </bpmn:participant>
     <bpmn:participant id="Pool_Orquestado" name="Orquestado" processRef="Process_Pool_Orquestado" participantWithoutLane:frequency="15">
-      <participantWithoutLane:userWithoutRole>Beto</participantWithoutLane:userWithoutRole>
+      <bpmn:extensionElements>
+        <participantWithoutLane:userWithoutRole>Beto</participantWithoutLane:userWithoutRole>
+      </bpmn:extensionElements>
       <bpmn:participantMultiplicity />
     </bpmn:participant>
     <bpmn:messageFlow id="Convocatoria" name="Convocatoria" sourceRef="Convocar" targetRef="Esperar_Convocatoria" />
@@ -18,18 +22,24 @@
       <bpmn:outgoing>o1</bpmn:outgoing>
     </bpmn:startEvent>
     <bpmn:sendTask id="Convocar" name="Publicar la convocatoria" user:NumberOfExecutions="1" user:minimumTime="2" user:maximumTime="2">
-      <user:UserTask>Ana</user:UserTask>
+      <bpmn:extensionElements>
+        <user:userTask>Ana</user:userTask>
+      </bpmn:extensionElements>
       <bpmn:incoming>o1</bpmn:incoming>
       <bpmn:outgoing>o2</bpmn:outgoing>
       <bpmn:multiInstanceLoopCharacteristics />
     </bpmn:sendTask>
     <bpmn:receiveTask id="Recoger" name="Recoger una solicitud" user:NumberOfExecutions="1" user:minimumTime="5" user:maximumTime="5">
-      <user:UserTask>Ana</user:UserTask>
+      <bpmn:extensionElements>
+        <user:userTask>Ana</user:userTask>
+      </bpmn:extensionElements>
       <bpmn:incoming>o2</bpmn:incoming>
       <bpmn:outgoing>o3</bpmn:outgoing>
     </bpmn:receiveTask>
     <bpmn:sendTask id="Responder" name="Responder a una solicitud" user:NumberOfExecutions="1" user:minimumTime="3" user:maximumTime="3">
-      <user:UserTask>Ana</user:UserTask>
+      <bpmn:extensionElements>
+        <user:userTask>Ana</user:userTask>
+      </bpmn:extensionElements>
       <bpmn:incoming>o3</bpmn:incoming>
       <bpmn:outgoing>o4</bpmn:outgoing>
       <bpmn:multiInstanceLoopCharacteristics />
@@ -47,17 +57,23 @@
       <bpmn:outgoing>r1</bpmn:outgoing>
     </bpmn:startEvent>
     <bpmn:receiveTask id="Esperar_Convocatoria" name="Esperar la convocatoria" user:NumberOfExecutions="1" user:minimumTime="2" user:maximumTime="2">
-      <user:UserTask>Beto</user:UserTask>
+      <bpmn:extensionElements>
+        <user:userTask>Beto</user:userTask>
+      </bpmn:extensionElements>
       <bpmn:incoming>r1</bpmn:incoming>
       <bpmn:outgoing>r2</bpmn:outgoing>
     </bpmn:receiveTask>
     <bpmn:sendTask id="Solicitar" name="Enviar la solicitud" user:NumberOfExecutions="1" user:minimumTime="4" user:maximumTime="4">
-      <user:UserTask>Beto</user:UserTask>
+      <bpmn:extensionElements>
+        <user:userTask>Beto</user:userTask>
+      </bpmn:extensionElements>
       <bpmn:incoming>r2</bpmn:incoming>
       <bpmn:outgoing>r3</bpmn:outgoing>
     </bpmn:sendTask>
     <bpmn:receiveTask id="Esperar_Resultado" name="Esperar el resultado" user:NumberOfExecutions="1" user:minimumTime="2" user:maximumTime="2">
-      <user:UserTask>Beto</user:UserTask>
+      <bpmn:extensionElements>
+        <user:userTask>Beto</user:userTask>
+      </bpmn:extensionElements>
       <bpmn:incoming>r3</bpmn:incoming>
       <bpmn:outgoing>r4</bpmn:outgoing>
     </bpmn:receiveTask>

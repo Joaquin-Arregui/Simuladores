@@ -2,10 +2,14 @@
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:collab="http://collaboration" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:participantWithoutLane="http://participantWithoutLane" xmlns:user="http://user" id="Definitions_09_eventos_de_mensaje" targetNamespace="http://bpmn.io/schema/bpmn" exporter="my-bpmn-exporter" exporterVersion="1.0.0">
   <bpmn:collaboration id="Colaboracion" collab:instance="2">
     <bpmn:participant id="Pool_Taller" name="Taller" processRef="Process_Pool_Taller" participantWithoutLane:frequency="0">
-      <participantWithoutLane:userWithoutRole>Ana</participantWithoutLane:userWithoutRole>
+      <bpmn:extensionElements>
+        <participantWithoutLane:userWithoutRole>Ana</participantWithoutLane:userWithoutRole>
+      </bpmn:extensionElements>
     </bpmn:participant>
     <bpmn:participant id="Pool_Dueno" name="Dueno" processRef="Process_Pool_Dueno" participantWithoutLane:frequency="40">
-      <participantWithoutLane:userWithoutRole>Beto</participantWithoutLane:userWithoutRole>
+      <bpmn:extensionElements>
+        <participantWithoutLane:userWithoutRole>Beto</participantWithoutLane:userWithoutRole>
+      </bpmn:extensionElements>
     </bpmn:participant>
     <bpmn:messageFlow id="Aviso" name="Listo" sourceRef="Avisar_Listo" targetRef="Esperar_Aviso" />
     <bpmn:messageFlow id="Recogido" name="Recogido" sourceRef="Avisar_Recogido" targetRef="Confirmar" />
@@ -15,7 +19,9 @@
       <bpmn:outgoing>t1</bpmn:outgoing>
     </bpmn:startEvent>
     <bpmn:task id="Reparar" name="Reparar el coche" user:NumberOfExecutions="1" user:minimumTime="20" user:maximumTime="30">
-      <user:UserTask>Ana</user:UserTask>
+      <bpmn:extensionElements>
+        <user:userTask>Ana</user:userTask>
+      </bpmn:extensionElements>
       <bpmn:incoming>t1</bpmn:incoming>
       <bpmn:outgoing>t2</bpmn:outgoing>
     </bpmn:task>
@@ -47,7 +53,9 @@
       <bpmn:messageEventDefinition id="MessageEventDefinition_Esperar_Aviso" />
     </bpmn:intermediateCatchEvent>
     <bpmn:task id="Recoger" name="Recoger el coche" user:NumberOfExecutions="1" user:minimumTime="5" user:maximumTime="10">
-      <user:UserTask>Beto</user:UserTask>
+      <bpmn:extensionElements>
+        <user:userTask>Beto</user:userTask>
+      </bpmn:extensionElements>
       <bpmn:incoming>d2</bpmn:incoming>
       <bpmn:outgoing>d3</bpmn:outgoing>
     </bpmn:task>

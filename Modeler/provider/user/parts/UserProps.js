@@ -5,6 +5,8 @@ import htm from 'htm';
 import { useService } from 'bpmn-js-properties-panel';
 import { TextFieldEntry, SelectEntry } from '@bpmn-io/properties-panel';
 
+import { PEOPLE_TYPES, peopleOf, setPeople } from '../../../lib/people/people.js';
+
 const html = htm.bind(h);
 
 export default function(element) {
@@ -68,49 +70,38 @@ export default function(element) {
 function UserFunction(props) {
   const { element } = props;
   const modeling = useService('modeling');
+  const moddle = useService('moddle');
   const translate = useService('translate');
 
+  // Quien puede hacer la tarea -personas o roles-, dentro de extensionElements (5.2).
   const getUserTaskList = () => {
     if (!element || !element.businessObject) {
       return [];
     }
-
-    // Asegurar que UserTask es un array
-    const userTask = element.businessObject.UserTask;
-    return Array.isArray(userTask) ? userTask : (userTask ? [ userTask ] : []);
+    return peopleOf(element.businessObject, PEOPLE_TYPES.task);
   };
 
+  const setUserTaskList = (list) => {
+    setPeople({ modeling, moddle }, element, element.businessObject, PEOPLE_TYPES.task, list);
+  };
 
   // Actualiza el valor de una tarea en una posición específica
   const updateUserTask = (index, value) => {
-    const userTaskList = getUserTaskList();
-    const updatedUserTaskList = [ ...userTaskList ];
+    const updatedUserTaskList = [ ...getUserTaskList() ];
     updatedUserTaskList[index] = value;
-
-    modeling.updateProperties(element, {
-      UserTask: updatedUserTaskList
-    });
+    setUserTaskList(updatedUserTaskList);
   };
 
   // Elimina una tarea de la lista
   const removeUserTask = (index) => {
-    const userTaskList = getUserTaskList();
-    const updatedUserTaskList = [ ...userTaskList ];
+    const updatedUserTaskList = [ ...getUserTaskList() ];
     updatedUserTaskList.splice(index, 1);
-
-    modeling.updateProperties(element, {
-      UserTask: updatedUserTaskList
-    });
+    setUserTaskList(updatedUserTaskList);
   };
 
   // Agrega una nueva tarea vacía
   const addUserTask = () => {
-    const userTaskList = getUserTaskList();
-    const updatedUserTaskList = [ ...userTaskList, '' ];
-
-    modeling.updateProperties(element, {
-      UserTask: updatedUserTaskList
-    });
+    setUserTaskList([ ...getUserTaskList(), '' ]);
   };
 
   // Renderiza las entradas individuales para las tareas
@@ -611,13 +602,7 @@ function isListOfStringEntryEdited(element) {
     return false;
   }
 
-  const userTaskValues = element.businessObject.UserTask;
-
-  if (!Array.isArray(userTaskValues)) {
-    return false;
-  }
-
-  return userTaskValues.some(value => typeof value === 'string' && value !== '');
+  return peopleOf(element.businessObject, PEOPLE_TYPES.task).some(value => value !== '');
 }
 
 function isNumberEntryEdited(element) {

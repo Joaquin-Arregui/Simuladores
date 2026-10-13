@@ -2,6 +2,8 @@ import { html } from 'htm/preact';
 import { useService } from 'bpmn-js-properties-panel';
 import { TextFieldEntry } from '@bpmn-io/properties-panel';
 
+import { PEOPLE_TYPES, entriesOf, peopleOf, setEntries, setPeople } from '../../../lib/people/people.js';
+
 
 export default function(element) {
   return [
@@ -15,7 +17,7 @@ export default function(element) {
       id: 'userWithRole',
       element,
       component: userWithRoleFunction,
-      isEdited: element => isStringEntryEdited(element, 'userWithRole')
+      isEdited: isRoleListEntryEdited
     },
     {
       id: 'instance',
@@ -173,43 +175,35 @@ function frequencyFunction(props) {
 function userWithoutRoleFunction(props) {
   const { element } = props;
   const modeling = useService('modeling');
+  const moddle = useService('moddle');
   const translate = useService('translate');
 
+  // Las personas sin rol del proceso, dentro de extensionElements (5.2).
   const getUserWithoutRoleList = () => {
     if (!element || !element.businessObject) {
       return [];
     }
-    return element.businessObject.userWithoutRole || [];
+    return peopleOf(element.businessObject, PEOPLE_TYPES.process);
+  };
+
+  const setUserWithoutRoleList = (list) => {
+    setPeople({ modeling, moddle }, element, element.businessObject, PEOPLE_TYPES.process, list);
   };
 
   const updateUserWithoutRole = (index, value) => {
-    const userWithoutRoleList = getUserWithoutRoleList();
-    const updatedUserWithoutRoleList = [ ...userWithoutRoleList ];
+    const updatedUserWithoutRoleList = [ ...getUserWithoutRoleList() ];
     updatedUserWithoutRoleList[index] = value;
-
-    modeling.updateProperties(element, {
-      userWithoutRole: updatedUserWithoutRoleList
-    });
-    console.log(element.businessObject.userWithoutRole);
+    setUserWithoutRoleList(updatedUserWithoutRoleList);
   };
 
   const removeUserWithoutRole = (index) => {
-    const userWithoutRoleList = getUserWithoutRoleList();
-    const updatedUserWithoutRoleList = [ ...userWithoutRoleList ];
+    const updatedUserWithoutRoleList = [ ...getUserWithoutRoleList() ];
     updatedUserWithoutRoleList.splice(index, 1);
-
-    modeling.updateProperties(element, {
-      userWithoutRole: updatedUserWithoutRoleList
-    });
+    setUserWithoutRoleList(updatedUserWithoutRoleList);
   };
 
   const addUserWithoutRole = () => {
-    const userWithoutRoleList = getUserWithoutRoleList();
-    const updatedUserWithoutRoleList = [ ...userWithoutRoleList, '' ];
-
-    modeling.updateProperties(element, {
-      userWithoutRole: updatedUserWithoutRoleList
-    });
+    setUserWithoutRoleList([ ...getUserWithoutRoleList(), '' ]);
   };
 
   const renderUserWithoutRoleEntries = () => {
@@ -252,38 +246,33 @@ function userWithRoleFunction(props) {
   const translate = useService('translate');
   const moddle = useService('moddle'); // <--- Importante
 
+  // Los roles del proceso, model:KeyValuePair dentro de extensionElements (5.2).
   const getuserWithRole = () => {
     if (!element || !element.businessObject) return [];
 
     if (element.businessObject.participants) {
       const firstParticipant = element.businessObject.participants[0];
       if (firstParticipant?.processRef) {
-        return Array.isArray(firstParticipant.processRef.userWithRole)
-          ? firstParticipant.processRef.userWithRole
-          : [];
+        return entriesOf(firstParticipant.processRef, PEOPLE_TYPES.roles);
       }
     }
 
-    return Array.isArray(element.businessObject.userWithRole)
-      ? element.businessObject.userWithRole
-      : [];
+    return entriesOf(element.businessObject, PEOPLE_TYPES.roles);
   };
 
   const setuserWithRole = (updatedArray) => {
 
-    // Collaboration
+    // Collaboration: cada proceso con sus propias entradas, que una entrada
+    // solo puede colgar de un extensionElements.
     if (element.businessObject.participants) {
       element.businessObject.participants.forEach(participant => {
         if (participant.processRef) {
-          modeling.updateModdleProperties(element, participant.processRef, {
-            userWithRole: updatedArray
-          });
+          const copies = updatedArray.map(pair => moddle.create(PEOPLE_TYPES.roles, { key: pair.key, value: pair.value }));
+          setEntries({ modeling, moddle }, element, participant.processRef, PEOPLE_TYPES.roles, copies);
         }
       });
     } else {
-      modeling.updateProperties(element, {
-        userWithRole: updatedArray
-      });
+      setEntries({ modeling, moddle }, element, element.businessObject, PEOPLE_TYPES.roles, updatedArray);
     }
   };
 
@@ -385,14 +374,12 @@ function isNumberEntryEdited(element) {
   return nuValue;
 }
 
-function isStringEntryEdited(element, attributeName) {
+function isRoleListEntryEdited(element) {
   if (!element || !element.businessObject) {
     return false;
   }
 
-  const value = element.businessObject[attributeName];
-
-  return typeof value === 'string' && value.trim() !== '';
+  return entriesOf(element.businessObject, PEOPLE_TYPES.roles).some(pair => pair.key || pair.value);
 }
 
 function isListOfStringEntryEdited(element) {
@@ -400,13 +387,6 @@ function isListOfStringEntryEdited(element) {
     return false;
   }
 
-  const userWithoutRoleValues = element.businessObject.userWithoutRole;
-
-  // Verificamos que userWithoutRole es un array
-  if (!Array.isArray(userWithoutRoleValues)) {
-    return false;
-  }
-
   // Retornamos true si al menos un elemento en la lista no es un string vacío
-  return userWithoutRoleValues.some(value => typeof value === 'string' && value !== '');
+  return peopleOf(element.businessObject, PEOPLE_TYPES.process).some(value => value !== '');
 }

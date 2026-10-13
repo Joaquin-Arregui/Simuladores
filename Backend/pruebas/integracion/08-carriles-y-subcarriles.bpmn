@@ -2,7 +2,9 @@
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:collab="http://collaboration" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:lane="http://lane" xmlns:participantWithoutLane="http://participantWithoutLane" xmlns:user="http://user" id="Definitions_08_carriles_y_subcarriles" targetNamespace="http://bpmn.io/schema/bpmn" exporter="my-bpmn-exporter" exporterVersion="1.0.0">
   <bpmn:collaboration id="Colaboracion" collab:instance="2">
     <bpmn:participant id="Pool_Cliente" name="Cliente" processRef="Process_Pool_Cliente" participantWithoutLane:frequency="50">
-      <participantWithoutLane:userWithoutRole>Carla</participantWithoutLane:userWithoutRole>
+      <bpmn:extensionElements>
+        <participantWithoutLane:userWithoutRole>Carla</participantWithoutLane:userWithoutRole>
+      </bpmn:extensionElements>
     </bpmn:participant>
     <bpmn:participant id="Pool_Banco" name="Banco" processRef="Process_Pool_Banco" participantWithoutLane:frequency="0" />
     <bpmn:messageFlow id="Mensaje_Solicitud" name="Solicitud" sourceRef="Pedir_Prestamo" targetRef="Recibir_Solicitud" />
@@ -13,12 +15,16 @@
       <bpmn:outgoing>Flujo_C1</bpmn:outgoing>
     </bpmn:startEvent>
     <bpmn:sendTask id="Pedir_Prestamo" name="Pedir el prestamo" user:NumberOfExecutions="1" user:minimumTime="10" user:maximumTime="20">
-      <user:UserTask>Carla</user:UserTask>
+      <bpmn:extensionElements>
+        <user:userTask>Carla</user:userTask>
+      </bpmn:extensionElements>
       <bpmn:incoming>Flujo_C1</bpmn:incoming>
       <bpmn:outgoing>Flujo_C2</bpmn:outgoing>
     </bpmn:sendTask>
     <bpmn:receiveTask id="Esperar_Resultado" name="Esperar el resultado" user:NumberOfExecutions="1" user:minimumTime="5" user:maximumTime="10">
-      <user:UserTask>Carla</user:UserTask>
+      <bpmn:extensionElements>
+        <user:userTask>Carla</user:userTask>
+      </bpmn:extensionElements>
       <bpmn:incoming>Flujo_C2</bpmn:incoming>
       <bpmn:outgoing>Flujo_C3</bpmn:outgoing>
     </bpmn:receiveTask>
@@ -32,8 +38,10 @@
   <bpmn:process id="Process_Pool_Banco" isExecutable="false">
     <bpmn:laneSet id="LaneSet_Carril_Oficina">
       <bpmn:lane id="Carril_Oficina" name="Oficina">
-        <lane:userWithoutRole>Ana</lane:userWithoutRole>
-        <lane:userWithoutRole>Bruno</lane:userWithoutRole>
+        <bpmn:extensionElements>
+          <lane:userWithoutRole>Ana</lane:userWithoutRole>
+          <lane:userWithoutRole>Bruno</lane:userWithoutRole>
+        </bpmn:extensionElements>
         <bpmn:flowNodeRef>Inicio_B</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>Recibir_Solicitud</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>Valorar_Riesgo</bpmn:flowNodeRef>
@@ -42,14 +50,18 @@
         <bpmn:flowNodeRef>Fin_B</bpmn:flowNodeRef>
         <bpmn:childLaneSet id="LaneSet_Carril_Riesgos">
           <bpmn:lane id="Carril_Riesgos" name="Riesgos">
-            <lane:userWithoutRole>Clara</lane:userWithoutRole>
+            <bpmn:extensionElements>
+              <lane:userWithoutRole>Clara</lane:userWithoutRole>
+            </bpmn:extensionElements>
             <bpmn:flowNodeRef>Valorar_Riesgo</bpmn:flowNodeRef>
           </bpmn:lane>
           <bpmn:lane id="Carril_Caja" name="Caja">
             <bpmn:flowNodeRef>Cobrar_Comision</bpmn:flowNodeRef>
           </bpmn:lane>
           <bpmn:lane id="Carril_Reserva" name="Reserva">
-            <lane:userWithoutRole>Diana</lane:userWithoutRole>
+            <bpmn:extensionElements>
+              <lane:userWithoutRole>Diana</lane:userWithoutRole>
+            </bpmn:extensionElements>
           </bpmn:lane>
         </bpmn:childLaneSet>
       </bpmn:lane>
@@ -58,23 +70,31 @@
       <bpmn:outgoing>Flujo_B1</bpmn:outgoing>
     </bpmn:startEvent>
     <bpmn:receiveTask id="Recibir_Solicitud" name="Recibir la solicitud" user:NumberOfExecutions="1" user:minimumTime="5" user:maximumTime="10">
-      <user:UserTask>Ana</user:UserTask>
-      <user:UserTask>Bruno</user:UserTask>
+      <bpmn:extensionElements>
+        <user:userTask>Ana</user:userTask>
+        <user:userTask>Bruno</user:userTask>
+      </bpmn:extensionElements>
       <bpmn:incoming>Flujo_B1</bpmn:incoming>
       <bpmn:outgoing>Flujo_B2</bpmn:outgoing>
     </bpmn:receiveTask>
     <bpmn:task id="Valorar_Riesgo" name="Valorar el riesgo" user:NumberOfExecutions="1" user:minimumTime="40" user:maximumTime="40">
-      <user:UserTask>Clara</user:UserTask>
+      <bpmn:extensionElements>
+        <user:userTask>Clara</user:userTask>
+      </bpmn:extensionElements>
       <bpmn:incoming>Flujo_B2</bpmn:incoming>
       <bpmn:outgoing>Flujo_B3</bpmn:outgoing>
     </bpmn:task>
     <bpmn:task id="Cobrar_Comision" name="Cobrar la comision" user:NumberOfExecutions="1" user:minimumTime="10" user:maximumTime="20">
-      <user:UserTask>Bruno</user:UserTask>
+      <bpmn:extensionElements>
+        <user:userTask>Bruno</user:userTask>
+      </bpmn:extensionElements>
       <bpmn:incoming>Flujo_B3</bpmn:incoming>
       <bpmn:outgoing>Flujo_B4</bpmn:outgoing>
     </bpmn:task>
     <bpmn:sendTask id="Enviar_Resultado" name="Enviar el resultado" user:NumberOfExecutions="1" user:minimumTime="10" user:maximumTime="20">
-      <user:UserTask>Ana</user:UserTask>
+      <bpmn:extensionElements>
+        <user:userTask>Ana</user:userTask>
+      </bpmn:extensionElements>
       <bpmn:incoming>Flujo_B4</bpmn:incoming>
       <bpmn:outgoing>Flujo_B5</bpmn:outgoing>
     </bpmn:sendTask>

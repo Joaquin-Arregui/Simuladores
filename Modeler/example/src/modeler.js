@@ -9,6 +9,7 @@ import { BpmnPropertiesPanelModule, BpmnPropertiesProviderModule } from 'bpmn-js
 import download from 'downloadjs';
 
 import resizeAllModule from '../../lib/resize-all-rules';
+import legacyPeopleModule from '../../lib/people';
 import propertiesProviderModule from '../../provider/properties';
 import userModdleDescriptor from '../../descriptors/user.json';
 import sequenceFlowExtension from '../../descriptors/sequenceFlow.json';
@@ -34,6 +35,7 @@ document.addEventListener('DOMContentLoaded', function() {
       BpmnPropertiesProviderModule,
       propertiesProviderModule,
       resizeAllModule,
+      legacyPeopleModule,
       AddExporter
     ],
     exporter: { name: 'my-bpmn-exporter', version: '1.0.0' },
@@ -340,42 +342,15 @@ document.addEventListener('DOMContentLoaded', function() {
   // ----------------------------
   async function sanitizeModel(modeler) {
     const modeling = modeler.get('modeling');
-    const moddle = modeler.get('moddle');
     const commandStack = modeler.get('commandStack');
     const elementRegistry = modeler.get('elementRegistry');
 
     const canvasRoot = modeler.get('canvas').getRootElement();
     const definitions = canvasRoot.businessObject.$parent;
 
-    // Reparar userWithRole
-    elementRegistry.filter(e => e.type === 'bpmn:Process').forEach(procShape => {
-      const bo = procShape.businessObject;
-
-      if (bo.userWithRole && !Array.isArray(bo.userWithRole)) {
-        const arr = Object.entries(bo.userWithRole).map(([ key, val ]) =>
-          moddle.create('model:KeyValuePair', {
-            key,
-            value: Array.isArray(val) ? val.join(',') : String(val ?? '')
-          })
-        );
-        modeling.updateModdleProperties(procShape, bo, { userWithRole: arr });
-      }
-
-      if (Array.isArray(bo.userWithRole)) {
-        const needsFix = bo.userWithRole.some(x => !x || !x.$descriptor);
-        if (needsFix) {
-          const arr = bo.userWithRole
-            .filter(Boolean)
-            .map(x => {
-              if (x && x.$descriptor) return x;
-              const key = String(x?.key ?? x?.role ?? '');
-              const value = x?.value != null ? String(x.value) : Array.isArray(x?.users) ? x.users.join(',') : '';
-              return moddle.create('model:KeyValuePair', { key, value });
-            });
-          modeling.updateModdleProperties(procShape, bo, { userWithRole: arr });
-        }
-      }
-    });
+    // Los roles del proceso ya no se reparan aqui: desde la 5.2 son entradas
+    // model:KeyValuePair de extensionElements, que solo crean los paneles y la
+    // apertura de ficheros antiguos (lib/people).
 
     // Filtrar rootElements inválidos
     if (definitions && Array.isArray(definitions.rootElements)) {

@@ -2,15 +2,21 @@
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:collab="http://collaboration" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:participantWithoutLane="http://participantWithoutLane" xmlns:user="http://user" id="Definitions_34_llegadas_con_decimales" targetNamespace="http://bpmn.io/schema/bpmn" exporter="my-bpmn-exporter" exporterVersion="1.0.0">
   <bpmn:collaboration id="Colaboracion" collab:instance="1">
     <bpmn:participant id="Pool_Orquestador" name="Orquestador" processRef="Process_Pool_Orquestador" participantWithoutLane:frequency="0" participantWithoutLane:instances="2" participantWithoutLane:orchestrationRole="orchestrator">
-      <participantWithoutLane:userWithoutRole>Ana</participantWithoutLane:userWithoutRole>
+      <bpmn:extensionElements>
+        <participantWithoutLane:userWithoutRole>Ana</participantWithoutLane:userWithoutRole>
+      </bpmn:extensionElements>
       <bpmn:participantMultiplicity />
     </bpmn:participant>
     <bpmn:participant id="Pool_Escalonado" name="Escalonado" processRef="Process_Pool_Escalonado" participantWithoutLane:frequency="0.1" participantWithoutLane:instances="4" participantWithoutLane:orchestrationRole="orchestrated" participantWithoutLane:infiniteResources="true" participantWithoutLane:arrivalMode="staggered">
-      <participantWithoutLane:userWithoutRole>Beto</participantWithoutLane:userWithoutRole>
+      <bpmn:extensionElements>
+        <participantWithoutLane:userWithoutRole>Beto</participantWithoutLane:userWithoutRole>
+      </bpmn:extensionElements>
       <bpmn:participantMultiplicity />
     </bpmn:participant>
     <bpmn:participant id="Pool_Uniforme" name="Uniforme" processRef="Process_Pool_Uniforme" participantWithoutLane:frequency="0" participantWithoutLane:instances="2" participantWithoutLane:orchestrationRole="orchestrated" participantWithoutLane:infiniteResources="true" participantWithoutLane:arrivalMode="uniform" participantWithoutLane:arrivalWindow="3">
-      <participantWithoutLane:userWithoutRole>Dario</participantWithoutLane:userWithoutRole>
+      <bpmn:extensionElements>
+        <participantWithoutLane:userWithoutRole>Dario</participantWithoutLane:userWithoutRole>
+      </bpmn:extensionElements>
       <bpmn:participantMultiplicity />
     </bpmn:participant>
   </bpmn:collaboration>
@@ -19,7 +25,9 @@
       <bpmn:outgoing>o1</bpmn:outgoing>
     </bpmn:startEvent>
     <bpmn:task id="Abrir" name="Abrir el plazo" user:NumberOfExecutions="1" user:minimumTime="1" user:maximumTime="1">
-      <user:UserTask>Ana</user:UserTask>
+      <bpmn:extensionElements>
+        <user:userTask>Ana</user:userTask>
+      </bpmn:extensionElements>
       <bpmn:incoming>o1</bpmn:incoming>
       <bpmn:outgoing>o2</bpmn:outgoing>
     </bpmn:task>
@@ -34,7 +42,9 @@
       <bpmn:outgoing>e1</bpmn:outgoing>
     </bpmn:startEvent>
     <bpmn:task id="Atender_E" name="Atender" user:NumberOfExecutions="1" user:minimumTime="5" user:maximumTime="5">
-      <user:UserTask>Beto</user:UserTask>
+      <bpmn:extensionElements>
+        <user:userTask>Beto</user:userTask>
+      </bpmn:extensionElements>
       <bpmn:incoming>e1</bpmn:incoming>
       <bpmn:outgoing>e2</bpmn:outgoing>
     </bpmn:task>
@@ -49,7 +59,9 @@
       <bpmn:outgoing>u1</bpmn:outgoing>
     </bpmn:startEvent>
     <bpmn:task id="Atender_U" name="Atender" user:NumberOfExecutions="1" user:minimumTime="1" user:maximumTime="1">
-      <user:UserTask>Dario</user:UserTask>
+      <bpmn:extensionElements>
+        <user:userTask>Dario</user:userTask>
+      </bpmn:extensionElements>
       <bpmn:incoming>u1</bpmn:incoming>
       <bpmn:outgoing>u2</bpmn:outgoing>
     </bpmn:task>

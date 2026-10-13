@@ -4,7 +4,7 @@
 //
 // Sin argumento revisa pruebas/integracion/. Abre cada diagrama con
 // bpmn-moddle -la libreria con la que bpmn-js importa un diagrama- y con los
-// descriptores del Modeler, y comprueba tres cosas:
+// descriptores del Modeler, y comprueba:
 //
 // 1. Que bpmn-moddle lo entiende entero: nada desconocido, nada sin resolver.
 // 2. Que cada elemento dibujable tiene su forma en el DI, o el Modeler no
@@ -13,12 +13,16 @@
 //    que alguien abre un diagrama y lo vuelve a guardar, y es donde se ve que
 //    una propiedad esta mal escrita: una lista de usuarios escrita como
 //    atributo se abre como una cadena y se guarda letra a letra.
-// 4. Que abre en otra herramienta (3.1): con bpmn-moddle SIN los descriptores
-//    del Modeler, que es como lo ve cualquier otra herramienta, tienen que
-//    seguir ahi todos los elementos BPMN y todas las marcas -multiinstancia y
-//    multiplicidad-, que son las que el motor lee del dibujo. Lo unico que se
-//    tolera que no entienda son los elementos propios del Modeler, y se cuentan:
-//    que otra herramienta los abra sin avisos es la 5.2.
+// 4. Que abre en otra herramienta sin avisos (3.1, 5.2): con bpmn-moddle SIN
+//    los descriptores del Modeler, que es como lo ve cualquier otra
+//    herramienta, y con los de Camunda 7 y Camunda 8 -camunda-bpmn-moddle y
+//    zeebe-bpmn-moddle, los que carga Camunda Modeler-. Ningun aviso: hasta la
+//    5.1 las listas de personas eran hijos directos de cada elemento, y otra
+//    herramienta avisaba y las descartaba; ahora van en bpmn:extensionElements.
+//    Tienen que seguir ahi todos los elementos BPMN y todas las marcas
+//    -multiinstancia y multiplicidad-, que son las que el motor lee del dibujo.
+//    Y guardarlo desde esa herramienta no pierde nada del Modeler: al abrir lo
+//    que ella guarda, con los descriptores, sale lo mismo.
 // 5. Que los atributos propios de cada pool (5.1) -frequency, instances,
 //    orchestrationRole, infiniteResources, arrivalMode y arrivalWindow- salen
 //    de abrir y guardar escritos igual que estaban en el fichero, y que los
@@ -26,6 +30,13 @@
 //    con lo reabierto, y si el descriptor lee mal un valor -frequency=0.1 como
 //    entero se queda en 0- la primera lectura ya lo ha perdido y la segunda
 //    coincide con ella. Aqui se compara el texto, leido sin descriptores.
+// 6. Que los diagramas del formato anterior a la 5.2 se siguen abriendo
+//    (formato-anterior/, guardados por el Modeler de entonces): con la
+//    migracion del propio Modeler -Modeler/lib/people/people.js, la que hace
+//    al abrir un fichero- cada lista pasa entera a extensionElements, no queda
+//    nada en el sitio antiguo, lo que sale abre sin avisos en las otras
+//    herramientas, y si hay un diagrama del mismo nombre en integracion/ sale
+//    igual que el.
 //
 // Es independiente de validation.py a proposito: si el generador y la
 // validacion del Backend compartieran un malentendido sobre el BPMN, aqui
@@ -48,8 +59,19 @@ const moddle = new BpmnModdle({
   participantWithoutLane: descriptor('participantWithoutLane')
 });
 
+// La migracion del Modeler, la misma que hace al abrir un fichero.
+const { migrateLegacyPeople, entriesOf, PEOPLE_TYPES } =
+  await import(pathToFileURL(join(modeler, 'lib', 'people', 'people.js')).href);
+
+const json = ruta => JSON.parse(readFileSync(require.resolve(ruta), 'utf8'));
 const otraHerramienta = new BpmnModdle();
-const PREFIJOS_DEL_MODELER = ['user', 'participantWithoutLane', 'lane', 'model', 'collab', 'sequenceFlow'];
+// Como abre un fichero Camunda Modeler: bpmn-moddle con sus descriptores. Vienen
+// con las dependencias del Modeler (las pide bpmn-js-properties-panel).
+const OTRAS_HERRAMIENTAS = [
+  ['bpmn-moddle', otraHerramienta],
+  ['Camunda 7', new BpmnModdle({ camunda: json('camunda-bpmn-moddle/resources/camunda.json') })],
+  ['Camunda 8', new BpmnModdle({ zeebe: json('zeebe-bpmn-moddle/resources/zeebe.json') })]
+];
 const DIBUJABLES = new Set(['bpmn:Participant', 'bpmn:Lane', 'bpmn:SequenceFlow', 'bpmn:MessageFlow']);
 
 function recorre(e, visita, vistos = new Set()) {
@@ -140,6 +162,36 @@ async function atributosDelPool(xml, guardado, rootElement) {
   return { problemas, cuantos };
 }
 
+// (4) Lo que no cuadra al abrir el diagrama en cada otra herramienta, y
+// cuantas marcas ve.
+async function enOtrasHerramientas(xml, conModeler) {
+  const problemas = [];
+  let marcas = 0;
+  for (const [nombre, herramienta] of OTRAS_HERRAMIENTAS) {
+    const ajeno = await herramienta.fromXML(xml);
+    for (const w of ajeno.warnings) problemas.push(`${nombre}: ${w.message.split('\n')[0]}`);
+    const sinModeler = instantanea(ajeno.rootElement);
+    marcas = 0;
+    for (const [clave, { tipo, props }] of Object.entries(conModeler)) {
+      if (!tipo.startsWith('bpmn:')) continue;
+      const visto = sinModeler[clave];
+      const esMarca = tipo === 'bpmn:MultiInstanceLoopCharacteristics' || tipo === 'bpmn:ParticipantMultiplicity';
+      if (esMarca) marcas += 1;
+      if (!visto || visto.tipo !== tipo) {
+        problemas.push(`${nombre}: no ve ${clave} (${tipo})`);
+      } else if (esMarca && JSON.stringify(visto.props.isSequential) !== JSON.stringify(props.isSequential)) {
+        problemas.push(`${nombre}: lee ${clave} con otro isSequential`);
+      }
+    }
+    const { xml: suyo } = await herramienta.toXML(ajeno.rootElement);
+    const { rootElement: devuelto } = await moddle.fromXML(suyo);
+    for (const cambio of cambiosAlGuardar(conModeler, instantanea(devuelto))) {
+      problemas.push(`${nombre}, al guardar: ${cambio}`);
+    }
+  }
+  return { problemas, marcas };
+}
+
 function cambiosAlGuardar(antes, despues) {
   const cambios = [];
   for (const clave of new Set([...Object.keys(antes), ...Object.keys(despues)])) {
@@ -191,24 +243,8 @@ for (const fichero of ficheros) {
   const delPool = await atributosDelPool(xml, guardado, rootElement);
   problemas.push(...delPool.problemas);
 
-  const ajeno = await otraHerramienta.fromXML(xml);
-  const propios = ajeno.warnings.filter(w => PREFIJOS_DEL_MODELER.some(p => w.message.includes(`<${p}:`)));
-  for (const w of ajeno.warnings.filter(w => !propios.includes(w))) {
-    problemas.push(`otra herramienta: ${w.message.split('\n')[0]}`);
-  }
-  const conModeler = instantanea(rootElement), sinModeler = instantanea(ajeno.rootElement);
-  let marcas = 0;
-  for (const [clave, { tipo, props }] of Object.entries(conModeler)) {
-    if (!tipo.startsWith('bpmn:')) continue;
-    const visto = sinModeler[clave];
-    const esMarca = tipo === 'bpmn:MultiInstanceLoopCharacteristics' || tipo === 'bpmn:ParticipantMultiplicity';
-    if (esMarca) marcas += 1;
-    if (!visto || visto.tipo !== tipo) {
-      problemas.push(`otra herramienta: no ve ${clave} (${tipo})`);
-    } else if (esMarca && JSON.stringify(visto.props.isSequential) !== JSON.stringify(props.isSequential)) {
-      problemas.push(`otra herramienta: lee ${clave} con otro isSequential`);
-    }
-  }
+  const otras = await enOtrasHerramientas(xml, instantanea(rootElement));
+  problemas.push(...otras.problemas);
 
   if (problemas.length) {
     fallos += 1;
@@ -217,8 +253,71 @@ for (const fichero of ficheros) {
     if (problemas.length > 12) console.log(`         ... y ${problemas.length - 12} mas`);
   } else {
     console.log(`${fichero.padEnd(34)} ok      ${elementos} elementos con forma, igual tras abrir y guardar; ${delPool.cuantos} atributos de pool, escritos igual`);
-    console.log(`${''.padEnd(34)}         otra herramienta: ve las ${marcas} marcas; no entiende ${propios.length} elementos propios del Modeler (5.2)`);
+    console.log(`${''.padEnd(34)}         bpmn-moddle, Camunda 7 y Camunda 8: sin avisos, ven las ${otras.marcas} marcas y guardan sin perder nada`);
   }
 }
-console.log(fallos ? `\n${fallos} diagrama(s) con problemas.` : `\n${ficheros.length} diagramas validos para bpmn-moddle.`);
+
+// (6) El formato anterior a la 5.2, con la migracion del Modeler.
+const LISTAS_ANTIGUAS = [
+  ['user:UserTask', PEOPLE_TYPES.task], ['lane:userWithoutRole', PEOPLE_TYPES.lane],
+  ['participantWithoutLane:userWithoutRole', PEOPLE_TYPES.participant],
+  ['model:userWithoutRole', PEOPLE_TYPES.process], ['model:userWithRole', PEOPLE_TYPES.roles]
+];
+const comoTexto = v => (v && typeof v === 'object' ? [v.key ?? '', v.value ?? ''] : v);
+
+// Las listas escritas en el sitio antiguo, por elemento; sin get(), que las crearia.
+function listasAntiguas(raiz) {
+  const listas = [];
+  recorre(raiz, e => {
+    for (const [nombre, tipo] of LISTAS_ANTIGUAS) {
+      const propiedad = e.$descriptor?.propertiesByName?.[nombre];
+      const valores = propiedad && e[propiedad.name];
+      if (Array.isArray(valores) && valores.length) listas.push({ e, nombre, tipo, valores: valores.map(comoTexto) });
+    }
+  });
+  return listas;
+}
+
+const carpetaAnterior = join(aqui, 'formato-anterior');
+const anteriores = existsSync(carpetaAnterior) ? readdirSync(carpetaAnterior).filter(f => f.endsWith('.bpmn')).sort() : [];
+console.log('\nFormato anterior a la 5.2 (formato-anterior/), con la migracion del Modeler:');
+if (!anteriores.length) {
+  // Sin ellos no se prueba que los ficheros antiguos se siguen abriendo.
+  console.log(`No hay ningun diagrama .bpmn en ${carpetaAnterior}.`);
+  fallos += 1;
+}
+for (const fichero of anteriores) {
+  const { rootElement, warnings } = await moddle.fromXML(readFileSync(join(carpetaAnterior, fichero), 'utf8'));
+  const problemas = warnings.map(w => `bpmn-moddle: ${w.message.split('\n')[0]}`);
+  const antes = listasAntiguas(rootElement);
+  if (!antes.length) problemas.push('no tiene ninguna lista en el sitio antiguo: no prueba la migracion');
+  const movidas = migrateLegacyPeople(moddle, rootElement);
+  for (const { e, nombre, tipo, valores } of antes) {
+    const ahora = entriesOf(e, tipo).map(x => (tipo === PEOPLE_TYPES.roles ? comoTexto(x) : x.value ?? ''));
+    if (JSON.stringify(ahora) !== JSON.stringify(valores)) {
+      problemas.push(`${e.id}: ${nombre} era ${JSON.stringify(valores)} y en extensionElements queda ${JSON.stringify(ahora)}`);
+    }
+  }
+  for (const { e, nombre } of listasAntiguas(rootElement)) problemas.push(`${e.id}: ${nombre} sigue en el sitio antiguo`);
+  const { xml: migrado } = await moddle.toXML(rootElement);
+  const otras = await enOtrasHerramientas(migrado, instantanea((await moddle.fromXML(migrado)).rootElement));
+  problemas.push(...otras.problemas);
+  const nuevo = join(aqui, 'integracion', fichero);
+  if (existsSync(nuevo)) {
+    const a = instantanea((await moddle.fromXML(migrado)).rootElement);
+    const b = instantanea((await moddle.fromXML(readFileSync(nuevo, 'utf8'))).rootElement);
+    for (const cambio of cambiosAlGuardar(a, b)) problemas.push(`frente a integracion/${fichero}: ${cambio}`);
+  }
+  if (problemas.length) {
+    fallos += 1;
+    console.log(`${fichero.padEnd(34)} PROBLEMAS`);
+    for (const p of problemas.slice(0, 12)) console.log(`         ${p}`);
+    if (problemas.length > 12) console.log(`         ... y ${problemas.length - 12} mas`);
+  } else {
+    const igual = existsSync(nuevo) ? `; igual que integracion/${fichero}` : '';
+    console.log(`${fichero.padEnd(34)} ok      ${movidas} entradas de ${antes.length} listas pasan a extensionElements; sin avisos en las otras herramientas${igual}`);
+  }
+}
+const total = ficheros.length + anteriores.length;
+console.log(fallos ? `\n${fallos} diagrama(s) con problemas.` : `\n${total} diagramas validos para bpmn-moddle.`);
 process.exit(fallos ? 1 : 0);

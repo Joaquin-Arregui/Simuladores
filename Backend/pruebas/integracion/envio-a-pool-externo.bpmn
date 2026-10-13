@@ -2,7 +2,9 @@
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:collab="http://collaboration" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:participantWithoutLane="http://participantWithoutLane" xmlns:user="http://user" id="Definitions_envio_a_pool_externo" targetNamespace="http://bpmn.io/schema/bpmn" exporter="my-bpmn-exporter" exporterVersion="1.0.0">
   <bpmn:collaboration id="Colaboracion" collab:instance="2">
     <bpmn:participant id="Pool_Interno" name="Oficina" processRef="Process_Pool_Interno" participantWithoutLane:frequency="20">
-      <participantWithoutLane:userWithoutRole>Ana</participantWithoutLane:userWithoutRole>
+      <bpmn:extensionElements>
+        <participantWithoutLane:userWithoutRole>Ana</participantWithoutLane:userWithoutRole>
+      </bpmn:extensionElements>
     </bpmn:participant>
     <bpmn:participant id="Pool_Externo" name="Organismo externo" participantWithoutLane:frequency="0" />
     <bpmn:messageFlow id="Comunicacion" name="Comunicacion" sourceRef="Comunicar" targetRef="Pool_Externo" />
@@ -12,12 +14,16 @@
       <bpmn:outgoing>f1</bpmn:outgoing>
     </bpmn:startEvent>
     <bpmn:task id="Tramitar" name="Tramitar la solicitud" user:NumberOfExecutions="1" user:minimumTime="20" user:maximumTime="30">
-      <user:UserTask>Ana</user:UserTask>
+      <bpmn:extensionElements>
+        <user:userTask>Ana</user:userTask>
+      </bpmn:extensionElements>
       <bpmn:incoming>f1</bpmn:incoming>
       <bpmn:outgoing>f2</bpmn:outgoing>
     </bpmn:task>
     <bpmn:sendTask id="Comunicar" name="Comunicar al organismo" user:NumberOfExecutions="1" user:minimumTime="5" user:maximumTime="10">
-      <user:UserTask>Ana</user:UserTask>
+      <bpmn:extensionElements>
+        <user:userTask>Ana</user:userTask>
+      </bpmn:extensionElements>
       <bpmn:incoming>f2</bpmn:incoming>
       <bpmn:outgoing>f3</bpmn:outgoing>
     </bpmn:sendTask>

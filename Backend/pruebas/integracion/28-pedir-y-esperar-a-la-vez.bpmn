@@ -2,11 +2,15 @@
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:collab="http://collaboration" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:participantWithoutLane="http://participantWithoutLane" xmlns:user="http://user" id="Definitions_28_pedir_y_esperar_a_la_vez" targetNamespace="http://bpmn.io/schema/bpmn" exporter="my-bpmn-exporter" exporterVersion="1.0.0">
   <bpmn:collaboration id="Colaboracion" collab:instance="3">
     <bpmn:participant id="Pool_Cliente" name="Cliente" processRef="Process_Pool_Cliente" participantWithoutLane:frequency="40">
-      <participantWithoutLane:userWithoutRole>Carla</participantWithoutLane:userWithoutRole>
+      <bpmn:extensionElements>
+        <participantWithoutLane:userWithoutRole>Carla</participantWithoutLane:userWithoutRole>
+      </bpmn:extensionElements>
     </bpmn:participant>
     <bpmn:participant id="Pool_Servicio" name="Servicio" processRef="Process_Pool_Servicio" participantWithoutLane:frequency="0" participantWithoutLane:infiniteResources="true">
-      <participantWithoutLane:userWithoutRole>Sara</participantWithoutLane:userWithoutRole>
-      <participantWithoutLane:userWithoutRole>Diego</participantWithoutLane:userWithoutRole>
+      <bpmn:extensionElements>
+        <participantWithoutLane:userWithoutRole>Sara</participantWithoutLane:userWithoutRole>
+        <participantWithoutLane:userWithoutRole>Diego</participantWithoutLane:userWithoutRole>
+      </bpmn:extensionElements>
     </bpmn:participant>
     <bpmn:messageFlow id="Mensaje_Peticion" name="Peticion" sourceRef="Enviar_Peticion" targetRef="Recibir_Peticion" />
     <bpmn:messageFlow id="Mensaje_Respuesta" name="Respuesta" sourceRef="Enviar_Respuesta" targetRef="Esperar_Respuesta" />
@@ -21,12 +25,16 @@
       <bpmn:outgoing>c3</bpmn:outgoing>
     </bpmn:parallelGateway>
     <bpmn:sendTask id="Enviar_Peticion" name="Enviar la peticion" user:NumberOfExecutions="1" user:minimumTime="10" user:maximumTime="20">
-      <user:UserTask>Carla</user:UserTask>
+      <bpmn:extensionElements>
+        <user:userTask>Carla</user:userTask>
+      </bpmn:extensionElements>
       <bpmn:incoming>c2</bpmn:incoming>
       <bpmn:outgoing>c4</bpmn:outgoing>
     </bpmn:sendTask>
     <bpmn:receiveTask id="Esperar_Respuesta" name="Recoger las respuestas" user:NumberOfExecutions="1" user:minimumTime="5" user:maximumTime="10">
-      <user:UserTask>Carla</user:UserTask>
+      <bpmn:extensionElements>
+        <user:userTask>Carla</user:userTask>
+      </bpmn:extensionElements>
       <bpmn:incoming>c3</bpmn:incoming>
       <bpmn:outgoing>c5</bpmn:outgoing>
       <bpmn:multiInstanceLoopCharacteristics />
@@ -51,23 +59,31 @@
       <bpmn:outgoing>s1</bpmn:outgoing>
     </bpmn:startEvent>
     <bpmn:task id="Preparar" name="Preparar la ventanilla" user:NumberOfExecutions="1" user:minimumTime="25" user:maximumTime="35">
-      <user:UserTask>Sara</user:UserTask>
+      <bpmn:extensionElements>
+        <user:userTask>Sara</user:userTask>
+      </bpmn:extensionElements>
       <bpmn:incoming>s1</bpmn:incoming>
       <bpmn:outgoing>s2</bpmn:outgoing>
     </bpmn:task>
     <bpmn:receiveTask id="Recibir_Peticion" name="Recibir la peticion" user:NumberOfExecutions="1" user:minimumTime="5" user:maximumTime="10">
-      <user:UserTask>Sara</user:UserTask>
+      <bpmn:extensionElements>
+        <user:userTask>Sara</user:userTask>
+      </bpmn:extensionElements>
       <bpmn:incoming>s2</bpmn:incoming>
       <bpmn:outgoing>s3</bpmn:outgoing>
     </bpmn:receiveTask>
     <bpmn:task id="Atender" name="Atender la peticion" user:NumberOfExecutions="1" user:minimumTime="40" user:maximumTime="90">
-      <user:UserTask>Sara</user:UserTask>
-      <user:UserTask>Diego</user:UserTask>
+      <bpmn:extensionElements>
+        <user:userTask>Sara</user:userTask>
+        <user:userTask>Diego</user:userTask>
+      </bpmn:extensionElements>
       <bpmn:incoming>s3</bpmn:incoming>
       <bpmn:outgoing>s4</bpmn:outgoing>
     </bpmn:task>
     <bpmn:sendTask id="Enviar_Respuesta" name="Enviar la respuesta" user:NumberOfExecutions="1" user:minimumTime="10" user:maximumTime="20">
-      <user:UserTask>Diego</user:UserTask>
+      <bpmn:extensionElements>
+        <user:userTask>Diego</user:userTask>
+      </bpmn:extensionElements>
       <bpmn:incoming>s4</bpmn:incoming>
       <bpmn:outgoing>s5</bpmn:outgoing>
       <bpmn:multiInstanceLoopCharacteristics />

@@ -12,8 +12,10 @@ Por que generado y no dibujado: el Modeler aun no tiene paneles para los
 atributos de los hitos 2 a 4 (5.3) ni los exporta a las reglas (5.4). Lo que si
 lleva el dibujo es lo que el Modeler guarda hoy: la estructura BPMN, los
 atributos de sus descriptores -desde la 5.1 tambien los del pool: instances,
-orchestrationRole, infiniteResources, arrivalMode y arrivalWindow- y los dos
-marcadores estandar, participantMultiplicity y multiInstanceLoopCharacteristics. La comprobacion
+orchestrationRole, infiniteResources, arrivalMode y arrivalWindow-, las listas
+de personas dentro de bpmn:extensionElements como las guarda desde la 5.2, y
+los dos marcadores estandar, participantMultiplicity y
+multiInstanceLoopCharacteristics. La comprobacion
 independiente de que el XML es BPMN valido la hace valida_bpmn.mjs con
 bpmn-moddle, la misma libreria con la que bpmn-js lo abre.
 """
@@ -81,16 +83,31 @@ def tamano(element):
     return LADO_EVENTO, LADO_EVENTO
 
 
-def usuarios(padre, prefijo, propiedad, valores):
-    """Un elemento hijo por usuario, que es como los guarda el Modeler.
+def extensiones(padre):
+    """El bpmn:extensionElements de un elemento, que se crea al primer uso.
 
-    En los descriptores UserTask y userWithoutRole son listas (isMany) que no
-    son atributos: escribirlas como un atributo con comas parece funcionar, pero
-    al abrir el diagrama bpmn-moddle lee una cadena donde espera una lista, y al
-    guardarlo la recorre letra a letra: Ana se convierte en A, n y a.
+    Va el primero: en el esquema de BPMN 2.0 solo puede ir detras de
+    bpmn:documentation, que este generador no escribe.
+    """
+    existente = padre.find(q("bpmn", "extensionElements"))
+    if existente is None:
+        existente = ET.Element(q("bpmn", "extensionElements"))
+        padre.insert(0, existente)
+    return existente
+
+
+def usuarios(padre, prefijo, etiqueta, valores):
+    """Una entrada por usuario dentro de bpmn:extensionElements, que es como
+    los guarda el Modeler desde la 5.2 (Modeler/lib/people/people.js).
+
+    Hasta la 5.1 eran hijos directos del elemento, y asi el fichero no valida
+    contra el esquema de BPMN 2.0 y otra herramienta avisa al abrirlo y los
+    descarta. Tampoco valen como un atributo con comas: el descriptor los lee
+    como lista, y al guardar recorreria la cadena letra a letra -Ana se
+    convierte en A, n y a-.
     """
     for valor in valores:
-        ET.SubElement(padre, q(prefijo, propiedad)).text = str(valor)
+        ET.SubElement(extensiones(padre), q(prefijo, etiqueta)).text = str(valor)
 
 
 def capas(nodos, flujos, inicios):
@@ -289,7 +306,7 @@ def genera(ruta_reglas):
         if not es_colaboracion:
             usuarios(proceso, "model", "userWithoutRole", raiz.userWithoutRole)
             for rol, miembros in raiz.userWithRole.items():
-                par = ET.SubElement(proceso, q("model", "keyValuePair"))
+                par = ET.SubElement(extensiones(proceso), q("model", "keyValuePair"))
                 ET.SubElement(par, q("model", "key")).text = rol
                 ET.SubElement(par, q("model", "value")).text = ",".join(miembros)
         nodos = nodos_de[dueno]
@@ -317,7 +334,7 @@ def genera(ruta_reglas):
                 nodo.set(q("user", "NumberOfExecutions"), str(element.numberOfExecutions))
                 nodo.set(q("user", "minimumTime"), str(element.minimumTime))
                 nodo.set(q("user", "maximumTime"), str(element.maximumTime))
-                usuarios(nodo, "user", "UserTask", element.userTask or [])
+                usuarios(nodo, "user", "userTask", element.userTask or [])
             for flujo in entrantes[n]:
                 ET.SubElement(nodo, q("bpmn", "incoming")).text = flujo
             for flujo in salientes[n]:

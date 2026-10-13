@@ -36,6 +36,8 @@
     },
     {
       "name": "KeyValuePair",
+      "superClass": [ "Element" ],
+      "meta": { "allowedIn": [ "bpmn:Process" ] },
       "properties": [
         {
           "name": "key",
@@ -44,6 +46,18 @@
         {
           "name": "value",
           "type": "String"
+        }
+      ]
+    },
+    {
+      "name": "UserWithoutRole",
+      "superClass": [ "Element" ],
+      "meta": { "allowedIn": [ "bpmn:Process" ] },
+      "properties": [
+        {
+          "name": "value",
+          "type": "String",
+          "isBody": true
         }
       ]
     }

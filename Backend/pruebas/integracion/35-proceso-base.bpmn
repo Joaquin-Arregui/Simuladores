@@ -2,13 +2,17 @@
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:collab="http://collaboration" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:participantWithoutLane="http://participantWithoutLane" xmlns:sequenceFlow="http://sequenceFlow" xmlns:user="http://user" id="Definitions_35_proceso_base" targetNamespace="http://bpmn.io/schema/bpmn" exporter="my-bpmn-exporter" exporterVersion="1.0.0">
   <bpmn:collaboration id="Colaboracion" collab:instance="1">
     <bpmn:participant id="Pool_SACU" name="SACU" processRef="Process_Pool_SACU" participantWithoutLane:frequency="0" participantWithoutLane:instances="1" participantWithoutLane:orchestrationRole="orchestrator">
-      <participantWithoutLane:userWithoutRole>Ana</participantWithoutLane:userWithoutRole>
-      <participantWithoutLane:userWithoutRole>Bea</participantWithoutLane:userWithoutRole>
-      <participantWithoutLane:userWithoutRole>Carlos</participantWithoutLane:userWithoutRole>
+      <bpmn:extensionElements>
+        <participantWithoutLane:userWithoutRole>Ana</participantWithoutLane:userWithoutRole>
+        <participantWithoutLane:userWithoutRole>Bea</participantWithoutLane:userWithoutRole>
+        <participantWithoutLane:userWithoutRole>Carlos</participantWithoutLane:userWithoutRole>
+      </bpmn:extensionElements>
       <bpmn:participantMultiplicity />
     </bpmn:participant>
     <bpmn:participant id="Pool_Residente" name="Residente" processRef="Process_Pool_Residente" participantWithoutLane:frequency="0" participantWithoutLane:instances="10" participantWithoutLane:orchestrationRole="orchestrated" participantWithoutLane:infiniteResources="true" participantWithoutLane:arrivalMode="uniform" participantWithoutLane:arrivalWindow="120">
-      <participantWithoutLane:userWithoutRole>Residente</participantWithoutLane:userWithoutRole>
+      <bpmn:extensionElements>
+        <participantWithoutLane:userWithoutRole>Residente</participantWithoutLane:userWithoutRole>
+      </bpmn:extensionElements>
       <bpmn:participantMultiplicity />
     </bpmn:participant>
     <bpmn:messageFlow id="Solicitud" name="Solicitud" sourceRef="Enviar_Solicitud" targetRef="Recibir_Solicitudes" />
@@ -21,63 +25,79 @@
       <bpmn:outgoing>s1</bpmn:outgoing>
     </bpmn:startEvent>
     <bpmn:task id="Publicar_Convocatoria" name="Publicar la convocatoria" user:NumberOfExecutions="1" user:minimumTime="10" user:maximumTime="10">
-      <user:UserTask>Ana</user:UserTask>
-      <user:UserTask>Bea</user:UserTask>
-      <user:UserTask>Carlos</user:UserTask>
+      <bpmn:extensionElements>
+        <user:userTask>Ana</user:userTask>
+        <user:userTask>Bea</user:userTask>
+        <user:userTask>Carlos</user:userTask>
+      </bpmn:extensionElements>
       <bpmn:incoming>s1</bpmn:incoming>
       <bpmn:outgoing>s2</bpmn:outgoing>
     </bpmn:task>
     <bpmn:receiveTask id="Recibir_Solicitudes" name="Recibir una solicitud" user:NumberOfExecutions="1" user:minimumTime="1" user:maximumTime="1">
-      <user:UserTask>Ana</user:UserTask>
-      <user:UserTask>Bea</user:UserTask>
-      <user:UserTask>Carlos</user:UserTask>
+      <bpmn:extensionElements>
+        <user:userTask>Ana</user:userTask>
+        <user:userTask>Bea</user:userTask>
+        <user:userTask>Carlos</user:userTask>
+      </bpmn:extensionElements>
       <bpmn:incoming>s2</bpmn:incoming>
       <bpmn:outgoing>s3</bpmn:outgoing>
       <bpmn:multiInstanceLoopCharacteristics />
     </bpmn:receiveTask>
     <bpmn:task id="Evaluar_Propuestas" name="Evaluar una propuesta" user:NumberOfExecutions="1" user:minimumTime="20" user:maximumTime="60">
-      <user:UserTask>Ana</user:UserTask>
-      <user:UserTask>Bea</user:UserTask>
-      <user:UserTask>Carlos</user:UserTask>
+      <bpmn:extensionElements>
+        <user:userTask>Ana</user:userTask>
+        <user:userTask>Bea</user:userTask>
+        <user:userTask>Carlos</user:userTask>
+      </bpmn:extensionElements>
       <bpmn:incoming>s3</bpmn:incoming>
       <bpmn:outgoing>s4</bpmn:outgoing>
       <bpmn:multiInstanceLoopCharacteristics />
     </bpmn:task>
     <bpmn:task id="Publicar_Aceptados" name="Publicar la lista de aceptados" user:NumberOfExecutions="1" user:minimumTime="10" user:maximumTime="10">
-      <user:UserTask>Ana</user:UserTask>
-      <user:UserTask>Bea</user:UserTask>
-      <user:UserTask>Carlos</user:UserTask>
+      <bpmn:extensionElements>
+        <user:userTask>Ana</user:userTask>
+        <user:userTask>Bea</user:userTask>
+        <user:userTask>Carlos</user:userTask>
+      </bpmn:extensionElements>
       <bpmn:incoming>s4</bpmn:incoming>
       <bpmn:outgoing>s5</bpmn:outgoing>
     </bpmn:task>
     <bpmn:sendTask id="Enviar_Resultados" name="Enviar un resultado" user:NumberOfExecutions="1" user:minimumTime="1" user:maximumTime="2">
-      <user:UserTask>Ana</user:UserTask>
-      <user:UserTask>Bea</user:UserTask>
-      <user:UserTask>Carlos</user:UserTask>
+      <bpmn:extensionElements>
+        <user:userTask>Ana</user:userTask>
+        <user:userTask>Bea</user:userTask>
+        <user:userTask>Carlos</user:userTask>
+      </bpmn:extensionElements>
       <bpmn:incoming>s5</bpmn:incoming>
       <bpmn:outgoing>s6</bpmn:outgoing>
       <bpmn:multiInstanceLoopCharacteristics />
     </bpmn:sendTask>
     <bpmn:receiveTask id="Recibir_Reclamaciones" name="Recibir una reclamacion" user:NumberOfExecutions="1" user:minimumTime="1" user:maximumTime="1">
-      <user:UserTask>Ana</user:UserTask>
-      <user:UserTask>Bea</user:UserTask>
-      <user:UserTask>Carlos</user:UserTask>
+      <bpmn:extensionElements>
+        <user:userTask>Ana</user:userTask>
+        <user:userTask>Bea</user:userTask>
+        <user:userTask>Carlos</user:userTask>
+      </bpmn:extensionElements>
       <bpmn:incoming>s6</bpmn:incoming>
       <bpmn:outgoing>s7</bpmn:outgoing>
       <bpmn:multiInstanceLoopCharacteristics />
     </bpmn:receiveTask>
     <bpmn:task id="Evaluar_Reclamaciones" name="Evaluar una reclamacion" user:NumberOfExecutions="1" user:minimumTime="20" user:maximumTime="40">
-      <user:UserTask>Ana</user:UserTask>
-      <user:UserTask>Bea</user:UserTask>
-      <user:UserTask>Carlos</user:UserTask>
+      <bpmn:extensionElements>
+        <user:userTask>Ana</user:userTask>
+        <user:userTask>Bea</user:userTask>
+        <user:userTask>Carlos</user:userTask>
+      </bpmn:extensionElements>
       <bpmn:incoming>s7</bpmn:incoming>
       <bpmn:outgoing>s8</bpmn:outgoing>
       <bpmn:multiInstanceLoopCharacteristics />
     </bpmn:task>
     <bpmn:sendTask id="Enviar_Reevaluaciones" name="Enviar una reevaluacion" user:NumberOfExecutions="1" user:minimumTime="1" user:maximumTime="2">
-      <user:UserTask>Ana</user:UserTask>
-      <user:UserTask>Bea</user:UserTask>
-      <user:UserTask>Carlos</user:UserTask>
+      <bpmn:extensionElements>
+        <user:userTask>Ana</user:userTask>
+        <user:userTask>Bea</user:userTask>
+        <user:userTask>Carlos</user:userTask>
+      </bpmn:extensionElements>
       <bpmn:incoming>s8</bpmn:incoming>
       <bpmn:outgoing>s9</bpmn:outgoing>
       <bpmn:multiInstanceLoopCharacteristics />
@@ -100,17 +120,23 @@
       <bpmn:outgoing>r1</bpmn:outgoing>
     </bpmn:startEvent>
     <bpmn:task id="Rellenar_Formulario" name="Rellenar el formulario" user:NumberOfExecutions="1" user:minimumTime="10" user:maximumTime="30">
-      <user:UserTask>Residente</user:UserTask>
+      <bpmn:extensionElements>
+        <user:userTask>Residente</user:userTask>
+      </bpmn:extensionElements>
       <bpmn:incoming>r1</bpmn:incoming>
       <bpmn:outgoing>r2</bpmn:outgoing>
     </bpmn:task>
     <bpmn:sendTask id="Enviar_Solicitud" name="Enviar la solicitud" user:NumberOfExecutions="1" user:minimumTime="1" user:maximumTime="1">
-      <user:UserTask>Residente</user:UserTask>
+      <bpmn:extensionElements>
+        <user:userTask>Residente</user:userTask>
+      </bpmn:extensionElements>
       <bpmn:incoming>r2</bpmn:incoming>
       <bpmn:outgoing>r3</bpmn:outgoing>
     </bpmn:sendTask>
     <bpmn:receiveTask id="Esperar_Resultado" name="Esperar el resultado" user:NumberOfExecutions="1" user:minimumTime="1" user:maximumTime="1">
-      <user:UserTask>Residente</user:UserTask>
+      <bpmn:extensionElements>
+        <user:userTask>Residente</user:userTask>
+      </bpmn:extensionElements>
       <bpmn:incoming>r3</bpmn:incoming>
       <bpmn:outgoing>r4</bpmn:outgoing>
     </bpmn:receiveTask>
@@ -125,12 +151,16 @@
       <bpmn:outgoing>r8</bpmn:outgoing>
     </bpmn:exclusiveGateway>
     <bpmn:sendTask id="Reclamar" name="Presentar una reclamacion" user:NumberOfExecutions="1" user:minimumTime="5" user:maximumTime="15">
-      <user:UserTask>Residente</user:UserTask>
+      <bpmn:extensionElements>
+        <user:userTask>Residente</user:userTask>
+      </bpmn:extensionElements>
       <bpmn:incoming>r7</bpmn:incoming>
       <bpmn:outgoing>r9</bpmn:outgoing>
     </bpmn:sendTask>
     <bpmn:receiveTask id="Esperar_Reevaluacion" name="Esperar la reevaluacion" user:NumberOfExecutions="1" user:minimumTime="1" user:maximumTime="1">
-      <user:UserTask>Residente</user:UserTask>
+      <bpmn:extensionElements>
+        <user:userTask>Residente</user:userTask>
+      </bpmn:extensionElements>
       <bpmn:incoming>r9</bpmn:incoming>
       <bpmn:outgoing>r10</bpmn:outgoing>
     </bpmn:receiveTask>

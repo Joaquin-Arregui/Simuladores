@@ -1,12 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:model="http://model" xmlns:sequenceFlow="http://sequenceFlow" xmlns:user="http://user" id="Definitions_13_ciclo_de_flujos" targetNamespace="http://bpmn.io/schema/bpmn" exporter="my-bpmn-exporter" exporterVersion="1.0.0">
   <bpmn:process id="Proceso" isExecutable="false" name="Reintento" model:instance="2" model:frequency="30">
-    <model:userWithoutRole>Ana</model:userWithoutRole>
+    <bpmn:extensionElements>
+      <model:userWithoutRole>Ana</model:userWithoutRole>
+    </bpmn:extensionElements>
     <bpmn:startEvent id="Ini" name="Entra el expediente">
       <bpmn:outgoing>f1</bpmn:outgoing>
     </bpmn:startEvent>
     <bpmn:task id="Trabajar" name="Trabajar el expediente" user:NumberOfExecutions="1" user:minimumTime="10" user:maximumTime="20">
-      <user:UserTask>Ana</user:UserTask>
+      <bpmn:extensionElements>
+        <user:userTask>Ana</user:userTask>
+      </bpmn:extensionElements>
       <bpmn:incoming>f1</bpmn:incoming>
       <bpmn:incoming>f3</bpmn:incoming>
       <bpmn:outgoing>f2</bpmn:outgoing>

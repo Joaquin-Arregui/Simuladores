@@ -1,18 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:model="http://model" xmlns:user="http://user" id="Definitions_01_simple" targetNamespace="http://bpmn.io/schema/bpmn" exporter="my-bpmn-exporter" exporterVersion="1.0.0">
   <bpmn:process id="Proceso_simple" isExecutable="false" name="Proceso simple" model:instance="2" model:frequency="30">
-    <model:userWithoutRole>Ana</model:userWithoutRole>
-    <model:userWithoutRole>Luis</model:userWithoutRole>
+    <bpmn:extensionElements>
+      <model:userWithoutRole>Ana</model:userWithoutRole>
+      <model:userWithoutRole>Luis</model:userWithoutRole>
+    </bpmn:extensionElements>
     <bpmn:startEvent id="Inicio" name="Inicio">
       <bpmn:outgoing>Flujo_1</bpmn:outgoing>
     </bpmn:startEvent>
     <bpmn:task id="Preparar" name="Preparar la solicitud" user:NumberOfExecutions="1" user:minimumTime="30" user:maximumTime="60">
-      <user:UserTask>Ana</user:UserTask>
+      <bpmn:extensionElements>
+        <user:userTask>Ana</user:userTask>
+      </bpmn:extensionElements>
       <bpmn:incoming>Flujo_1</bpmn:incoming>
       <bpmn:outgoing>Flujo_2</bpmn:outgoing>
     </bpmn:task>
     <bpmn:task id="Revisar" name="Revisar la solicitud" user:NumberOfExecutions="1" user:minimumTime="20" user:maximumTime="40">
-      <user:UserTask>Luis</user:UserTask>
+      <bpmn:extensionElements>
+        <user:userTask>Luis</user:userTask>
+      </bpmn:extensionElements>
       <bpmn:incoming>Flujo_2</bpmn:incoming>
       <bpmn:outgoing>Flujo_3</bpmn:outgoing>
     </bpmn:task>

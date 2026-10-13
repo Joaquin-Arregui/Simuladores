@@ -2,6 +2,8 @@ import { html } from 'htm/preact';
 import { useService } from 'bpmn-js-properties-panel';
 import { TextFieldEntry } from '@bpmn-io/properties-panel';
 
+import { PEOPLE_TYPES, peopleOf, setPeople } from '../../../lib/people/people.js';
+
 
 export default function(element) {
   return [
@@ -100,46 +102,35 @@ function isNumberEntryEdited(element) {
 function userWithoutRoleFunction(props) {
   const { element } = props;
   const modeling = useService('modeling');
+  const moddle = useService('moddle');
   const translate = useService('translate');
 
+  // La plantilla del pool, dentro de extensionElements (5.2).
   const getUserWithoutRoleList = () => {
     if (!element || !element.businessObject) {
       return [];
     }
+    return peopleOf(element.businessObject, PEOPLE_TYPES.participant);
+  };
 
-    // Asegurar que el valor sea un array
-    const userWithoutRole = element.businessObject.userWithoutRole;
-    return Array.isArray(userWithoutRole) ? userWithoutRole : (userWithoutRole ? [ userWithoutRole ] : []);
+  const setUserWithoutRoleList = (list) => {
+    setPeople({ modeling, moddle }, element, element.businessObject, PEOPLE_TYPES.participant, list);
   };
 
   const updateUserWithoutRole = (index, value) => {
-    const userWithoutRoleList = getUserWithoutRoleList();
-    const updatedUserWithoutRoleList = [ ...userWithoutRoleList ];
+    const updatedUserWithoutRoleList = [ ...getUserWithoutRoleList() ];
     updatedUserWithoutRoleList[index] = value;
-
-    modeling.updateProperties(element, {
-      userWithoutRole: updatedUserWithoutRoleList
-    });
-    console.log(element.businessObject.userWithoutRole);
+    setUserWithoutRoleList(updatedUserWithoutRoleList);
   };
 
   const removeUserWithoutRole = (index) => {
-    const userWithoutRoleList = getUserWithoutRoleList();
-    const updatedUserWithoutRoleList = [ ...userWithoutRoleList ];
+    const updatedUserWithoutRoleList = [ ...getUserWithoutRoleList() ];
     updatedUserWithoutRoleList.splice(index, 1);
-
-    modeling.updateProperties(element, {
-      userWithoutRole: updatedUserWithoutRoleList
-    });
+    setUserWithoutRoleList(updatedUserWithoutRoleList);
   };
 
   const addUserWithoutRole = () => {
-    const userWithoutRoleList = getUserWithoutRoleList();
-    const updatedUserWithoutRoleList = [ ...userWithoutRoleList, '' ];
-
-    modeling.updateProperties(element, {
-      userWithoutRole: updatedUserWithoutRoleList
-    });
+    setUserWithoutRoleList([ ...getUserWithoutRoleList(), '' ]);
   };
 
   const renderUserWithoutRoleEntries = () => {
@@ -181,13 +172,6 @@ function isListOfStringEntryEdited(element) {
     return false;
   }
 
-  const userWithoutRoleValues = element.businessObject.userWithoutRole;
-
-  // Verificamos que userWithoutRole es un array
-  if (!Array.isArray(userWithoutRoleValues)) {
-    return false;
-  }
-
   // Retornamos true si al menos un elemento en la lista no es un string vacío
-  return userWithoutRoleValues.some(value => typeof value === 'string' && value !== '');
+  return peopleOf(element.businessObject, PEOPLE_TYPES.participant).some(value => value !== '');
 }

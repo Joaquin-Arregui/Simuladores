@@ -49,6 +49,18 @@
           "type": "Integer"
         }
       ]
+    },
+    {
+      "name": "UserTask",
+      "superClass": [ "Element" ],
+      "meta": { "allowedIn": [ "bpmn:Task", "bpmn:CallActivity" ] },
+      "properties": [
+        {
+          "name": "value",
+          "type": "String",
+          "isBody": true
+        }
+      ]
     }
   ]
 }
