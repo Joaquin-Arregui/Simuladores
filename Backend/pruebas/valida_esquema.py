@@ -17,6 +17,8 @@ ficheros de pruebas/esquema-bpmn/ -los de OMG para BPMN 2.0, espacio de nombres
   seguir sin poder leerse.
 - `exportadas/` -- tambien: son esos mismos diagramas tal como los guarda el
   Modeler, con su propio codigo (exporta_reglas.mjs, 5.4).
+- `Modeler/ejemplos/` -- tambien: estan dibujados y guardados en el Modeler
+  (5.6), y son lo primero que abrira quien empiece a usarlo.
 - `formato-anterior/` -- NO pueden cumplirlo, y el primer error tiene que ser
   una lista de personas del Modeler fuera de extensionElements: es la razon de
   la 5.2, y lo que demuestra que esta comprobacion distingue un fichero bueno
@@ -33,8 +35,9 @@ ESQUEMA = AQUI / "esquema-bpmn" / "BPMN20.xsd"
 # Los espacios de nombres de los descriptores del Modeler (Modeler/descriptors/).
 DEL_MODELER = ("http://user", "http://lane", "http://participantWithoutLane", "http://model",
                "http://collaboration", "http://sequenceFlow")
-GRUPOS = (("integracion", "cumple"), ("integracion-con-error", "cumple"), ("exportadas", "cumple"),
-          ("formato-anterior", "no cumple"))
+GRUPOS = ((AQUI / "integracion", "cumple"), (AQUI / "integracion-con-error", "cumple"),
+          (AQUI / "exportadas", "cumple"), (AQUI.parent.parent / "Modeler" / "ejemplos", "cumple"),
+          (AQUI / "formato-anterior", "no cumple"))
 
 
 def errores(esquema, ruta):
@@ -53,8 +56,11 @@ def main():
         return 1
     esquema = etree.XMLSchema(etree.parse(str(ESQUEMA)))
     fallos = total = 0
-    for carpeta, previsto in GRUPOS:
-        ficheros = sorted((AQUI / carpeta).glob("*.bpmn"))
+    for ruta_carpeta, previsto in GRUPOS:
+        # En la salida, las del banco por su nombre y los ejemplos desde la raiz.
+        carpeta = (ruta_carpeta.name if ruta_carpeta.parent == AQUI
+                   else ruta_carpeta.relative_to(AQUI.parent.parent).as_posix())
+        ficheros = sorted(ruta_carpeta.glob("*.bpmn"))
         if not ficheros:
             # Una carpeta vacia no es una validacion correcta: es haber perdido los diagramas.
             print(f"{carpeta + '/':38} FALTA  no hay ningun diagrama .bpmn")

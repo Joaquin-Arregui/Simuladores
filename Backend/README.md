@@ -142,6 +142,43 @@ Para repetir una simulación basta con volver a enviar esa semilla. El proceso d
 simulación se lanza además con `PYTHONHASHSEED=0`, así que tampoco el orden
 interno de los conjuntos de Python cambia de una ejecución a otra.
 
+## El proceso base
+
+La convocatoria del plan, el modelo del que parte el proyecto, está dibujada en
+el Modeler, `Modeler/ejemplos/proceso-base.bpmn` (cómo se dibuja, en
+[la guía del Modeler](../Modeler/README.md#el-proceso-base)), y escrita como
+reglas en el modelo de referencia `pruebas/modelos/35-proceso-base.txt`. Son el
+mismo modelo:
+
+- La colaboración «Proceso base», con una convocatoria y la semilla `20260101`
+  guardada (`collab:seed`).
+- **SACU**, el orquestador, con tres personas —Ana, Bea y Carlos— que se
+  reparten sus tareas: publica la convocatoria, recibe las solicitudes, evalúa
+  una por solicitud, publica la lista de aceptados y envía a cada solicitante
+  su resultado; después recibe, evalúa y responde las reclamaciones. Las
+  recepciones, las evaluaciones y los envíos son multiinstancia paralela: el
+  lote es lo que llega, y una recepción cierra cuando ya no puede llegar nada.
+- **Residente**, orquestado: diez casos por convocatoria, con recursos
+  infinitos y llegada uniforme en 120 s. Rellena el formulario, envía la
+  solicitud y espera el resultado; queda aceptado el 60 %, y de los demás
+  reclama la mitad, que espera su reevaluación.
+
+Desde el Modeler basta con abrir el ejemplo y pulsar **Simular**. Lo que llega
+aquí es lo de cualquier simulación: en `content`, las reglas que el Modeler
+exporta del dibujo, y en `diagramXML`, el dibujo; sin `seed`, porque la
+semilla la lee el Backend del diagrama. Con la fecha de inicio predeterminada
+responde 200 sin avisos, con la semilla 20260101 y dos registros, `Pool_SACU`
+(un caso) y `Pool_Residente` (diez). Quedan aceptados ocho residentes, el
+séptimo se rechaza sin reclamar y el segundo reclama; la convocatoria acaba a
+las 00:05:57 (t=357 s). Los aceptados terminan entre las 00:05:13 y las
+00:05:17, todos casi a la vez, porque la SACU no publica los resultados hasta
+haber evaluado el lote entero.
+
+El banco comprueba que el dibujo y las reglas que el Modeler exporta de él,
+mandados así, sin semilla, dan exactamente el XES de las reglas del `35`
+(`pruebas/integracion.py`); la regresión ejecuta además el `35` con 100
+residentes ([pruebas/README.md](pruebas/README.md)).
+
 ## Ejecución y soporte
 
 Las uniones paralelas esperan una llegada por cada flujo de entrada y consumen
@@ -172,6 +209,25 @@ porcentajes configurados en el modelador, no evalúan expresiones BPMN.
 | Eventos intermedios | Lanzamiento simple, envío/recepción de mensaje y espera por duración numérica. |
 | Compuertas | Exclusiva, inclusiva y paralela, con uniones y ciclos. |
 | Datos | Disponibilidad de objetos referenciados mediante entradas/salidas de tareas. |
+
+Cada ejecución de una tarea dura un número entero de segundos (1.2). La
+duración sale de una normal centrada entre su mínimo y su máximo, con una
+desviación típica de la sexta parte de esa distancia, y **recortada**, no
+truncada: un valor que cae fuera no se vuelve a sortear, sino que se queda en
+el extremo más próximo. Como los extremos están a tres desviaciones del
+centro, fuera cae el 0,27 % de las veces, la mitad por cada lado, así que cada
+extremo sale en torno al 0,13 % de las ejecuciones; en una normal truncada no
+tendrían más peso que sus vecinos. Con mínimo y máximo iguales, la duración es
+siempre ese valor.
+
+Después se redondea al segundo más próximo; en un empate, al par, como `round`
+de Python: con mínimo y máximo de 2.5 la tarea dura 2 s, y con 3.5, 4 s. Con
+2.5 y 3.5 casi todas las ejecuciones duran 3 s, y las que caen en un extremo,
+2 s o 4 s, en torno al 0,13 % cada una. Si el mínimo es mayor que cero, nunca
+dura menos de un segundo, aunque el redondeo diera cero: con 0.4 dura 1 s. Los
+tiempos admiten decimales —el Modeler los guarda y las reglas los llevan tal
+cual—, y cambian cómo se reparten las duraciones entre los dos extremos, pero
+no la precisión del resultado.
 
 En una bifurcación exclusiva se elige una salida; si los porcentajes no suman 100,
 se reparten en proporción y se avisa. En una inclusiva se decide cada salida de
@@ -229,8 +285,9 @@ Respecto al motor anterior a la limpieza:
 - Cada mensaje se consume una sola vez.
 - Los usuarios se asignan por orden de llegada. Antes, con varias instancias
   esperando, se atendía primero a la última en llegar.
-- La duración de una tarea sale de una normal truncada entre su mínimo y su
-  máximo, y no depende de cuántas veces la haya hecho ese usuario: se ha
+- La duración de una tarea sale de una normal recortada a su mínimo y su
+  máximo (ver [Ejecución y soporte](#ejecución-y-soporte)), y no depende de
+  cuántas veces la haya hecho ese usuario: se ha
   retirado el aprendizaje por repetición del motor original, que la acortaba un
   5 % por repetición hasta un 50 %.
 - Una tarea con tiempo mayor que cero dura al menos un segundo: el redondeo

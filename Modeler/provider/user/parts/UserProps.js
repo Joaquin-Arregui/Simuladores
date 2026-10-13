@@ -1,9 +1,11 @@
 import { h } from '@bpmn-io/properties-panel/preact';
-import { useEffect } from '@bpmn-io/properties-panel/preact/hooks';
 import htm from 'htm';
 
 import { useService } from 'bpmn-js-properties-panel';
-import { TextFieldEntry, SelectEntry } from '@bpmn-io/properties-panel';
+import { TextFieldEntry, SelectEntry, isTextFieldEntryEdited } from '@bpmn-io/properties-panel';
+
+import numberField from '../../model/parts/NumberField';
+import { formatNumber } from '../../../lib/numbers/numbers.js';
 
 import { PEOPLE_TYPES, peopleOf, setPeople } from '../../../lib/people/people.js';
 
@@ -32,14 +34,14 @@ export default function(element) {
     {
       id: 'minimumTime',
       element,
-      component: minimumTimeFunction,
-      isEdited: isNumberEntryEdited,
+      component: MinimumTimeEntry,
+      isEdited: isTextFieldEntryEdited,
     },
     {
       id: 'maximumTime',
       element,
-      component: maximumTimeFunction,
-      isEdited: isNumberEntryEdited,
+      component: MaximumTimeEntry,
+      isEdited: isTextFieldEntryEdited,
     },
     {
       id: 'loopParameter',
@@ -249,171 +251,30 @@ function NumberOfExecutionsFunction(props) {
   />`;
 }
 
-function maximumTimeFunction(props) {
-  const { element, id } = props;
-  const modeling = useService('modeling');
-  const translate = useService('translate');
-  const debounce = useService('debounceInput');
+// Los tiempos de la tarea, en segundos, validados como los valida el Backend:
+// un numero de 0 en adelante, con decimales, y el minimo no mayor que el
+// maximo. Iguales valen -la tarea dura siempre lo mismo, como varias del
+// proceso base-; sin maximo, las reglas llevan el minimo (lib/rules). Lo que no
+// vale se marca en rojo y no se guarda, como en los demas campos numericos.
+// Los decimales llegan tal cual a las reglas, pero el motor redondea cada
+// duracion al segundo (1.2): con 2.5 y 2.5, la tarea dura 2 s.
+const MinimumTimeEntry = numberField({
+  property: 'minimumTime',
+  label: 'Minimum time',
+  description: 'Seconds; decimals allowed, but each duration is rounded to a whole second.',
+  check: (bo, value, translate) => (typeof bo.maximumTime === 'number' && value > bo.maximumTime
+    ? translate('Cannot be greater than Maximum time ({maximum}).', { maximum: formatNumber(bo.maximumTime) })
+    : null)
+});
 
-  const getValue = () => {
-    if (!element || !element.businessObject) {
-      return '';
-    }
-    const value = element.businessObject.maximumTime;
-    return (value !== undefined && !isNaN(value)) ? value.toString() : '';
-  };
-
-  const setValue = value => {
-    const safeValue = value || '';
-    if (!element || !element.businessObject) {
-      return;
-    }
-
-    let valueToSave;
-    const newValue = parseFloat(safeValue);
-
-    if (safeValue.trim() === '') {
-      valueToSave = undefined;
-    } else if (isNaN(newValue)) {
-      return;
-    } else {
-      valueToSave = newValue;
-    }
-
-    modeling.updateProperties(element, {
-      maximumTime: valueToSave
-    });
-  };
-
-  const validate = (value) => {
-    const safeValue = value || '';
-    if (safeValue.trim() === '') {
-      return null;
-    }
-
-    const newValue = parseFloat(safeValue);
-
-    if (isNaN(newValue)) {
-      return translate('Must be a valid number.');
-    }
-    if (newValue < 0) {
-      return translate('Time cannot be negative.');
-    }
-
-    const minimumTime = parseFloat(element.businessObject.minimumTime);
-    if (!isNaN(minimumTime) && newValue <= minimumTime) {
-      return translate('Must be greater than Minimum time.');
-    }
-    return null;
-  };
-
-  useEffect(() => {
-    return () => {
-      const minValue = parseFloat(element.businessObject.minimumTime);
-      const maxValue = parseFloat(element.businessObject.maximumTime);
-
-      if (!isNaN(minValue) && !isNaN(maxValue)) {
-        if (minValue >= maxValue) {
-          alert(translate('Maximum time must be greater than Minimum time.'));
-        }
-      }
-    };
-  }, [ element, translate ]);
-
-  return html`<${TextFieldEntry}
-    id=${id}
-    element=${element}
-    label=${translate('Maximum time')}
-    getValue=${getValue}
-    setValue=${setValue}
-    debounce=${debounce}
-    validate=${validate}
-    tooltip=${translate('Enter the maximum time.')} 
-  />`;
-}
-
-function minimumTimeFunction(props) {
-  const { element, id } = props;
-  const modeling = useService('modeling');
-  const translate = useService('translate');
-  const debounce = useService('debounceInput');
-
-  const getValue = () => {
-    if (!element || !element.businessObject) {
-      return '';
-    }
-    const value = element.businessObject.minimumTime;
-    return (value !== undefined && !isNaN(value)) ? value.toString() : '';
-  };
-
-  const setValue = value => {
-    const safeValue = value || '';
-    if (!element || !element.businessObject) {
-      return;
-    }
-
-    let valueToSave;
-    const newValue = parseFloat(safeValue);
-
-    if (safeValue.trim() === '') {
-      valueToSave = undefined;
-    } else if (isNaN(newValue)) {
-      return;
-    } else {
-      valueToSave = newValue;
-    }
-
-    modeling.updateProperties(element, {
-      minimumTime: valueToSave
-    });
-  };
-
-  const validate = (value) => {
-    const safeValue = value || '';
-    if (safeValue.trim() === '') {
-      return null;
-    }
-
-    const newValue = parseFloat(safeValue);
-
-    if (isNaN(newValue)) {
-      return translate('Must be a valid number.');
-    }
-    if (newValue < 0) {
-      return translate('Time cannot be negative.');
-    }
-
-    const maximumTime = parseFloat(element.businessObject.maximumTime);
-    if (!isNaN(maximumTime) && newValue >= maximumTime) {
-      return translate('Must be less than Maximum time.');
-    }
-    return null;
-  };
-
-  useEffect(() => {
-    return () => {
-      const minValue = parseFloat(element.businessObject.minimumTime);
-      const maxValue = parseFloat(element.businessObject.maximumTime);
-
-      if (!isNaN(minValue) && !isNaN(maxValue)) {
-        if (minValue >= maxValue) {
-          alert(translate('Minimum time must be less than Maximum time.'));
-        }
-      }
-    };
-  }, [ element, translate ]);
-
-  return html`<${TextFieldEntry}
-    id=${id}
-    element=${element}
-    label=${translate('Minimum time')}
-    getValue=${getValue}
-    setValue=${setValue}
-    debounce=${debounce}
-    validate=${validate}
-    tooltip=${translate('Enter the minimum time.')} 
-  />`;
-}
+const MaximumTimeEntry = numberField({
+  property: 'maximumTime',
+  label: 'Maximum time',
+  description: 'Seconds. Empty: the same as the minimum.',
+  check: (bo, value, translate) => (typeof bo.minimumTime === 'number' && value < bo.minimumTime
+    ? translate('Cannot be less than Minimum time ({minimum}).', { minimum: formatNumber(bo.minimumTime) })
+    : null)
+});
 
 function SelectOptionFunction(props) {
   const { element, id } = props;

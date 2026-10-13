@@ -29,7 +29,11 @@ mientras el comportamiento no deba cambiar, sus XES no deben cambiar.
   siguen abriendo.
 - `exporta_reglas.mjs` y `exportadas/` — lo que el Modeler manda a la API al
   simular cada diagrama de `integracion/`: el BPMN guardado y sus reglas
-  exportadas, con el código del Modeler (ver más abajo).
+  exportadas, con el código del Modeler (ver más abajo). En
+  `exportadas/ejemplos/`, las reglas de los ejemplos del Modeler.
+- `../../Modeler/ejemplos/` — no son del banco, pero el banco los comprueba: los
+  ejemplos del Modeler, dibujados y guardados en él (5.6). Hoy, el proceso
+  base, que cuenta el modelo `35`.
 - `lee_con_pm4py.py` — lee con PM4Py los registros congelados, los reúne y
   saca de ellos quién está libre (ver más abajo).
 
@@ -293,6 +297,16 @@ sin abrir ningún puerto.
   exportadas solas**, sin el diagrama, también: con el diagrama no se vería un
   parámetro que el exportador se dejara, porque desde la 5.3 el Backend lo
   tomaría del dibujo; sin él, las reglas tienen que llevarlo todo.
+- Los **ejemplos del Modeler**, `Modeler/ejemplos/<ejemplo>.bpmn` (5.6), se
+  mandan como los manda el Modeler: el fichero tal cual y las reglas que el
+  Modeler exporta de él, `exportadas/ejemplos/<ejemplo>.txt`, **sin semilla en
+  la petición**. Cada uno cuenta un modelo de referencia
+  (`MODELO_DE_CADA_EJEMPLO` en `integracion.py`; `proceso-base`, el `35`) y
+  tiene que dar el XES de sus reglas con la semilla del banco, que es la que
+  lleva guardada, y sus mismos avisos; y sus reglas solas, con esa semilla,
+  también. Así se comprueba que el proceso base se dibuja y se simula sin
+  escribir un fichero de reglas. Un ejemplo sin modelo, o un modelo sin su
+  ejemplo, es un fallo.
 - Con la primera respuesta que trae varios registros se comprueba que la
   revisión de un conjunto (`simulator.registros.revisa_registros`) detecta los
   rotos —que no haya ninguno, que falte uno, que esté duplicado o mal formado,
@@ -346,6 +360,13 @@ los mismos nombres que en las reglas—, las listas de personas dentro de
 BPMN de verdad no lo dice el Backend sino `valida_bpmn.mjs`, con bpmn-moddle
 —la librería con la que bpmn-js abre un diagrama— y los descriptores del
 Modeler; necesita `npm install` hecho en `Modeler/`. Se abren en el Modeler.
+
+Los ejemplos del Modeler son la excepción, a propósito: el proceso base
+(`Modeler/ejemplos/proceso-base.bpmn`) está dibujado en el Modeler, con todo lo
+de la simulación escrito en sus paneles y puesto con su menú de reemplazo,
+porque lo que prueba es que se puede dibujar y simular sin escribir reglas
+(5.6). `valida_bpmn.mjs`, sin argumentos, y `valida_esquema.py` lo comprueban
+como a los generados.
 
 `valida_bpmn.mjs` comprueba además que **abrir y guardar no cambia nada**, que
 es lo que pasa cada vez que alguien abre un diagrama en el Modeler y lo vuelve a
@@ -411,12 +432,17 @@ avisos en las otras herramientas y, si hay uno del mismo nombre en
 
 Por último, `valida_bpmn.mjs` comprueba los **números del panel**
 (`Modeler/lib/numbers/`): cada valor que el panel acepta en las frecuencias,
-las instancias y la ventana de llegada se guarda con los descriptores, se abre
+las instancias, la ventana de llegada y los tiempos de una tarea se guarda con
+los descriptores, se abre
 otra vez y, escrito como lo muestra el panel, el panel lo tiene que volver a
 aceptar con el mismo valor; y lo que no vale —negativos, `1e400`, enteros con
 decimales o mayores que 9007199254740991— se tiene que rechazar. JavaScript
 guarda 0.0000001 como `1e-7`, y un panel que solo admitiera decimales sin
-exponente marcaba como inválido lo que acababa de guardar.
+exponente marcaba como inválido lo que acababa de guardar. Y hasta la 5.6 el
+descriptor leía los tiempos de una tarea como enteros: 2.5 se guardaba bien,
+pero al volver a abrir el fichero era 2. Lo que se perdía era el parámetro del
+modelo: la duración simulada la redondea el motor al segundo en cualquier caso
+(ver `Backend/README.md`), pero entre los extremos que dice el modelo.
 
 Y comprueba **los registros que ofrece el Modeler** (`Modeler/lib/logs/`, 5.5):
 con los registros congelados de cada modelo en `esperado/`, puestos como los
@@ -443,6 +469,12 @@ que bpmn-js cambia al pintarlo: `isMarkerVisible` en las compuertas
 exclusivas. El resultado, `exportadas/<modelo>.txt` y `exportadas/<modelo>.bpmn`,
 es byte a byte lo que manda el Modeler de verdad: así se comprobó en un
 navegador con los 22 diagramas.
+
+Hace lo mismo con los ejemplos del Modeler, `Modeler/ejemplos/`, pero de ellos
+solo congela las reglas, en `exportadas/ejemplos/`: un ejemplo ya es lo que
+guarda el Modeler, así que abierto y guardado otra vez tiene que salir igual,
+byte a byte, y lo que se manda al simularlo es el propio fichero. Si se vuelve
+a dibujar o se cambia en el Modeler, se congela otra vez con `--congela`.
 
 Sin argumentos compara lo exportado hoy con lo congelado y dice desde qué línea
 cambia; con `--congela` lo vuelve a escribir, y solo si todos los diagramas se
@@ -510,10 +542,11 @@ contenedores, porque PM4Py lee las listas y se salta los contenedores.
 
 Los comandos se niegan a comparar o congelar si falta un grupo de casos o
 está vacío: `modelos/`, `modelos-con-avisos/` y `modelos-con-error/` en el banco
-del motor, `integracion/`, `integracion-con-error/` y `exportadas/` en el de
-integración, la carpeta de diagramas y `formato-anterior/` en `valida_bpmn.mjs`,
-`integracion/` en `exporta_reglas.mjs`, y las cuatro carpetas de diagramas en
-`valida_esquema.py`. Sin esa comprobación, perder una
+del motor, `integracion/`, `integracion-con-error/`, `exportadas/` y
+`Modeler/ejemplos/` en el de integración, la carpeta de diagramas,
+`Modeler/ejemplos/` y `formato-anterior/` en `valida_bpmn.mjs`, `integracion/` y
+`Modeler/ejemplos/` en `exporta_reglas.mjs`, y las cinco carpetas de diagramas
+en `valida_esquema.py`. Sin esa comprobación, perder una
 carpeta entera —modelos y referencias a la vez, en un merge— daba verde con
 menos casos, o con ninguno, sin decir nada.
 

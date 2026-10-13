@@ -22,6 +22,100 @@ es de 5 minutos; el editor consulta su configuración antes de cada ejecución.
 Si el Backend ignora algo para poder simular (por ejemplo, un flujo por defecto o
 un pool externo), los avisos aparecen encima del resultado.
 
+## El proceso base
+
+`ejemplos/proceso-base.bpmn` es la convocatoria del plan dibujada en el Modeler:
+la SACU, que la orquesta, y diez residentes que solicitan, esperan su resultado
+y, si no los aceptan, pueden reclamar. Para simularla basta con abrirla
+(**Open Existing Model**) y pulsar **Simular**; no hace falta ningún fichero de
+reglas, porque el Modeler las exporta del dibujo, y la semilla va guardada en
+él.
+
+![El proceso base](ejemplos/proceso-base.svg)
+
+El resultado son dos registros, **SACU** con un caso y **Residente** con diez,
+de la simulación con semilla 20260101 del modelo «Proceso base». Con la fecha
+de inicio predeterminada del Backend, la convocatoria acaba a las 00:05:57
+(t=357 s): quedan aceptados ocho residentes, uno se rechaza sin reclamar y otro
+reclama y recibe su reevaluación. Es exactamente la simulación del modelo de
+referencia `35-proceso-base` del banco, y el banco lo comprueba
+(`Backend/pruebas/integracion.py`).
+
+### Dibujarlo desde cero
+
+Todo se hace con la paleta, el menú de reemplazo de cada elemento (la llave
+inglesa) y los paneles; los tiempos van en segundos.
+
+1. **Open New Model**, borra el evento de inicio y crea dos pools con
+   **Create pool/participant**, en la paleta: **SACU** arriba y **Residente**
+   abajo.
+2. Dibuja en cada pool sus eventos, tareas y compuertas, y únelos como en la
+   imagen. Las tareas de envío y recepción se cambian de tipo con la llave
+   inglesa (**Send task**, **Receive task**). Los nombres se escriben con doble
+   clic. El ID, en **General**, es lo que los registros escriben en cada
+   evento (`concept:name`); el ejemplo usa IDs legibles, como
+   `Publicar_Convocatoria`, pero no hace falta.
+3. Une con flujos de mensaje cada envío con su recepción en el otro pool:
+   **Solicitud** (Enviar la solicitud → Recibir una solicitud), **Resultado**
+   (Enviar un resultado → Esperar el resultado), **Reclamacion** (Presentar una
+   reclamacion → Recibir una reclamacion) y **Reevaluacion** (Enviar una
+   reevaluacion → Esperar la reevaluacion).
+4. En cada tarea, en **Simulation parameters**, quién la hace (**Add User
+   Task**) y sus tiempos. A las seis con multiinstancia en la tabla, la llave
+   inglesa y **Parallel multi-instance**: son las que trabajan por lotes, una
+   vez por solicitud o por reclamación.
+
+   | Pool | Tarea | Tipo | Quién | Mínimo | Máximo | Multiinstancia |
+   | --- | --- | --- | --- | --- | --- | --- |
+   | SACU | Publicar la convocatoria | Task | Ana, Bea, Carlos | 10 | 10 | |
+   | SACU | Recibir una solicitud | Receive | Ana, Bea, Carlos | 1 | 1 | paralela |
+   | SACU | Evaluar una propuesta | Task | Ana, Bea, Carlos | 20 | 60 | paralela |
+   | SACU | Publicar la lista de aceptados | Task | Ana, Bea, Carlos | 10 | 10 | |
+   | SACU | Enviar un resultado | Send | Ana, Bea, Carlos | 1 | 2 | paralela |
+   | SACU | Recibir una reclamacion | Receive | Ana, Bea, Carlos | 1 | 1 | paralela |
+   | SACU | Evaluar una reclamacion | Task | Ana, Bea, Carlos | 20 | 40 | paralela |
+   | SACU | Enviar una reevaluacion | Send | Ana, Bea, Carlos | 1 | 2 | paralela |
+   | Residente | Rellenar el formulario | Task | Residente | 10 | 30 | |
+   | Residente | Enviar la solicitud | Send | Residente | 1 | 1 | |
+   | Residente | Esperar el resultado | Receive | Residente | 1 | 1 | |
+   | Residente | Presentar una reclamacion | Send | Residente | 5 | 15 | |
+   | Residente | Esperar la reevaluacion | Receive | Residente | 1 | 1 | |
+
+   Con mínimo y máximo iguales, o con el máximo vacío, la tarea dura siempre
+   lo mismo: el mínimo, redondeado al segundo. El motor simula cada duración
+   en segundos enteros (ver los parámetros del panel, más abajo); en el
+   proceso base todos los tiempos son enteros, así que cada tarea dura
+   exactamente lo que dice.
+5. En cada salida de las dos compuertas, en **SequenceFlow properties**, su
+   **Percentage of Branches**: en «Aceptada?», 60 por «Si» y 40 por «No»; en
+   «Reclamar?», 50 y 50.
+6. A los dos pools, la llave inglesa y **Participant multiplicity**, y en
+   **Model properties**:
+   - SACU: **Orchestration role** Orchestrator, **Instances** 1 (una
+     convocatoria) y sus tres personas (**Add User without Role**).
+   - Residente: Orchestrated, **Instances** 10 (residentes por convocatoria),
+     **Infinite resources** —cada residente se hace sus tareas: nadie espera
+     a otro—, **Arrival mode** Uniform y **Arrival window T** 120 —cada uno
+     llega en un segundo al azar entre 0 y 120 desde que se abre la
+     convocatoria— y la persona Residente.
+7. En la raíz —un clic en el lienzo vacío—, en **Model properties**: **Model
+   name** «Proceso base», **Number of instances** 1 y **Seed** 20260101.
+8. **Ctrl+S** lo guarda y **Simular** lo simula.
+
+Con la misma semilla, la simulación depende también del orden en que se
+dibujan dos cosas: los pools y las salidas de cada compuerta. El motor recorre
+los elementos en el orden en que el Modeler los guarda, que es en el que se
+crearon, y en ese orden reparte los números al azar. El ejemplo tiene la SACU
+antes que los residentes y, en cada compuerta, la salida «Si» antes que la «No»;
+dibujado así, en cualquier orden lo demás, da exactamente su XES, y en otro
+orden, otra simulación igual de válida. Sin semilla, cada simulación es otra y
+la usada queda en los registros.
+
+El fichero abre sin avisos en otras herramientas: el banco lo abre como lo
+abren bpmn-js sin nada del Modeler y Camunda Modeler (Camunda 7 y 8), lo vuelve
+a guardar desde ellas sin perder nada y lo valida contra el esquema de BPMN 2.0
+(`Backend/pruebas/valida_bpmn.mjs` y `valida_esquema.py`).
+
 ## Compilación
 
 ```sh
@@ -33,6 +127,8 @@ La compilación genera exclusivamente `example/dist`; conserva los HTML y fuente
 
 ## Estructura
 
+- `ejemplos`: diagramas dibujados y guardados con el Modeler; hoy, el
+  proceso base (ver arriba).
 - `example/src`: inicio y editor; al pulsar **Simular**, `taskHandlers.js`
   exporta las reglas con `lib/rules`.
 - `provider` y `descriptors`: propiedades de simulación y su serialización BPMN.
@@ -73,14 +169,30 @@ poder quitarlo. Los pools sin carriles tienen además su lista de personas.
 
 En la **raíz** —la colaboración, o el proceso si el diagrama es uno solo— está
 la **semilla** (`collab:seed` o `model:seed`), junto al número de instancias de
-la colaboración, o al del proceso y su frecuencia. Vacía, el motor genera una y
+la colaboración, o al del proceso y su frecuencia. La colaboración tiene además
+ahí su nombre, **Model name**, que los registros guardan como `model:name`: el
+panel **General** de bpmn-js no lo ofrece para una colaboración, y sin él el
+modelo se exportaba como `Unnamed`. Vacía, el motor genera una y
 la deja en los registros; con la misma semilla y el mismo modelo sale la misma
 simulación. Se guarda como texto para que una semilla grande no pierda cifras.
 
 Cada campo se valida como lo valida el Backend (enteros donde hacen falta,
 nada negativo, T obligatoria con la llegada uniforme, instancias obligatorias
 con el marcador, semilla entre 0 y 9007199254740991): lo que no vale se marca
-en rojo y no se guarda. Los enteros llegan como mucho a 9007199254740991, el
+en rojo y no se guarda. También los tiempos de una tarea, **Minimum time** y
+**Maximum time** (5.6): segundos, con decimales, y el mínimo no mayor que el
+máximo; iguales valen. Los decimales se guardan en el `.bpmn` y llegan a las
+reglas tal cual, pero el motor simula cada ejecución en segundos enteros (1.2):
+la duración sale entre el mínimo y el máximo y se redondea al segundo más
+próximo —en un empate, al par: con 2.5 y 2.5 la tarea dura siempre 2 s, y con
+3.5 y 3.5, 4 s—, y si el mínimo es mayor que cero nunca baja de 1 s. Un tiempo
+con decimales cambia cómo se reparten las duraciones entre los dos extremos
+—cómo se sortean, en [el README del Backend](../Backend/README.md#ejecución-y-soporte)—,
+no la precisión de cada una. Hasta la 5.6 el panel exigía el máximo
+estrictamente mayor, avisaba con una ventana emergente y guardaba igual lo que
+marcaba como inválido; y como el descriptor los leía como enteros, un 2.5
+guardado volvía como 2 al abrir el fichero: cambiaba el modelo, no solo la
+duración simulada. Los enteros llegan como mucho a 9007199254740991, el
 mayor que JavaScript guarda exacto. Las frecuencias admiten también notación
 científica, porque es como JavaScript las escribe en el `.bpmn` por debajo de
 1e-6 y desde 1e21 —0.0000001 se guarda como `1e-7`—; al mostrarlas, el panel
@@ -144,7 +256,7 @@ del diagrama.
 
 Una tarea multiinstancia lleva la marca estándar de BPMN, no un tipo propio: se
 pone desde el menú de reemplazo de la tarea (la llave inglesa), con **Parallel
-multi instance** o **Sequential multi instance**, y se quita volviendo a pulsar la
+multi-instance** o **Sequential multi-instance**, y se quita volviendo a pulsar la
 que está activa. Se guarda como `bpmn:multiInstanceLoopCharacteristics`
 —`isSequential="true"` en la secuencial—, se exporta a las reglas como
 `multiInstanceType="false"` o `"true"`, y el Backend también la lee del diagrama

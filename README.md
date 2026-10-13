@@ -25,6 +25,8 @@ En Linux o macOS, el ejecutable del entorno es `.venv/bin/python`.
 
 El modelador se sirve en `http://localhost:9000` y el Backend en `http://localhost:3000`. Consulta [la documentación del modelador](Modeler/README.md) y [la del Backend](Backend/README.md) para instalarlos y conocer las funciones disponibles.
 
+Para empezar hay un ejemplo listo para abrir en el modelador y simular, el proceso base de la convocatoria: `Modeler/ejemplos/proceso-base.bpmn` ([cómo se dibuja y qué da](Modeler/README.md#el-proceso-base)).
+
 La aplicación conserva edición BPMN, parámetros, usuarios/roles y simulación. Se han retirado chatbot, mapa de calor y Scheduler tanto del Modeler como del Backend, además de las demos de animación de tokens y el ejecutor de experimentos `server2.py`.
 
 Cada simulación dispone de 5 minutos de tiempo real, configurables en el Backend

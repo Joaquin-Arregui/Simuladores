@@ -2,7 +2,8 @@
 //
 //     node pruebas/valida_bpmn.mjs [carpeta]
 //
-// Sin argumento revisa pruebas/integracion/. Abre cada diagrama con
+// Sin argumento revisa pruebas/integracion/ y los ejemplos del Modeler,
+// Modeler/ejemplos/, que no estan generados sino dibujados en el (5.6). Abre cada diagrama con
 // bpmn-moddle -la libreria con la que bpmn-js importa un diagrama- y con los
 // descriptores del Modeler, y comprueba:
 //
@@ -43,6 +44,8 @@
 //    panel lo vuelve a aceptar con el mismo valor. JavaScript guarda 0.0000001
 //    como 1e-7, y un panel que solo admitiera decimales sin exponente marcaria
 //    como invalido lo que acaba de guardar. Lo que no vale se tiene que rechazar.
+//    Tambien los tiempos de una tarea (5.6): hasta entonces el descriptor los
+//    leia como enteros, y 2.5 se guardaba bien pero volvia como 2.
 // 8. Que el Modeler ofrece un registro por pool con el nombre de su pool (5.5):
 //    con los registros congelados de cada modelo (esperado/), como los
 //    devuelve la API, Modeler/lib/logs da uno por pool, en su orden, cada uno
@@ -222,21 +225,23 @@ function cambiosAlGuardar(antes, despues) {
   return cambios;
 }
 
-const carpeta = process.argv[2] || join(aqui, 'integracion');
-if (!existsSync(carpeta)) {
-  console.log(`No existe la carpeta de diagramas: ${carpeta}`);
-  process.exit(1);
-}
-const ficheros = readdirSync(carpeta).filter(f => f.endsWith('.bpmn')).sort();
-if (!ficheros.length) {
-  // Una carpeta vacia no es una validacion correcta: es haber perdido los diagramas.
-  console.log(`No hay ningun diagrama .bpmn en ${carpeta}.`);
-  process.exit(1);
+const carpetas = process.argv[2]
+  ? [[process.argv[2], '']]
+  : [[join(aqui, 'integracion'), ''], [join(modeler, 'ejemplos'), 'ejemplos/']];
+const ficheros = [];
+for (const [carpeta, prefijo] of carpetas) {
+  const estos = existsSync(carpeta) ? readdirSync(carpeta).filter(f => f.endsWith('.bpmn')).sort() : [];
+  if (!estos.length) {
+    // Una carpeta vacia no es una validacion correcta: es haber perdido los diagramas.
+    console.log(existsSync(carpeta) ? `No hay ningun diagrama .bpmn en ${carpeta}.` : `No existe la carpeta de diagramas: ${carpeta}`);
+    process.exit(1);
+  }
+  ficheros.push(...estos.map(f => ({ ruta: join(carpeta, f), fichero: prefijo + f })));
 }
 
 let fallos = 0;
-for (const fichero of ficheros) {
-  const xml = readFileSync(join(carpeta, fichero), 'utf8');
+for (const { ruta, fichero } of ficheros) {
+  const xml = readFileSync(ruta, 'utf8');
   const { rootElement, warnings } = await moddle.fromXML(xml);
   const problemas = warnings.map(w => `bpmn-moddle: ${w.message.split('\n')[0]}`);
 
@@ -339,7 +344,8 @@ for (const fichero of anteriores) {
 const CAMPOS_NUMERICOS = [
   // [elemento, propiedad, entero, minimo]
   ['P', 'frequency', false, 0], ['P', 'instances', true, 1], ['P', 'arrivalWindow', true, 0],
-  ['Proc', 'frequency', false, 0], ['Proc', 'instance', true, 1], ['C', 'instance', true, 1]
+  ['Proc', 'frequency', false, 0], ['Proc', 'instance', true, 1], ['C', 'instance', true, 1],
+  ['T', 'minimumTime', false, 0], ['T', 'maximumTime', false, 0]
 ];
 const VALEN = {
   decimal: ['0.0000001', '1e-7', '0.000000123', '2.5e-3', '0.1', '3', '0', '123456789.125',
@@ -349,7 +355,7 @@ const VALEN = {
 const NO_VALEN = { decimal: ['1e400', '-1', '.5', '1,5', 'abc'], entero: ['9007199254740992', '1e3', '2.5', '-3'] };
 const PLANTILLA = '<?xml version="1.0" encoding="UTF-8"?><bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" ' +
   'id="D" targetNamespace="x"><bpmn:collaboration id="C"><bpmn:participant id="P" processRef="Proc"/></bpmn:collaboration>' +
-  '<bpmn:process id="Proc"/></bpmn:definitions>';
+  '<bpmn:process id="Proc"><bpmn:task id="T"/></bpmn:process></bpmn:definitions>';
 const porId = raiz => {
   const ids = {};
   recorre(raiz, e => { if (e.id) ids[e.id] = e; });

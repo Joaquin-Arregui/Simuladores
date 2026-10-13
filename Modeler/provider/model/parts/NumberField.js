@@ -17,7 +17,10 @@ import { checkNumber, formatNumber, parseNumber } from '../../../lib/numbers/num
 //   minimum      el menor valor admitido
 //   description  texto, o (businessObject, translate) => texto
 //   required     (businessObject) => si vacio es un error
-export default function numberField({ property, label, integer = false, minimum = 0, description, required }) {
+//   check        (businessObject, valor, translate) => por que un numero valido
+//                no vale con los demas campos -un minimo mayor que el maximo-,
+//                o null
+export default function numberField({ property, label, integer = false, minimum = 0, description, required, check }) {
   function NumberFieldEntry(props) {
     const { element, id } = props;
     const modeling = useService('modeling');
@@ -42,7 +45,7 @@ export default function numberField({ property, label, integer = false, minimum 
       }
       const problem = checkNumber(text, { integer, minimum });
       if (!problem) {
-        return null;
+        return check ? check(element.businessObject, parseNumber(text, { integer }), translate) : null;
       }
       if (integer) {
         return translate('Must be a whole number between {minimum} and {maximum}.',

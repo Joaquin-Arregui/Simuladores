@@ -22,6 +22,13 @@ Dos grupos de diagramas:
   exportadas de exportadas/<modelo>, que escribe exporta_reglas.mjs con el
   codigo del Modeler. Tienen que dar el mismo XES, metadatos incluidos, y los
   mismos avisos que las reglas de referencia con la misma semilla.
+- `Modeler/ejemplos/<ejemplo>.bpmn` -- los ejemplos del Modeler (5.6), que no
+  estan generados desde unas reglas sino dibujados y guardados en el. Cada uno
+  cuenta un modelo de referencia (MODELO_DE_CADA_EJEMPLO), y se manda como lo
+  manda el Modeler: el fichero y las reglas que exporta de el
+  (exportadas/ejemplos/<ejemplo>.txt), sin semilla en la peticion. Tiene que dar
+  el XES de las reglas de su modelo con la semilla del banco, la que lleva
+  guardada: se dibuja y se simula sin escribir un fichero de reglas.
 - `integracion-con-error/<modelo>--<variante>.bpmn` -- el diagrama esta roto o
   no cuenta lo mismo que las reglas de <modelo>, y la API tiene que rechazarlo
   con un 400 o un 422 y el mensaje congelado en esperado/integracion/. Un 500 no
@@ -54,6 +61,11 @@ DIAGRAMAS = AQUI / "integracion"
 DIAGRAMAS_CON_ERROR = AQUI / "integracion-con-error"
 # Lo que el Modeler manda al simular cada diagrama de integracion/ (5.4).
 EXPORTADAS = AQUI / "exportadas"
+# Los ejemplos del Modeler, dibujados en el (5.6), las reglas que exporta de
+# cada uno y el modelo de referencia que cuenta.
+EJEMPLOS = AQUI.parent.parent / "Modeler" / "ejemplos"
+EXPORTADAS_DE_EJEMPLOS = EXPORTADAS / "ejemplos"
+MODELO_DE_CADA_EJEMPLO = {"proceso-base": "35-proceso-base"}
 ESPERADO = banco.ESPERADO / "integracion"
 CODIGOS_PREVISTOS = (400, 422)
 
@@ -422,6 +434,57 @@ def revisa_lo_que_manda_el_modeler(cliente, diagrama, directo):
     return fallos
 
 
+def revisa_los_ejemplos(cliente):
+    """5.6: cada ejemplo del Modeler, mandado como lo manda el Modeler -el
+    fichero y las reglas que exporta de el, sin semilla en la peticion-, da el
+    XES de su modelo de referencia con la semilla del banco, que es la que
+    lleva guardada. Y sus reglas solas, con esa semilla, tambien: como en
+    revisa_lo_que_manda_el_modeler, sin el dibujo se ve si el exportador se
+    deja algo que el dibujo tapaba. Cuantos fallos."""
+    fallos = 0
+    ejemplos = {ruta.stem: ruta for ruta in sorted(EJEMPLOS.glob("*.bpmn"))}
+    for nombre in sorted(set(MODELO_DE_CADA_EJEMPLO) - set(ejemplos)):
+        print("%-38s FALTA   el ejemplo del modelo %s" % ("ejemplos/%s.bpmn" % nombre, MODELO_DE_CADA_EJEMPLO[nombre]))
+        fallos += 1
+    for nombre, ejemplo in ejemplos.items():
+        etiqueta = "ejemplos/" + ejemplo.name
+        modelo = MODELO_DE_CADA_EJEMPLO.get(nombre)
+        reglas = EXPORTADAS_DE_EJEMPLOS / (nombre + ".txt")
+        if modelo is None:
+            print("%-38s SIN MODELO  di en MODELO_DE_CADA_EJEMPLO que modelo cuenta" % etiqueta)
+            fallos += 1
+            continue
+        if not reglas.exists():
+            print("%-38s FALTA   exportadas/ejemplos/%s.txt: ejecuta node pruebas/exporta_reglas.mjs --congela"
+                  % (etiqueta, nombre))
+            fallos += 1
+            continue
+        directo = banco.ejecuta(reglas_de(modelo))
+        content, xml = reglas.read_text(encoding="utf-8"), ejemplo.read_text(encoding="utf-8")
+        for etiqueta, cuerpo, que in ((etiqueta, {"content": content, "diagramXML": xml},
+                                       "el dibujo y sus reglas, sin semilla"),
+                                      ("  ...sus reglas solas", {"content": content, "seed": banco.SEMILLA},
+                                       "las reglas, sin el dibujo")):
+            respuesta = cliente.post("/simulate", json=cuerpo)
+            datos = respuesta.get_json(silent=True) or {}
+            if respuesta.status_code != 200:
+                print("%-38s HTTP %d   %s" % (etiqueta, respuesta.status_code, datos.get("error", "")))
+                fallos += 1
+                continue
+            problemas = compara_respuesta(datos, directo, content, cuerpo.get("diagramXML"))
+            if sorted(datos.get("warnings", [])) != sorted(directo.warnings):
+                problemas.append("avisos distintos: el ejemplo %s, las reglas de %s %s"
+                                 % (datos.get("warnings"), modelo, directo.warnings))
+            if problemas:
+                print("%-38s DISTINTO  %s no simulan el modelo %s" % (etiqueta, que, modelo))
+                for linea in problemas:
+                    print("         %s" % linea)
+                fallos += 1
+            else:
+                print("%-38s ok      %s: el XES de %s, seed=%d" % (etiqueta, que, modelo, datos["seed"]))
+    return fallos
+
+
 def con_semilla(xml, semilla):
     """El diagrama con la semilla en su raiz, donde la guarda el panel (5.3):
     collab:seed en la colaboracion o, si es un proceso solo, model:seed."""
@@ -526,7 +589,8 @@ def main():
                           help="escribe las respuestas de error esperadas, solo si todo pasa")
     argumentos = opciones.parse_args()
     # Sin diagramas no hay validacion: perder las carpetas no puede dar verde.
-    problemas = banco.faltan_grupos((DIAGRAMAS, "*.bpmn"), (DIAGRAMAS_CON_ERROR, "*.bpmn"), (EXPORTADAS, "*.txt"))
+    problemas = banco.faltan_grupos((DIAGRAMAS, "*.bpmn"), (DIAGRAMAS_CON_ERROR, "*.bpmn"), (EXPORTADAS, "*.txt"),
+                                    (EJEMPLOS, "*.bpmn"))
     if problemas:
         for problema in problemas:
             print("Falta un grupo de diagramas: %s." % problema)
@@ -544,6 +608,7 @@ def main():
     fallos += revisa_nombres_vacios(cliente)
     fallos += revisa_identificacion(cliente)
     fallos += revisa_lo_que_aporta_el_diagrama(cliente)
+    fallos += revisa_los_ejemplos(cliente)
     errores = respuestas_de_error(cliente)
     for diagrama, texto, previsto in errores:
         nombre = "con-error/" + diagrama.name
@@ -573,11 +638,17 @@ def main():
         print("%-38s REFERENCIA HUERFANA  no existe su diagrama" % huerfana.name)
         fallos += 1
     diagramas = {diagrama.stem for diagrama in DIAGRAMAS.glob("*.bpmn")}
-    for resto in sorted(p for p in EXPORTADAS.iterdir() if p.stem not in diagramas):
+    for resto in sorted(p for p in EXPORTADAS.iterdir() if p.stem not in diagramas and p != EXPORTADAS_DE_EJEMPLOS):
         print("%-38s SOBRA   no existe integracion/%s.bpmn" % ("exportadas/" + resto.name, resto.stem))
         fallos += 1
+    ejemplos = {ejemplo.stem for ejemplo in EJEMPLOS.glob("*.bpmn")}
+    restos = sorted(p for p in EXPORTADAS_DE_EJEMPLOS.iterdir() if p.stem not in ejemplos) \
+        if EXPORTADAS_DE_EJEMPLOS.is_dir() else []
+    for resto in restos:
+        print("%-38s SOBRA   no existe Modeler/ejemplos/%s.bpmn" % ("exportadas/ejemplos/" + resto.name, resto.stem))
+        fallos += 1
 
-    total = len(list(DIAGRAMAS.glob("*.bpmn"))) + len(errores)
+    total = len(list(DIAGRAMAS.glob("*.bpmn"))) + len(ejemplos) + len(errores)
     print()
     if argumentos.congela:
         if fallos:

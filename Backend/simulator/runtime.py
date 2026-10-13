@@ -86,6 +86,8 @@ def xml_value(value):
 
 
 def resolve_task_time(max_time, min_time):
+    # A normal clipped to [min_time, max_time], not truncated: a draw outside
+    # is not redrawn, it takes the nearest bound (about 0.13 % at each one).
     duration = max(min_time, min(random.gauss((min_time + max_time) / 2,
                                              (max_time - min_time) / 6), max_time))
     # Rounding must not turn a positive-duration task into a zero-time loop.

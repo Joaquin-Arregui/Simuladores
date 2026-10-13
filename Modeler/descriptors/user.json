@@ -31,12 +31,12 @@
         {
           "name": "minimumTime",
           "isAttr": true,
-          "type": "Integer"
+          "type": "Real"
         },
         {
           "name": "maximumTime",
           "isAttr": true,
-          "type": "Integer"
+          "type": "Real"
         },
         {
           "name": "loopParameter",

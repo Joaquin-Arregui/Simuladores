@@ -3,8 +3,9 @@
 //     node pruebas/exporta_reglas.mjs             compara con exportadas/
 //     node pruebas/exporta_reglas.mjs --congela   las vuelve a escribir
 //
-// Para cada integracion/<modelo>.bpmn hace lo mismo que el Modeler al abrir el
-// diagrama y pulsar Simular, con su mismo codigo:
+// Para cada integracion/<modelo>.bpmn, y para cada ejemplo del Modeler
+// -Modeler/ejemplos/<ejemplo>.bpmn, dibujados en el (5.6)-, hace lo mismo que
+// el Modeler al abrir el diagrama y pulsar Simular, con su mismo codigo:
 //
 // 1. Lo abre con bpmn-moddle y los descriptores del Modeler, y pasa a
 //    extensionElements las listas de personas del formato anterior
@@ -17,7 +18,10 @@
 //    compuerta exclusiva, bpmn-js le pone isMarkerVisible en el DI
 //    (ElementFactory); se hace igual aqui, para que lo guardado sea lo mismo.
 //
-// Escribe -o compara- exportadas/<modelo>.txt y exportadas/<modelo>.bpmn.
+// Escribe -o compara- exportadas/<modelo>.txt y exportadas/<modelo>.bpmn. De
+// los ejemplos, solo las reglas, en exportadas/ejemplos/: un ejemplo es lo que
+// guarda el Modeler, y abierto y guardado otra vez tiene que salir igual, byte
+// a byte; lo que el Modeler manda al simularlo es el propio fichero.
 // integracion.py los manda juntos a la API y exige el mismo XES que las reglas
 // de referencia con la misma semilla. Aqui se comprueba que siguen siendo lo
 // que exporta el Modeler de hoy: si cambia el exportador o un diagrama, sale
@@ -25,7 +29,7 @@
 //
 // Necesita las dependencias del Modeler (npm install en Modeler/).
 import { createRequire, register } from 'module';
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
 
@@ -99,64 +103,89 @@ async function exporta(xml) {
 }
 
 const congela = process.argv.includes('--congela');
-const origen = join(aqui, 'integracion');
-const destino = join(aqui, 'exportadas');
-const diagramas = existsSync(origen) ? readdirSync(origen).filter(f => f.endsWith('.bpmn')).sort() : [];
-if (!diagramas.length) {
+// Lo que se exporta y adonde: los diagramas del banco, generados desde las
+// reglas, y los ejemplos del Modeler (5.6), dibujados y guardados en el.
+const GRUPOS = [
+  { origen: join(aqui, 'integracion'), destino: join(aqui, 'exportadas'), prefijo: '', esLoGuardado: false },
+  { origen: join(modeler, 'ejemplos'), destino: join(aqui, 'exportadas', 'ejemplos'), prefijo: 'ejemplos/', esLoGuardado: true }
+];
+const bpmnDe = carpeta => (existsSync(carpeta) ? readdirSync(carpeta).filter(f => f.endsWith('.bpmn')).sort() : []);
+const vacios = GRUPOS.filter(g => !bpmnDe(g.origen).length);
+if (vacios.length) {
   // Una carpeta vacia no es una exportacion correcta: es haber perdido los diagramas.
-  console.log(`No hay ningun diagrama .bpmn en ${origen}.`);
+  for (const { origen } of vacios) console.log(`No hay ningun diagrama .bpmn en ${origen}.`);
   process.exit(1);
 }
 
-let fallos = 0;
-const nuevos = {};
-for (const fichero of diagramas) {
-  const modelo = fichero.replace(/\.bpmn$/, '');
-  const { reglas, guardado, avisos } = await exporta(readFileSync(join(origen, fichero), 'utf8'));
-  nuevos[modelo] = { reglas, guardado };
-  const problemas = avisos.map(a => `al abrirlo: ${a}`);
-  if (!congela) {
-    for (const [extension, texto, que] of [['txt', reglas, 'las reglas'], ['bpmn', guardado, 'el BPMN guardado']]) {
-      const ruta = join(destino, `${modelo}.${extension}`);
-      if (!existsSync(ruta)) {
-        problemas.push(`no esta exportadas/${modelo}.${extension}: ejecuta con --congela`);
-      } else if (readFileSync(ruta, 'utf8') !== texto) {
-        const viejas = readFileSync(ruta, 'utf8').split('\n'), nuevas = texto.split('\n');
-        const linea = nuevas.findIndex((l, i) => l !== viejas[i]);
-        problemas.push(`${que} cambian desde la linea ${linea + 1}: ${JSON.stringify((nuevas[linea] || '').slice(0, 160))}`);
+let fallos = 0, total = 0;
+const nuevos = [];
+const restos = [];
+for (const { origen, destino, prefijo, esLoGuardado } of GRUPOS) {
+  const diagramas = bpmnDe(origen);
+  const vigentes = new Set();
+  for (const fichero of diagramas) {
+    total += 1;
+    const modelo = fichero.replace(/\.bpmn$/, '');
+    const original = readFileSync(join(origen, fichero), 'utf8');
+    const { reglas, guardado, avisos } = await exporta(original);
+    nuevos.push({ destino, modelo, reglas, guardado: esLoGuardado ? null : guardado });
+    vigentes.add(`${modelo}.txt`);
+    if (!esLoGuardado) vigentes.add(`${modelo}.bpmn`);
+    const problemas = avisos.map(a => `al abrirlo: ${a}`);
+    if (esLoGuardado && guardado !== original) {
+      const desde = [...guardado].findIndex((c, i) => c !== original[i]);
+      problemas.push(`abierto y guardado con el Modeler no sale igual; cambia en el caracter ${desde + 1}: ` +
+        JSON.stringify(guardado.slice(Math.max(0, desde - 40), desde + 80)));
+    }
+    if (!congela) {
+      const congelados = [['txt', reglas, 'las reglas'], ...(esLoGuardado ? [] : [['bpmn', guardado, 'el BPMN guardado']])];
+      for (const [extension, texto, que] of congelados) {
+        const ruta = join(destino, `${modelo}.${extension}`);
+        if (!existsSync(ruta)) {
+          problemas.push(`no esta exportadas/${prefijo}${modelo}.${extension}: ejecuta con --congela`);
+        } else if (readFileSync(ruta, 'utf8') !== texto) {
+          const viejas = readFileSync(ruta, 'utf8').split('\n'), nuevas = texto.split('\n');
+          const linea = nuevas.findIndex((l, i) => l !== viejas[i]);
+          problemas.push(`${que} cambian desde la linea ${linea + 1}: ${JSON.stringify((nuevas[linea] || '').slice(0, 160))}`);
+        }
       }
     }
+    if (problemas.length) {
+      fallos += 1;
+      console.log(`${(prefijo + fichero).padEnd(40)} PROBLEMAS`);
+      for (const p of problemas) console.log(`         ${p}`);
+    } else {
+      const lineas = reglas.split('\n').filter(l => l.startsWith('Element:')).length;
+      console.log(`${(prefijo + fichero).padEnd(40)} ok      ${lineas} elementos en las reglas${congela ? '' : ', igual que lo congelado'}`);
+    }
   }
-  if (problemas.length) {
-    fallos += 1;
-    console.log(`${fichero.padEnd(40)} PROBLEMAS`);
-    for (const p of problemas) console.log(`         ${p}`);
-  } else {
-    const lineas = reglas.split('\n').filter(l => l.startsWith('Element:')).length;
-    console.log(`${fichero.padEnd(40)} ok      ${lineas} elementos en las reglas${congela ? '' : ', igual que lo congelado'}`);
+  // Lo congelado de un diagrama que ya no existe es un resto. Las carpetas no:
+  // la de los ejemplos esta dentro de exportadas/.
+  if (existsSync(destino)) {
+    for (const f of readdirSync(destino).sort()) {
+      if (!vigentes.has(f) && statSync(join(destino, f)).isFile()) restos.push({ ruta: `${prefijo}${f}`, origen });
+    }
   }
 }
 
-// Lo congelado de un diagrama que ya no existe es un resto.
-const vigentes = new Set(Object.keys(nuevos).flatMap(m => [`${m}.txt`, `${m}.bpmn`]));
-const restos = existsSync(destino) ? readdirSync(destino).filter(f => !vigentes.has(f)).sort() : [];
+const deDonde = origen => (origen.startsWith(modeler) ? 'Modeler/ejemplos/' : 'integracion/');
 if (congela) {
   if (fallos) {
     console.log(`\nNo se ha escrito nada: ${fallos} diagrama(s) con problemas.`);
     process.exit(1);
   }
-  mkdirSync(destino, { recursive: true });
-  for (const [modelo, { reglas, guardado }] of Object.entries(nuevos)) {
+  for (const { destino, modelo, reglas, guardado } of nuevos) {
+    mkdirSync(destino, { recursive: true });
     writeFileSync(join(destino, `${modelo}.txt`), reglas);
-    writeFileSync(join(destino, `${modelo}.bpmn`), guardado);
+    if (guardado !== null) writeFileSync(join(destino, `${modelo}.bpmn`), guardado);
   }
-  for (const resto of restos) console.log(`Sobra exportadas/${resto}: su diagrama ya no esta en integracion/; borralo.`);
-  console.log(`\nCongelados ${diagramas.length} diagramas en exportadas/.`);
+  for (const { ruta, origen } of restos) console.log(`Sobra exportadas/${ruta}: su diagrama ya no esta en ${deDonde(origen)}; borralo.`);
+  console.log(`\nCongelados ${total} diagramas en exportadas/.`);
   process.exit(restos.length ? 1 : 0);
 }
-for (const resto of restos) {
-  console.log(`${resto.padEnd(40)} SOBRA   su diagrama ya no esta en integracion/`);
+for (const { ruta, origen } of restos) {
+  console.log(`${ruta.padEnd(40)} SOBRA   su diagrama ya no esta en ${deDonde(origen)}`);
   fallos += 1;
 }
-console.log(fallos ? `\n${fallos} problema(s).` : `\n${diagramas.length} diagramas: lo exportado es lo que exporta hoy el Modeler.`);
+console.log(fallos ? `\n${fallos} problema(s).` : `\n${total} diagramas: lo exportado es lo que exporta hoy el Modeler.`);
 process.exit(fallos ? 1 : 0);
