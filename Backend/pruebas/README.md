@@ -40,6 +40,9 @@ mientras el comportamiento no deba cambiar, sus XES no deben cambiar.
 - `capa_de_dibujo.mjs` — la capa de dibujo del visualizador
   (`Modeler/lib/drawing`) en un Chromium de verdad: las marcas siguen a su
   elemento (ver [La capa de dibujo](#la-capa-de-dibujo)).
+- `escena.mjs` — las pelotas de los casos y los sobres del visualizador
+  (`Modeler/lib/scene`), con todos los registros congelados y en un Chromium
+  de verdad (ver [La pelota del caso y el sobre](#la-pelota-del-caso-y-el-sobre)).
 - `navegador.mjs` — lo que comparten las pruebas en navegador: servir los
   ficheros y abrir Chromium.
 - `interfaz.mjs` — la interfaz del Modeler en un Chromium de verdad: abrir,
@@ -91,6 +94,7 @@ mientras el comportamiento no deba cambiar, sus XES no deben cambiar.
 | `34-llegadas-con-decimales` | Escalonados cada 0,1 s en dos rondas, y uniformes en la segunda, que se abre en t=5,3 | Que la comprobacion de las llegadas compare con la precision de la coma flotante y no con la del XES: el cuarto escalonado llega a los 0,3 s y 3 * 0,1 es 0.30000000000000004, asi que daba un falso error en las dos rondas |
 | `35-proceso-base` | La convocatoria entera del plan con 10 residentes: la SACU publica, recibe hasta que no puede llegar nada, evalua una por solicitud, publica los aceptados y responde a cada uno; los residentes llegan al azar en 120 s, deciden con dos gateways de porcentajes (60 % aceptados, la mitad del resto reclama) y la SACU recibe, evalua y responde las reclamaciones | Cualquier pieza del proceso que el plan llama base: el lote de las dos recepciones, las evaluaciones y los envios multiinstancia, la cola de tres personas y los gateways |
 | `36-tareas-instantaneas` | Dos casos, en t=0 y t=30, con dos tareas de duracion cero seguidas de una que dura diez segundos | Que las tareas instantaneas desaparezcan de las consultas de la linea de tiempo, pierdan su identidad u orden, ocupen tiempo inventado o se repitan entre ventanas consecutivas |
+| `37-recogida-antes-de-la-otra-espera` | Dos ramas del orquestador llegan a la misma recepcion y el orquestado le manda dos solicitudes por el mismo flujo. La rama A recoge la primera a los 7 s y espera a Ana hasta los 20; la B espera la segunda de 8 a 10. Las dos activaciones tienen la ejecucion 1 y el mismo remitente | Que el visualizador tome la espera de mensaje de una activacion por la de otra: daba la primera solicitud por recogida a los 10 s y la mostraba en el buzon a los 8 (6.3) |
 | `con-avisos/envio-a-pool-externo` | Un mensaje dirigido al pool y no a un receptor | Que un envio que sale de la simulacion acabe en un error interno en vez de en un aviso |
 | `con-avisos/mismo-usuario-en-dos-pools` | El mismo nombre declarado en dos pools | Que dos pools vuelvan a competir por el mismo recurso |
 | `con-avisos/multiinstancia-con-numero-escrito` | Una convocatoria multiinstancia con numberOfExecutions=4 a dos casos | Que un numero que ya no se usa se ignore en silencio; N son los dos casos vivos |
@@ -630,6 +634,74 @@ fracción de un recorrido, con codos, tramos de longitud cero y fracciones fuera
 de rango. Necesita lo mismo que `interfaz.mjs`: `npm install` en `Modeler/` y,
 una vez, `npx playwright install chromium`, o `CHROMIUM_PATH`.
 
+## La pelota del caso y el sobre
+
+```
+node pruebas/escena.mjs
+```
+
+Con la línea de tiempo y la capa de dibujo, el visualizador dibuja en cada
+instante una pelota por cada ejecución o espera activa de un caso y un sobre
+por cada mensaje (`Modeler/lib/scene`, 6.3). Primero, sin navegador, el script
+construye la escena de cada modelo de `esperado/`, con los flujos de sus
+reglas, y comprueba:
+
+- Que cada envío tiene la recepción que recoge su sobre, y cada recepción un
+  solo envío, de su pareja de casos y por su flujo de mensaje; que nadie recoge
+  un sobre antes de que salga, ni después de empezar la recepción; que cada
+  sobre tiene su ID; y que su solicitud es la de su remitente o la de su
+  destinatario, con los números de esos casos.
+- Que lo que hay en cada buzón cuadra por cuentas, sin emparejar nada: en cada
+  instante, los sobres que han salido hacia él menos los que su caso ha
+  recogido, que son sus recepciones empezadas y sus esperas a una persona en
+  curso —una ejecución de una recepción recoge su sobre y enseguida espera a
+  una persona o trabaja—. Es lo que no cuadraba en el `37`: con dos
+  activaciones de la misma recepción, las dos con la ejecución 1 y el mismo
+  remitente, la escena tomaba la espera de mensaje de la segunda por la de la
+  primera, que ya tenía su sobre y esperaba a Ana, y lo enseñaba en el buzón
+  de 7 a 10 s.
+- En cada instante en que cambia algo y a mitad de cada dos: una pelota por
+  cada pieza activa de la línea de tiempo, con el número de su caso dentro de
+  su pool; los casos de cada pool contados una vez, tengan las pelotas que
+  tengan; y cada sobre visible solo entre que sale y que lo recogen.
+- Que el tránsito es cosmético: con él están las mismas pelotas, en los mismos
+  elementos y estados, y los mismos casos; solo cambia dónde se dibujan —sobre
+  un flujo que llega a su elemento, o el sobre sobre su flujo de mensaje— y se
+  ven además los sobres que acaban de salir. Y que el instante no depende de
+  cómo se llega a él: recorrer los instantes hacia delante y hacia atrás da lo
+  mismo.
+- Lo que pide la tarea: en el 1:1 (`02`), el cliente 1 espera la respuesta en
+  su tarea de 16 a 120 s mientras el servicio 1 recibe, atiende y responde, y
+  con tránsito la petición va a mitad de su flujo a los 18 s sin que el cliente
+  deje de esperar; en un paralelo, varias pelotas del mismo caso que cuentan
+  como un caso: dos ramas (`03`), una recepción y una tarea a la vez (`12`) y
+  las diez ejecuciones del lote del SACU (`35`); y los sobres de un mismo caso:
+  los tres que el orquestador 1 tiene a la vez en el buzón de la convocatoria
+  (`10`), cada uno para su orquestado; los de una misma pareja, uno detrás de
+  otro, en orden (`25`, `26`, `27`); y los dos del `37`, que se recogen a los
+  7 y a los 10 s: a los 8 el buzón está vacío.
+
+Para ver que las comprobaciones distinguen, se repiten con tres escenas
+estropeadas a propósito, que tienen que fallar: una que cuenta las pelotas como
+casos (`35`), una que reparte al revés los dos sobres de un mismo buzón (`25`)
+y una cuyo tránsito retrasa el instante (`02`).
+
+Después, en el bpmn-js de las dependencias del Modeler con `lib/scene`, abre
+los diagramas de `integracion/` del `02`, el `10` y el `35` con sus registros y
+comprueba en la pantalla: la pelota del cliente 1 dentro de su tarea, con su
+número y el borde discontinuo de esperar, y el reloj en «t = 60 s»; a los 18 s
+con tránsito, el sobre sobre el trazo de su flujo de mensaje, «1→1» con el
+número de la solicitud en negrita, y la pelota del cliente, que es la misma
+marca que a los 60 s; las pelotas dentro de sus elementos al ampliar; los tres
+sobres de la convocatoria, encima de su recepción y en orden de llegada; las
+diez pelotas del SACU 1, cada una en su sitio; y que al abrir otro diagrama —el
+del `01`— no queda ni una marca ni el reloj, ni la simulación anterior: `show`
+tiene que dar error sin dibujar nada hasta que se carguen los registros del
+nuevo, y con ellos dibuja los suyos; `clear()` también la descarga. Antes se
+quedaba con la simulación, y `show(60)` volvía a dibujar las marcas y el reloj
+de la anterior sobre el diagrama nuevo. Necesita lo mismo que
+`capa_de_dibujo.mjs`.
+
 ## El coste del proceso base
 
 ```
@@ -686,7 +758,9 @@ del motor, `integracion/`, `integracion-con-error/`, `exportadas/` y
 `Modeler/ejemplos/` en `exporta_reglas.mjs`, las cinco carpetas de diagramas
 en `valida_esquema.py`, y el ejemplo, sus reglas exportadas y los registros
 congelados del `35` en `interfaz.mjs`, los registros de `esperado/` en
-`linea_de_tiempo.mjs`, y el ejemplo en `capa_de_dibujo.mjs`. Sin esa
+`linea_de_tiempo.mjs`, el ejemplo en `capa_de_dibujo.mjs`, y los registros de
+`esperado/`, las reglas de cada uno y los diagramas del `01`, el `02`, el `10` y
+el `35` en `escena.mjs`. Sin esa
 comprobación, perder una
 carpeta entera —modelos y referencias a la vez, en un merge— daba verde con
 menos casos, o con ninguno, sin decir nada.

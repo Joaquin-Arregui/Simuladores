@@ -130,10 +130,11 @@ npm run bundle
 La compilación genera exclusivamente `example/dist`; conserva los HTML y fuentes de `example`. Para servir la compilación, publica toda la carpeta `example`. `npm run all` revisa el código con ESLint y compila.
 
 Las pruebas del Modeler están en el banco del Backend: el código de `lib/` lo
-prueban sin navegador `valida_bpmn.mjs` y `exporta_reglas.mjs`, y la interfaz,
-en un Chromium de verdad, `interfaz.mjs` (ver
-[el banco](../Backend/pruebas/README.md#la-interfaz)). Para esta hace falta,
-una vez, `npx playwright install chromium`, que descarga el Chromium de
+prueban sin navegador `valida_bpmn.mjs`, `exporta_reglas.mjs` y
+`linea_de_tiempo.mjs`, y en un Chromium de verdad, la interfaz `interfaz.mjs`
+(ver [el banco](../Backend/pruebas/README.md#la-interfaz)) y lo que dibuja el
+visualizador `capa_de_dibujo.mjs` y `escena.mjs`. Para estas hace falta, una
+vez, `npx playwright install chromium`, que descarga el Chromium de
 Playwright.
 
 ## Estructura
@@ -163,6 +164,8 @@ Playwright.
   abajo).
 - `lib/drawing`: la capa de dibujo del visualizador, marcas sobre el lienzo
   (ver abajo).
+- `lib/scene`: las pelotas de los casos, los sobres y el reloj del
+  visualizador (ver abajo).
 
 ### Parámetros de simulación en el panel
 
@@ -277,6 +280,7 @@ ejecuciones simultáneas de una tarea multiinstancia.
 | `execution` | El número de la ejecución en su activación |
 | `request` | La solicitud que atiende: el caso que la pidió |
 | `sender`, `target`, `user` | Quién mandó el sobre, a quién va y quién hace la tarea |
+| `origin`, `destination` | De qué elemento viene el sobre que recibe una recepción, y a cuál va el que manda un envío |
 | `flows` | Las salidas que tomó una compuerta, o la entrada por la que espera una unión |
 | `cancelled` | Una espera de una recepción multiinstancia que se canceló al cerrar esta |
 | `start`, `end` | Segundos desde la fecha de inicio de la simulación, los que escribió el motor |
@@ -316,8 +320,67 @@ hay ningún elemento con ese ID, y vuelve a su sitio al deshacer el cambio. Al
 abrir otro diagrama se quitan todas.
 No capturan el ratón: el diagrama se selecciona y se edita a través de ellas.
 El banco lo comprueba en un Chromium de verdad
-(`Backend/pruebas/capa_de_dibujo.mjs`). Todavía no la usa ninguna página: la
-usará el modo de visualización (6.7).
+(`Backend/pruebas/capa_de_dibujo.mjs`). La usa la escena (abajo); ninguna
+página todavía: el modo de visualización es de la 6.7.
+
+### La pelota del caso y el sobre
+
+`lib/scene` (6.3) dibuja con la capa de dibujo lo que hay en un instante. Tiene
+dos partes: `scene.js`, sin nada del navegador, saca la escena de la línea de
+tiempo y de los flujos del diagrama —`createScene(timeline, graph)`, con el
+grafo de `graphFromRegistry(elementRegistry)` si el diagrama está abierto o de
+`graphFromBpmn(xml)` si es un `.bpmn`—, y `view.js` es un módulo de diagram-js,
+el servicio `sceneView`: `load(timeline)` le da la simulación del diagrama
+abierto, y `show(t, { transit })` dibuja el instante `t` y devuelve su escena.
+Al abrir otro diagrama, o con `clear()`, quita las marcas y el reloj y descarga
+la simulación: `show` da error hasta que se cargue la del diagrama nuevo, en vez
+de dibujar sobre él la del anterior.
+
+- **La pelota** es una ejecución o una espera activa de un caso, y lleva el
+  número del caso dentro de su pool. Un caso con dos ramas paralelas, o con
+  las diez ejecuciones de un lote, tiene varias pelotas a la vez, todas con su
+  número; la escena cuenta aparte los casos de cada pool (`cases`), una vez
+  cada uno. Trabajando, el borde es continuo; esperando —a una persona, un
+  mensaje, unos datos o la otra rama—, discontinuo. Las pelotas de un elemento
+  se reparten en filas alrededor de su centro, en el orden de sus casos.
+- **El sobre** es un mensaje: sale cuando acaba su envío y lo recoge la
+  recepción de su caso destino, al acabar la espera que terminó con él o, si
+  ya estaba allí, al activarse. Las piezas de cada ejecución de una recepción
+  van seguidas —esperar el sobre, esperar a una persona, trabajar—, así que la
+  recogida es cuando empieza la espera de persona que acaba al empezar la
+  recepción, o, si no la hubo, cuando empieza la recepción. No vale la última
+  espera de mensaje anterior: dos activaciones de la misma recepción numeran
+  las dos su ejecución desde 1, y la espera de la segunda puede acabar antes de
+  que empiece la recepción de la primera, que ya tenía su sobre (el `37` del
+  banco). Mientras tanto está en el buzón, encima de la recepción, en fila por
+  orden de llegada. Cada envío se empareja con su
+  recepción por el elemento que envía y el que recibe, el caso remitente y el
+  destinatario, en orden, porque el buzón de un caso es una cola; su ID es el
+  de la ejecución que lo envía, así que dos sobres de los mismos casos no se
+  confunden. Lleva debajo los números de su remitente y su destinatario,
+  «1→2», con el del caso cuya solicitud es en negrita: los tres que manda el
+  orquestador 1 en una convocatoria son «1→2», «1→3» y «1→4». El mensaje es el
+  de su flujo.
+- **El tránsito** es cosmético (D15): con `transit`, en segundos simulados, una
+  pelota que acaba de llegar a un elemento se dibuja ese tiempo sobre el flujo
+  por el que llegó —como mucho la mitad de su estancia, para que se la vea
+  llegar—, y un sobre que acaba de salir, sobre su flujo de mensaje. No cambia
+  ningún elemento, estado ni recuento: en `t` cada pelota está ya en su
+  elemento. Como depende solo de `t`, saltar a un instante da el mismo dibujo
+  que llegar a él reproduciendo. Con `transit` 0, que es lo que se da si no se
+  dice, no hay tránsito.
+- **El reloj**, encima del lienzo, marca siempre el instante simulado:
+  `t = 60 s · 2026-01-01 00:01:00`, con la fecha de inicio de la simulación y
+  su desfase horario.
+
+Cada pelota y cada sobre es una marca que se reutiliza de un instante a otro:
+solo se mueve lo que cambia. Las marcas no capturan el ratón, así que su
+título, con el caso, la ejecución, el estado y la solicitud, no aparece al
+pasar por encima; está para las pruebas y los lectores de pantalla. Los
+colores de la resolución son de la 6.5, las zonas de cada tarea y las
+insignias que sustituyen a muchas marcas, de la 6.4, y la página que lo usa, de
+la 6.7. El banco lo comprueba con todos los registros de referencia y en un
+Chromium de verdad (`Backend/pruebas/escena.mjs`).
 
 ### Las reglas que se mandan al simular
 

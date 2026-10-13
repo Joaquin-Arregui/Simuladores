@@ -164,6 +164,10 @@ export function timelineFromLogs(logs) {
           request: event['bpmn:request'] ?? null,
           sender: event['bpmn:messageSender'] ?? null,
           target: event['bpmn:messageTarget'] ?? null,
+
+          // De que elemento viene el sobre que recibe, y a cual va el que envia.
+          origin: event['bpmn:messageOrigin'] ?? null,
+          destination: event['bpmn:messageDestiny'] ?? null,
           user: event['bpmn:userTask'] ?? null,
           flows: flows ? String(flows).split(',').map(flow => flow.trim()).filter(Boolean) : [],
           cancelled: event['bpmn:cancelled'] === true,

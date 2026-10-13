@@ -1,0 +1,38 @@
+# Modelo de referencia 37 - dos activaciones de la misma recepcion, mismo caso y
+# mismo remitente: el orquestado manda dos solicitudes por el mismo flujo.
+# La primera solicitud llega a los 6 s; la rama A llega a Recoger a los 7, la
+# recoge en el acto y espera a Ana, ocupada en Ocupar hasta los 20. La rama B
+# llega a los 8 y espera el segundo sobre hasta los 10. Las dos activaciones
+# tienen la ejecucion 1 y el mismo remitente, y la espera de mensaje de la
+# segunda (8-10) acaba antes de que empiece la recepcion de la primera (20): el
+# visualizador (6.3) la tomaba por la de la primera, la daba por recogida a los
+# 10 y la mostraba en el buzon a los 8, cuando ya estaba recogida.
+Element: [type=bpmn:Collaboration, id_bpmn='Colaboracion', name='Recogida antes de la otra espera', instances=1]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Orquestador', name='Orquestador', frequency=0, userWithoutRole=['Ana', 'Beto', 'Carla'], instances=1, participantMultiplicity='true', orchestrationRole='orchestrator', containedElements=['Ini_O', 'Convocar', 'Bifurca_O', 'Ruta_A', 'Ruta_B', 'Ocupar', 'Recoger', 'Fin_O', 'o1', 'o2', 'o3', 'o4', 'o5', 'o6', 'o7', 'o8', 'o9']]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Orquestado', name='Orquestado', frequency=0, userWithoutRole=['Olga'], instances=1, participantMultiplicity='true', orchestrationRole='orchestrated', infiniteResources='true', containedElements=['Ini_R', 'Esperar_Convocatoria', 'Solicitar', 'Fin_R', 'r1', 'r2', 'r3']]
+Element: [type=bpmn:StartEvent, id_bpmn='Ini_O', name='Abre la convocatoria', subTask='Convocar']
+Element: [type=bpmn:SendTask, id_bpmn='Convocar', name='Publicar la convocatoria', userTask='Ana', numberOfExecutions=1, multiInstanceType='false', minimumTime=1, maximumTime=1, subTask='Bifurca_O']
+Element: [type=bpmn:ParallelGateway, id_bpmn='Bifurca_O', name='Tres ramas', subTask='Ruta_A,Ruta_B,Ocupar']
+Element: [type=bpmn:Task, id_bpmn='Ruta_A', name='Abrir la ventanilla A', userTask='Beto', numberOfExecutions=1, minimumTime=6, maximumTime=6, subTask='Recoger']
+Element: [type=bpmn:Task, id_bpmn='Ruta_B', name='Abrir la ventanilla B', userTask='Carla', numberOfExecutions=1, minimumTime=7, maximumTime=7, subTask='Recoger']
+Element: [type=bpmn:Task, id_bpmn='Ocupar', name='Ocupar a Ana', userTask='Ana', numberOfExecutions=1, minimumTime=19, maximumTime=19, subTask='Fin_O']
+Element: [type=bpmn:ReceiveTask, id_bpmn='Recoger', name='Recoger una solicitud', userTask='Ana', numberOfExecutions=1, minimumTime=1, maximumTime=1, subTask='Fin_O']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_O', name='Cierra la ventanilla', subTask='']
+Element: [type=bpmn:StartEvent, id_bpmn='Ini_R', name='Entra el solicitante', subTask='Esperar_Convocatoria']
+Element: [type=bpmn:ReceiveTask, id_bpmn='Esperar_Convocatoria', name='Esperar la convocatoria', userTask='Olga', numberOfExecutions=1, minimumTime=1, maximumTime=1, subTask='Solicitar']
+Element: [type=bpmn:SendTask, id_bpmn='Solicitar', name='Enviar una solicitud', userTask='Olga', numberOfExecutions=2, minimumTime=4, maximumTime=4, subTask='Fin_R']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_R', name='Fin del solicitante', subTask='']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o1', name='', superElement='Ini_O', subElement='Convocar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o2', name='', superElement='Convocar', subElement='Bifurca_O']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o3', name='', superElement='Bifurca_O', subElement='Ruta_A']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o4', name='', superElement='Bifurca_O', subElement='Ruta_B']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o5', name='', superElement='Bifurca_O', subElement='Ocupar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o6', name='', superElement='Ruta_A', subElement='Recoger']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o7', name='', superElement='Ruta_B', subElement='Recoger']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o8', name='', superElement='Recoger', subElement='Fin_O']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o9', name='', superElement='Ocupar', subElement='Fin_O']
+Element: [type=bpmn:SequenceFlow, id_bpmn='r1', name='', superElement='Ini_R', subElement='Esperar_Convocatoria']
+Element: [type=bpmn:SequenceFlow, id_bpmn='r2', name='', superElement='Esperar_Convocatoria', subElement='Solicitar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='r3', name='', superElement='Solicitar', subElement='Fin_R']
+Element: [type=bpmn:MessageFlow, id_bpmn='Convocatoria', name='Convocatoria', superElement='Convocar', subElement='Esperar_Convocatoria']
+Element: [type=bpmn:MessageFlow, id_bpmn='Solicitud', name='Solicitud', superElement='Solicitar', subElement='Recoger']
