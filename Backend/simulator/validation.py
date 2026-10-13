@@ -91,6 +91,44 @@ def lane_chain(elements, node_id):
     return ordered
 
 
+def resolve_lane_pools(elements, duenos_de_nodos, pools):
+    """{carril: pool} de los carriles cuyo pool se puede saber.
+
+    El Modeler exporta los nodos del pool, pero no los IDs de sus carriles, asi
+    que el pool de un carril se deduce: primero de sus propios nodos, que
+    validate_simulation ya obliga a que sean de un solo participante; bpmn-js
+    lista cada nodo en su carril y en todos los que lo contienen, asi que una
+    cadena de subcarriles con nodos apunta entera al mismo pool. Un carril sin
+    nodos -una reserva de personal, por ejemplo- se queda con el pool de su
+    carril padre, o con el de sus subcarriles si todos son del mismo. Sin eso sus
+    personas no entraban en la plantilla de ningun pool, y despues no se podia
+    saber que estaban libres. `duenos_de_nodos` es {nodo: participante}.
+    """
+    carriles = elements.get("lanes", [])
+    duenos = {}
+    for lane_id in carriles:
+        propios = {duenos_de_nodos.get(nodo) for nodo in elements[lane_id].contained_elements} & set(pools)
+        if len(propios) == 1:
+            duenos[lane_id] = propios.pop()
+    cambiado = True
+    while cambiado:
+        cambiado = False
+        for lane_id in carriles:
+            if lane_id in duenos:
+                continue
+            padre = getattr(elements[lane_id], "parent_lane", None)
+            hijos = {duenos[hijo] for hijo in carriles
+                     if getattr(elements[hijo], "parent_lane", None) == lane_id and hijo in duenos}
+            if padre in duenos:
+                duenos[lane_id] = duenos[padre]
+            elif len(hijos) == 1:
+                duenos[lane_id] = hijos.pop()
+            else:
+                continue
+            cambiado = True
+    return duenos
+
+
 def task_base_users(elements, node_id, is_process):
     """Users a node may use before applying its own assignment.
 
@@ -1107,6 +1145,14 @@ def validate_simulation(elements, process, starts, message_starts, warnings=None
             owners = {ownership.get(child) for child in lane.contained_elements}
             if len(owners) > 1:
                 _fail(lane, "un carril no puede contener nodos de varios participantes.")
+        # Un carril del que no se sabe el pool no da sus personas a ninguna
+        # plantilla: se avisa en vez de perderlas en silencio.
+        de_pool = resolve_lane_pools(elements, ownership, set(ownership.values()))
+        for lane in lanes:
+            if lane.id_bpmn not in de_pool:
+                add_warning(warnings, f"{lane.id_bpmn} (bpmn:Lane): no tiene nodos, ni un carril padre o "
+                                      f"subcarriles que los tengan, y no se sabe de que pool es; sus personas "
+                                      f"no entran en ninguna plantilla.")
         for node in nodes:
             if node not in ownership:
                 _fail(nodes[node], "el nodo no pertenece a ningún participante.")

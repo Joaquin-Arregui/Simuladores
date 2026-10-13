@@ -5,8 +5,8 @@ from xml.etree import ElementTree as ET
 
 from simulator.simulationFunctions.generateFunction import generateFunction
 from simulator.validation import (TASK_TYPES, resolve_batch_receives, resolve_convocatorias,
-                                  resolve_reply_contexts, resolve_send_cycles, resolve_send_reach,
-                                  resolve_takeable_flows, task_base_users)
+                                  resolve_lane_pools, resolve_reply_contexts, resolve_send_cycles,
+                                  resolve_send_reach, resolve_takeable_flows, task_base_users)
 from simulator.registros import FORMATO_DEL_REGISTRO, id_de_simulacion
 
 DEFAULT_START_DATE = '2026-01-01T00:00:00+00:00'
@@ -69,8 +69,13 @@ def _cabeceras(elements, process, participants, element_participant, pool_users,
         propios.append(_personas('pool:staff', pool_users[participant_id]))
         carriles = [lane_id for lane_id in elements['lanes'] if element_participant.get(lane_id) == participant_id]
         if carriles:
+            # Cada carril con su nombre, su carril padre si lo tiene -un
+            # subcarril sin personas propias trabaja con las de el- y sus personas.
             propios.append(_lista('pool:lanes', [
-                _personas(lane_id, elements[lane_id].users, [_atributo('string', 'name', elements[lane_id].name)])
+                _personas(lane_id, elements[lane_id].users,
+                          [_atributo('string', 'name', elements[lane_id].name)]
+                          + ([_atributo('string', 'parent', elements[lane_id].parent_lane)]
+                             if getattr(elements[lane_id], 'parent_lane', None) else []))
                 for lane_id in carriles]))
         if getattr(pool, 'userWithRole', None):
             propios.append(_lista('pool:roles', [_personas(rol, personas)
@@ -93,26 +98,6 @@ def _assign_participant(elements, ids, participant, mapping, seen):
         if contained:
             _assign_participant(elements, contained, participant, mapping, seen)
         mapping[child] = participant
-
-
-def _lane_participant(elements, lane_id, element_participant, pools):
-    """A que pool pertenece un carril, deducido de los nodos que contiene.
-
-    El Modeler exporta los nodos del pool, pero no los IDs de sus carriles, asi
-    que el carril no llega nunca por `containedElements` y se quedaba colgando
-    de la colaboracion: la cola del pool perdia a sus usuarios. Los nodos si
-    estan, y validate_simulation ya obliga a que sean de un solo participante.
-
-    Los subcarriles se resuelven igual, cada uno por sus propios nodos: bpmn-js
-    lista cada nodo en su carril y en todos los que lo contienen, asi que la
-    cadena entera apunta al mismo pool y los usuarios heredados de un carril
-    padre entran tambien en la cola. Por eso bastan los nodos propios: un carril
-    sin nodos no puede cederle usuarios a ninguna tarea ni por herencia, porque
-    task_base_users solo recorre los carriles que contienen el nodo.
-    """
-    owners = {element_participant.get(child) for child in elements[lane_id].contained_elements}
-    owners &= pools
-    return owners.pop() if len(owners) == 1 else None
 
 
 def _ejecuciones_maximas(envio):
@@ -191,11 +176,9 @@ def generateScript(elements, process, starts, messageStarts, start_date=DEFAULT_
     # Los carriles, despues de sus nodos y antes del valor por defecto: si se
     # dejan al valor por defecto acaban en la colaboracion y sus usuarios no
     # llegan a la cola de su pool.
-    pools = set(participants)
-    for lane_id in elements['lanes']:
-        owner = _lane_participant(elements, lane_id, element_participant, pools)
-        if owner is not None:
-            element_participant[lane_id] = owner
+    # Su pool sale de sus nodos o, si no tienen, de su carril padre o sus
+    # subcarriles (resolve_lane_pools).
+    element_participant.update(resolve_lane_pools(elements, element_participant, set(participants)))
     for item in elements.values():
         node_id = getattr(item, 'id_bpmn', None)
         if node_id is not None:

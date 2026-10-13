@@ -1,0 +1,1 @@
+Carril_Suelto (bpmn:Lane): no tiene nodos, ni un carril padre o subcarriles que los tengan, y no se sabe de que pool es; sus personas no entran en ninguna plantilla.

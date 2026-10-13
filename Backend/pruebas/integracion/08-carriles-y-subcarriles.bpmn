@@ -48,6 +48,9 @@
           <bpmn:lane id="Carril_Caja" name="Caja">
             <bpmn:flowNodeRef>Cobrar_Comision</bpmn:flowNodeRef>
           </bpmn:lane>
+          <bpmn:lane id="Carril_Reserva" name="Reserva">
+            <lane:userWithoutRole>Diana</lane:userWithoutRole>
+          </bpmn:lane>
         </bpmn:childLaneSet>
       </bpmn:lane>
     </bpmn:laneSet>
@@ -90,16 +93,19 @@
         <dc:Bounds x="160" y="80" width="1200" height="150" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Pool_Banco_di" bpmnElement="Pool_Banco" isHorizontal="true">
-        <dc:Bounds x="160" y="290" width="1200" height="450" />
+        <dc:Bounds x="160" y="290" width="1200" height="600" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Carril_Oficina_di" bpmnElement="Carril_Oficina" isHorizontal="true">
-        <dc:Bounds x="190" y="290" width="1170" height="450" />
+        <dc:Bounds x="190" y="290" width="1170" height="600" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Carril_Riesgos_di" bpmnElement="Carril_Riesgos" isHorizontal="true">
         <dc:Bounds x="220" y="440" width="1140" height="150" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Carril_Caja_di" bpmnElement="Carril_Caja" isHorizontal="true">
         <dc:Bounds x="220" y="590" width="1140" height="150" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Carril_Reserva_di" bpmnElement="Carril_Reserva" isHorizontal="true">
+        <dc:Bounds x="220" y="740" width="1140" height="150" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Inicio_C_di" bpmnElement="Inicio_C">
         <dc:Bounds x="272" y="122" width="36" height="36" />

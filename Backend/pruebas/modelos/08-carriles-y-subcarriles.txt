@@ -5,12 +5,18 @@
 # Es el modelo que detecta que la cola del pool se queda sin los usuarios de los
 # carriles: entonces ninguna tarea del banco encuentra a quien asignarse y la
 # simulacion termina bloqueada con un 422.
+# Carril_Reserva es un subcarril de Carril_Oficina sin ningun nodo, con Diana:
+# personal de reserva al que ninguna tarea recurre. No tiene nodos de los que
+# deducir su pool, asi que lo saca de su carril padre, y Diana tiene que estar
+# en la plantilla del banco y en su registro, libre de principio a fin. Sin eso
+# el carril y Diana desaparecian del XES sin avisar.
 Element: [type=bpmn:Collaboration, id_bpmn='Colaboracion', name='Banco con carriles', instances=2]
 Element: [type=bpmn:Participant, id_bpmn='Pool_Cliente', name='Cliente', frequency=50, userWithoutRole=['Carla'], containedElements=['Inicio_C', 'Pedir_Prestamo', 'Esperar_Resultado', 'Fin_C', 'Flujo_C1', 'Flujo_C2', 'Flujo_C3']]
 Element: [type=bpmn:Participant, id_bpmn='Pool_Banco', name='Banco', frequency=0, userWithoutRole=[], containedElements=['Inicio_B', 'Recibir_Solicitud', 'Valorar_Riesgo', 'Cobrar_Comision', 'Enviar_Resultado', 'Fin_B', 'Flujo_B1', 'Flujo_B2', 'Flujo_B3', 'Flujo_B4', 'Flujo_B5']]
 Element: [type=bpmn:Lane, id_bpmn='Carril_Oficina', name='Oficina', userWithoutRole=['Ana', 'Bruno'], containedElements=['Inicio_B', 'Recibir_Solicitud', 'Valorar_Riesgo', 'Cobrar_Comision', 'Enviar_Resultado', 'Fin_B']]
 Element: [type=bpmn:Lane, id_bpmn='Carril_Riesgos', name='Riesgos', parentLane='Carril_Oficina', userWithoutRole=['Clara'], containedElements=['Valorar_Riesgo']]
 Element: [type=bpmn:Lane, id_bpmn='Carril_Caja', name='Caja', parentLane='Carril_Oficina', userWithoutRole=[], containedElements=['Cobrar_Comision']]
+Element: [type=bpmn:Lane, id_bpmn='Carril_Reserva', name='Reserva', parentLane='Carril_Oficina', userWithoutRole=['Diana'], containedElements=[]]
 Element: [type=bpmn:StartEvent, id_bpmn='Inicio_C', name='Arranca el cliente', subTask='Pedir_Prestamo']
 Element: [type=bpmn:SendTask, id_bpmn='Pedir_Prestamo', name='Pedir el prestamo', userTask='Carla', numberOfExecutions=1, minimumTime=10, maximumTime=20, subTask='Esperar_Resultado']
 Element: [type=bpmn:ReceiveTask, id_bpmn='Esperar_Resultado', name='Esperar el resultado', userTask='Carla', numberOfExecutions=1, minimumTime=5, maximumTime=10, subTask='Fin_C']

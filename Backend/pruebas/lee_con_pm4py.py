@@ -15,7 +15,8 @@ escribe el motor se puede leer, y que con lo leido basta para tres cosas:
 - Saber quien esta libre sin consultar las reglas, que pueden haber cambiado
   despues: la plantilla de cada pool esta en su registro, tambien quien no
   llega a trabajar, y lo ocupado sale de los eventos. En el 32 Carla no trabaja
-  en ninguna ronda, y tiene que salir como libre de principio a fin.
+  en ninguna ronda, y en el 08 Diana esta en un subcarril de reserva sin
+  ninguna tarea: las dos tienen que salir libres de principio a fin.
 """
 import logging
 import sys
@@ -26,7 +27,8 @@ import banco
 
 # Quien tiene que salir sin ninguna asignacion: si no sale, la plantilla del
 # registro no esta completa.
-SIN_ASIGNACIONES = {("32-convocatorias-que-empiezan-de-cero", "Pool_Orquestador"): ["Carla"]}
+SIN_ASIGNACIONES = {("32-convocatorias-que-empiezan-de-cero", "Pool_Orquestador"): ["Carla"],
+                    ("08-carriles-y-subcarriles", "Pool_Banco"): ["Diana"]}
 
 
 def plantilla(log):

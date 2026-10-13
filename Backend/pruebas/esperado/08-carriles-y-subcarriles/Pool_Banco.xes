@@ -4,7 +4,7 @@
   <extension name="Time" prefix="time" uri="http://www.xes-standard.org/time.xesext"/>
   <classifier name="Activity (by BPMN ID)" keys="bpmn:id" scope="event"/>
   <classifier name="Case (by participant and instance)" keys="bpmn:participant bpmn:instance" scope="event"/>
-  <string key="simulation:id" value="48d8855e99c84cc3" />
+  <string key="simulation:id" value="e429753222a1c468" />
   <string key="simulation:formatVersion" value="1" />
   <int key="simulation:seed" value="20260101" />
   <string key="simulation:startDate" value="2026-01-01T00:00:00+00:00" />
@@ -12,7 +12,7 @@
   <int key="simulation:convocatorias" value="1" />
   <string key="model:id" value="Colaboracion" />
   <string key="model:name" value="Banco con carriles" />
-  <string key="model:rulesSha256" value="2cc1c23b006ac9fd2e0f2de075c772aebbd26d7958cc8f1ff961c35e383666e5" />
+  <string key="model:rulesSha256" value="6be2893c26d9e08fe5d7ccb112dbfcdf97b1c313353473aaa59ce679a14a1123" />
   <string key="concept:name" value="Banco" />
   <string key="pool:id" value="Pool_Banco" />
   <string key="pool:name" value="Banco" />
@@ -22,6 +22,7 @@
       <string key="person" value="Ana" />
       <string key="person" value="Bruno" />
       <string key="person" value="Clara" />
+      <string key="person" value="Diana" />
     </values>
   </list>
   <list key="pool:lanes">
@@ -36,12 +37,21 @@
       <list key="Carril_Riesgos">
         <values>
           <string key="name" value="Riesgos" />
+          <string key="parent" value="Carril_Oficina" />
           <string key="person" value="Clara" />
         </values>
       </list>
       <list key="Carril_Caja">
         <values>
           <string key="name" value="Caja" />
+          <string key="parent" value="Carril_Oficina" />
+        </values>
+      </list>
+      <list key="Carril_Reserva">
+        <values>
+          <string key="name" value="Reserva" />
+          <string key="parent" value="Carril_Oficina" />
+          <string key="person" value="Diana" />
         </values>
       </list>
     </values>

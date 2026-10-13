@@ -23,7 +23,7 @@ from xml.etree import ElementTree as ET
 
 import banco  # noqa: F401  fija la fecha de inicio y el sys.path
 from simulator.parser import parse_bpmn_elements
-from simulator.validation import NODE_TYPES, TASK_TYPES, lane_chain
+from simulator.validation import NODE_TYPES, TASK_TYPES, lane_chain, resolve_lane_pools
 
 NS = {
     "bpmn": "http://www.omg.org/spec/BPMN/20100524/MODEL",
@@ -235,10 +235,16 @@ def genera(ruta_reglas):
         participantes = [k for k, v in modelo.items() if kind(v) == "Participant"]
         nodos_de = {p: [n for n in nodos_todos if n in elements[p].contained_elements] for p in participantes}
         procesos = {p: f"Process_{p}" for p in participantes if nodos_de[p]}
+        # El pool de cada carril, como lo resuelve el motor: por sus nodos o,
+        # si no tiene, por su carril padre o sus subcarriles. Uno sin pool no se
+        # dibuja; el motor avisa de el.
+        pool_de_carril = resolve_lane_pools(
+            elements, {n: p for p, ns in nodos_de.items() for n in ns}, set(participantes))
     else:
         if carriles_todos:
             raise SystemExit("Un Process con carriles no esta soportado por este generador.")
         participantes, nodos_de, procesos = [], {raiz_id: nodos_todos}, {raiz_id: raiz_id}
+        pool_de_carril = {}
 
     entrantes, salientes = defaultdict(list), defaultdict(list)
     for flujo in secuencia:
@@ -279,7 +285,7 @@ def genera(ruta_reglas):
                 ET.SubElement(par, q("model", "key")).text = rol
                 ET.SubElement(par, q("model", "value")).text = ",".join(miembros)
         nodos = nodos_de[dueno]
-        carriles = [c for c in carriles_todos if set(elements[c].contained_elements) & set(nodos)]
+        carriles = [c for c in carriles_todos if pool_de_carril.get(c) == dueno]
         if carriles:
             def escribe_carriles(padre, nivel_carriles):
                 conjunto = ET.SubElement(padre, q("bpmn", "laneSet" if padre is proceso else "childLaneSet"),
@@ -331,6 +337,7 @@ def genera(ruta_reglas):
     # --- DI: pools apilados, carriles en bandas, nodos por capas ----------
     lienzo = Lienzo()
     profundidad_max = 0
+    carriles_todos = [c for c in carriles_todos if c in pool_de_carril]
     for c in carriles_todos:
         d, actual = 0, elements[c].parent_lane
         while actual in carriles_todos:
@@ -341,7 +348,7 @@ def genera(ruta_reglas):
     for dueno in duenos:
         nodos = nodos_de.get(dueno, [])
         flujos = [(f.superElement, f.subElement) for f in secuencia if f.superElement in nodos]
-        carriles = [c for c in carriles_todos if set(elements[c].contained_elements) & set(nodos)]
+        carriles = [c for c in carriles_todos if pool_de_carril.get(c) == dueno]
         if nodos:
             ancho, alto = dibuja_pool(elements, nodos, flujos, carriles, 160, y, lienzo,
                                       profundidad_max if carriles else 0)

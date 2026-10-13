@@ -37,7 +37,7 @@ mientras el comportamiento no deba cambiar, sus XES no deben cambiar.
 | `05-multiplicidad-por-pool` | Orquestador con 1 instancia y orquestado con 3 | Que cada pool use su propio número y no el de la colaboración |
 | `06-mensaje-antes-de-arrancar` | Un mensaje dirigido a un caso que aún no ha arrancado | Que un mensaje se pierda porque su destinatario todavía no existía |
 | `07-recursos-infinitos` | Un pool finito y otro infinito, los dos con un usuario y tres casos | Que la casilla de recursos infinitos deje de hacer efecto |
-| `08-carriles-y-subcarriles` | Un pool sin usuarios propios: un carril con los suyos, un subcarril con otro y un subcarril que los hereda | Que la cola del pool se quede sin los usuarios de sus carriles |
+| `08-carriles-y-subcarriles` | Un pool sin usuarios propios: un carril con los suyos, un subcarril con otro, un subcarril que los hereda y uno de reserva sin nodos | Que la cola del pool se quede sin los usuarios de sus carriles; o que un subcarril sin nodos -la reserva, con Diana- pierda su pool y Diana desaparezca de la plantilla del registro |
 | `09-eventos-de-mensaje` | Aviso y confirmacion por eventos intermedios de mensaje, con dos parejas desfasadas | Que el otro camino de los mensajes, el que no pasa por tareas, se cruce o pierda el remitente |
 | `con-avisos/pool-vacio` | Un pool sin proceso que simular | Que un aviso se convierta en una simulación bloqueada |
 | `con-avisos/parametro-desconocido` | Un parámetro que el simulador no conoce | Que un modelo de una versión más nueva del Modeler deje de cargarse |
@@ -71,6 +71,7 @@ mientras el comportamiento no deba cambiar, sus XES no deben cambiar.
 | `con-avisos/envio-a-pool-externo` | Un mensaje dirigido al pool y no a un receptor | Que un envio que sale de la simulacion acabe en un error interno en vez de en un aviso |
 | `con-avisos/mismo-usuario-en-dos-pools` | El mismo nombre declarado en dos pools | Que dos pools vuelvan a competir por el mismo recurso |
 | `con-avisos/multiinstancia-con-numero-escrito` | Una convocatoria multiinstancia con numberOfExecutions=4 a dos casos | Que un numero que ya no se usa se ignore en silencio; N son los dos casos vivos |
+| `con-avisos/carril-sin-pool` | El 08 con un carril sin nodos, sin carril padre ni subcarriles | Que sus personas se pierdan sin avisar: no hay de donde saber de que pool es |
 | `con-avisos/llegadas-que-no-se-usan` | El 33 con frequency, modo y ventana en el orquestador, una ventana en el escalonado y una frequency en el simultaneo | Que lo que no se usa se ignore en silencio, o que se use: el orquestador llega al abrirse y todo se simula igual que en el 33 |
 | `con-error/sin-destino` | Tres agencias escribiendo a cinco oficinas: ni 1 a N, ni N a 1, ni mismo numero | Que el motor se invente un emparejamiento en vez de decir que no hay ninguno |
 | `con-error/respuesta-ambigua` | Dos recepciones del mismo pool unidas antes de una sola respuesta | Que el motor elija por su cuenta a cual de las dos responde |
@@ -369,7 +370,8 @@ un mismo modelo son de la misma simulación, están todos los pools esperados y,
 reunidos, tienen todos los casos; y la plantilla de cada pool sale de su
 registro, así que se sabe quién está libre en cada instante sin consultar unas
 reglas que pueden haber cambiado. En el `32` Carla no trabaja en ninguna ronda,
-y tiene que salir libre de principio a fin. Los metadatos que tienen partes
+y en el `08` Diana está en un subcarril de reserva sin ninguna tarea: las dos
+tienen que salir libres de principio a fin. Los metadatos que tienen partes
 —la plantilla, los carriles, los roles— son listas XES anidadas y no
 contenedores, porque PM4Py lee las listas y se salta los contenedores.
 
