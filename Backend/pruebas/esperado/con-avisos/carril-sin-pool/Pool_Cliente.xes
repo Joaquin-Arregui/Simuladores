@@ -63,6 +63,7 @@
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Esperar_Resultado" />
       <string key="bpmn:execution" value="1" />
+      <string key="bpmn:request" value="Pool_Banco - 1" />
       <date key="time:timestamp" value="2026-01-01T00:00:16.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:01:35.000+00:00" />
       <float key="time:duration" value="79.0" />
@@ -78,6 +79,7 @@
       <string key="bpmn:id" value="Esperar_Resultado" />
       <string key="bpmn:messageOrigin" value="Enviar_Resultado" />
       <string key="bpmn:messageSender" value="Pool_Banco - 1" />
+      <string key="bpmn:request" value="Pool_Banco - 1" />
       <string key="bpmn:userTask" value="Carla" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="7" />
@@ -144,6 +146,7 @@
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Esperar_Resultado" />
       <string key="bpmn:execution" value="1" />
+      <string key="bpmn:request" value="Pool_Banco - 2" />
       <date key="time:timestamp" value="2026-01-01T00:01:05.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:02:22.000+00:00" />
       <float key="time:duration" value="77.0" />
@@ -159,6 +162,7 @@
       <string key="bpmn:id" value="Esperar_Resultado" />
       <string key="bpmn:messageOrigin" value="Enviar_Resultado" />
       <string key="bpmn:messageSender" value="Pool_Banco - 2" />
+      <string key="bpmn:request" value="Pool_Banco - 2" />
       <string key="bpmn:userTask" value="Carla" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="8" />

@@ -32,6 +32,7 @@
       <string key="concept:name" value="StandByMessage · Ini_R" />
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Ini_R" />
+      <string key="bpmn:request" value="Pool_Emisor - 1" />
       <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:00:08.000+00:00" />
       <float key="time:duration" value="8.0" />
@@ -58,6 +59,7 @@
       <int key="bpmn:instance" value="1" />
       <string key="bpmn:messageOrigin" value="Avisar" />
       <string key="bpmn:messageSender" value="Pool_Emisor - 1" />
+      <string key="bpmn:request" value="Pool_Emisor - 1" />
       <int key="bpmn:occurrence" value="3" />
       <string key="bpmn:participant" value="Pool_Receptor" />
       <int key="bpmn:convocatoria" value="1" />
@@ -169,6 +171,7 @@
       <string key="concept:name" value="StandByMessage · Ini_R" />
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Ini_R" />
+      <string key="bpmn:request" value="Pool_Emisor - 2" />
       <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:00:57.000+00:00" />
       <float key="time:duration" value="57.0" />
@@ -195,6 +198,7 @@
       <int key="bpmn:instance" value="2" />
       <string key="bpmn:messageOrigin" value="Avisar" />
       <string key="bpmn:messageSender" value="Pool_Emisor - 2" />
+      <string key="bpmn:request" value="Pool_Emisor - 2" />
       <int key="bpmn:occurrence" value="3" />
       <string key="bpmn:participant" value="Pool_Receptor" />
       <int key="bpmn:convocatoria" value="1" />

@@ -159,6 +159,8 @@ Playwright.
 - `lib/people`: dónde se guardan las listas de personas (ver abajo) y la
   migración de los ficheros anteriores a la 5.2.
 - `lib/resize-all-rules`: regla de redimensionado del editor.
+- `lib/timeline`: la línea de tiempo del visualizador, desde los registros (ver
+  abajo).
 
 ### Parámetros de simulación en el panel
 
@@ -253,6 +255,41 @@ descargara el Modeler: `downloadjs` escribía un byte por carácter en cuanto
 había uno entre `\x80` y `\xff`, así que una «ó» o una «ñ» en un nombre dejaban
 el `.bpmn` guardado con **Ctrl+S** imposible de leer. Ahora se le pasa el texto
 ya codificado.
+
+### La línea de tiempo
+
+El visualizador (hito 6) reproduce una simulación solo con sus registros
+(D15). `lib/timeline` los convierte en su línea de tiempo:
+`timelineFromLogs(logs)`, con los registros como los devuelve el Backend, da
+cada evento como una pieza —una ejecución o una espera con su intervalo real,
+o un instante por el que el caso pasa sin quedarse—, y `at(t)` da en cualquier
+instante lo que tiene activo cada caso: varias piezas si hay ramas paralelas o
+ejecuciones simultáneas de una tarea multiinstancia.
+
+| Campo | Qué es |
+| --- | --- |
+| `id` | El caso y su `bpmn:occurrence`: no se repite aunque la tarea vuelva en un bucle o la recorran dos ramas a la vez |
+| `case`, `pool`, `instance`, `call` | El caso, su pool, su número y su convocatoria |
+| `element`, `type` | El ID BPMN del elemento y el tipo del evento |
+| `state` | `working`, `waiting-user`, `waiting-message`, `waiting-data`, `waiting-join`, `timer` o `instant` |
+| `execution` | El número de la ejecución en su activación |
+| `request` | La solicitud que atiende: el caso que la pidió |
+| `sender`, `target`, `user` | Quién mandó el sobre, a quién va y quién hace la tarea |
+| `flows` | Las salidas que tomó una compuerta, o la entrada por la que espera una unión |
+| `cancelled` | Una espera de una recepción multiinstancia que se canceló al cerrar esta |
+| `start`, `end` | Segundos desde la fecha de inicio de la simulación, los que escribió el motor |
+
+Un intervalo está activo desde su inicio hasta justo antes de su fin: cuando
+una pieza acaba y la siguiente empieza en el mismo instante, en ese instante
+está la siguiente. `passedBetween(a, b)` da los instantes entre dos momentos
+(excluye `a`, incluye `b`), también las ejecuciones o esperas cuyo inicio y
+fin coinciden: conservan su identidad, estado y orden, sin añadir duración.
+`statusOf(caso, t)` indica si el caso aún no ha llegado, está vivo o ha terminado,
+y `changes()` enumera los instantes en que cambia algo. El tránsito por los flujos es
+cosmético y no está en la línea (6.3). Tampoco hay esperas por un tope de
+concurrencia: el motor no tiene topes, y lo que espera una ejecución
+multiinstancia es a una persona libre de su pool. El banco la comprueba con
+todos los registros de referencia (`Backend/pruebas/linea_de_tiempo.mjs`).
 
 ### Las reglas que se mandan al simular
 

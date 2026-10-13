@@ -276,6 +276,26 @@ def destino_de(origin, target, caso, execution, contexto, destinatarios=None):
     return None
 
 
+def solicitud_de(tarea, caso, execution, contexto):
+    """La solicitud que atiende una ejecucion: el caso que escribio a la
+    recepcion de la que viene su lote, o a la que responde (6.1).
+
+    Es la misma anotacion con la que una respuesta vuelve a quien escribio
+    (destino_de, regla 1), asi que la evaluacion i y la respuesta i dicen la
+    misma solicitud que la recepcion i. Una tarea que no trabaja un lote ni
+    responde a nadie no atiende ninguna: None.
+    """
+    recepcion = loteDeEvaluacion.get(tarea) or recepcionDeRespuesta.get(tarea)
+    return None if recepcion is None else _anotacion(caso, recepcion, execution, contexto)
+
+
+def atributo_de_solicitud(solicitud):
+    """bpmn:request en el evento de una ejecucion, o nada si no atiende a nadie."""
+    if solicitud is None:
+        return ''
+    return f'\n            <string key="bpmn:request" value="{xml_value(solicitud)}"/>'
+
+
 def publish_message(origin, target, execution, caso, contexto, destinatarios=None):
     """Deja el sobre en el buzon de su caso destino y devuelve ese caso.
 
@@ -674,8 +694,10 @@ def recoge_lote(env, origen, recepcion, caso, contexto, ejecuta, paralelo):
     ejecuciones lanzadas a la vez cuando N estaba escrito, y por eso cada sobre
     va a la misma ejecucion que antes y su espera cuenta desde que se activo la
     recepcion. En secuencia, cada una espera cuando termina la anterior.
-    Cuando cierra, la que esperaba se va sin registrar nada, y la recepcion
-    termina con las demas. Con cero sobres no ejecuta nada ni ocupa a nadie.
+    Cuando cierra, la que esperaba se va, y su espera queda en el registro
+    cancelada (6.1): sin ella, mientras la recepcion espera algo que ya no
+    llega el caso no estaria en ninguna parte. Con cero sobres no ejecuta nada
+    ni ocupa a nadie.
     """
     lote = abre_lote(origen, recepcion, caso, contexto)
     inicio = env.now
@@ -685,6 +707,7 @@ def recoge_lote(env, origen, recepcion, caso, contexto, ejecuta, paralelo):
         def ejecucion(numero):
             remitente = yield env.process(espera_en_lote(env, lote, numero))
             if remitente is None:
+                _registra_espera_cancelada(caso, recepcion, numero, inicio)
                 fin.succeed()
                 return
             ejecuciones.append(env.process(ejecucion(numero + 1)))
@@ -698,6 +721,7 @@ def recoge_lote(env, origen, recepcion, caso, contexto, ejecuta, paralelo):
             empieza = env.now
             remitente = yield env.process(espera_en_lote(env, lote, numero))
             if remitente is None:
+                _registra_espera_cancelada(caso, recepcion, numero, empieza)
                 return False
             yield from ejecuta(env, recepcion, caso, numero, (remitente, empieza))
             return True
@@ -709,6 +733,26 @@ def recoge_lote(env, origen, recepcion, caso, contexto, ejecuta, paralelo):
     # buscan, y cero es una respuesta, no la falta de una.
     lotes.setdefault((caso, contexto, recepcion), 0)
     recepciones_anotadas.add((caso, contexto, recepcion))
+
+
+def _registra_espera_cancelada(caso, recepcion, execution, inicio):
+    """La espera de la ejecucion que se va cuando cierra el lote (D7, 6.1).
+
+    Esperaba un sobre mas que ya no puede llegar. Cuenta desde donde cuentan
+    las de su lote -en paralelo, desde que se activo la recepcion-, y como el
+    resto de esperas solo se registra si duro algo: una recepcion que se activa
+    sin nadie que pueda escribirle cierra en el acto y no espera nada.
+    """
+    if env.now <= inicio:
+        return
+    _append_event(caso, [('string', 'bpmn:type', 'StandByMessage'),
+                         ('string', 'bpmn:id', recepcion),
+                         ('string', 'bpmn:execution', execution),
+                         ('date', 'time:timestamp', inicio),
+                         ('date', 'time:endTime', env.now),
+                         ('date', 'time:duration', env.now - inicio),
+                         ('int', 'bpmn:instance', caso.indice),
+                         ('boolean', 'bpmn:cancelled', 'true')])
 
 
 def publish_data(data_object, caso):
@@ -905,6 +949,7 @@ def _start_event(node, caso, delay, contexto):
         if env.now > start_wait:
             _append_event(caso, [('string', 'bpmn:type', 'StandByMessage'),
                                 ('string', 'bpmn:id', node),
+                                ('string', 'bpmn:request', remitente),
                                 ('date', 'time:timestamp', start_wait),
                                 ('date', 'time:endTime', env.now),
                                 ('date', 'time:duration', env.now - start_wait),
@@ -915,6 +960,7 @@ def _start_event(node, caso, delay, contexto):
     if item['origin'] is not None:
         values.append(('string', 'bpmn:messageOrigin', item['origin']))
         values.append(('string', 'bpmn:messageSender', remitente))
+        values.append(('string', 'bpmn:request', remitente))
     _append_event(caso, values)
     _release_token(caso, node, contexto)
     _route(node, caso, item['next'], contexto)

@@ -130,6 +130,7 @@
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Recoger" />
       <string key="bpmn:execution" value="1" />
+      <string key="bpmn:request" value="Pool_Orquestado - 1" />
       <date key="time:timestamp" value="2026-01-01T00:00:02.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:00:03.000+00:00" />
       <float key="time:duration" value="1.0" />
@@ -145,6 +146,7 @@
       <string key="bpmn:id" value="Recoger" />
       <string key="bpmn:messageOrigin" value="Solicitar" />
       <string key="bpmn:messageSender" value="Pool_Orquestado - 1" />
+      <string key="bpmn:request" value="Pool_Orquestado - 1" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="1" />
@@ -179,6 +181,7 @@
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Recoger" />
       <string key="bpmn:execution" value="1" />
+      <string key="bpmn:request" value="Pool_Orquestado - 2" />
       <date key="time:timestamp" value="2026-01-01T00:00:07.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:00:12.000+00:00" />
       <float key="time:duration" value="5.0" />
@@ -194,6 +197,7 @@
       <string key="bpmn:id" value="Recoger" />
       <string key="bpmn:messageOrigin" value="Solicitar" />
       <string key="bpmn:messageSender" value="Pool_Orquestado - 2" />
+      <string key="bpmn:request" value="Pool_Orquestado - 2" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="1" />
@@ -232,6 +236,7 @@
       <string key="bpmn:messageTarget" value="Pool_Orquestado - 1" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="1" />
+      <string key="bpmn:request" value="Pool_Orquestado - 1" />
       <int key="bpmn:time" value="1" />
       <string key="bpmn:subTask" value="Fin_O" />
       <date key="time:timestamp" value="2026-01-01T00:00:24.000+00:00" />
@@ -263,6 +268,7 @@
       <string key="bpmn:messageTarget" value="Pool_Orquestado - 2" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="1" />
+      <string key="bpmn:request" value="Pool_Orquestado - 2" />
       <int key="bpmn:time" value="1" />
       <string key="bpmn:subTask" value="Fin_O" />
       <date key="time:timestamp" value="2026-01-01T00:00:33.000+00:00" />

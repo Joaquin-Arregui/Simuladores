@@ -33,6 +33,7 @@ f'''
             <string key="bpmn:type" value="StandByMessage"/>
             <string key="bpmn:id" value="{{xml_value(TaskName)}}"/>
             <string key="bpmn:execution" value="1"/>
+            <string key="bpmn:request" value="{{xml_value(remitente)}}"/>
             <date key="time:timestamp" value="{{xml_value(start_standby_message)}}"/>
             <date key="time:endTime" value="{{xml_value(end_standby_message)}}"/>
             <date key="time:duration" value="{{xml_value(duration_standby_message)}}"/>
@@ -46,6 +47,7 @@ f'''
             <string key="bpmn:id" value="{xml_template(element.id_bpmn)}"/>
             <string key="bpmn:messageOrigin" value="{xml_template(element.messageOrigin)}"/>
             <string key="bpmn:messageSender" value="{{xml_value(remitente)}}"/>
+            <string key="bpmn:request" value="{{xml_value(remitente)}}"/>
             <string key="bpmn:subTask" value="{xml_template(element.subTask)}"/>
             <date key="time:timestamp" value="{{xml_value(env.now)}}"/>
             <int key="bpmn:instance" value="{{xml_value(caso.indice)}}"/>

@@ -78,6 +78,7 @@
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Recibir_Solicitud" />
       <string key="bpmn:execution" value="1" />
+      <string key="bpmn:request" value="Pool_Cliente - 1" />
       <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:00:16.000+00:00" />
       <float key="time:duration" value="16.0" />
@@ -93,6 +94,7 @@
       <string key="bpmn:id" value="Recibir_Solicitud" />
       <string key="bpmn:messageOrigin" value="Pedir_Prestamo" />
       <string key="bpmn:messageSender" value="Pool_Cliente - 1" />
+      <string key="bpmn:request" value="Pool_Cliente - 1" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="8" />
@@ -148,6 +150,7 @@
       <string key="bpmn:messageTarget" value="Pool_Cliente - 1" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="1" />
+      <string key="bpmn:request" value="Pool_Cliente - 1" />
       <int key="bpmn:time" value="14" />
       <string key="bpmn:subTask" value="Fin_B" />
       <date key="time:timestamp" value="2026-01-01T00:01:21.000+00:00" />
@@ -193,6 +196,7 @@
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Recibir_Solicitud" />
       <string key="bpmn:execution" value="1" />
+      <string key="bpmn:request" value="Pool_Cliente - 2" />
       <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:01:05.000+00:00" />
       <float key="time:duration" value="65.0" />
@@ -208,6 +212,7 @@
       <string key="bpmn:id" value="Recibir_Solicitud" />
       <string key="bpmn:messageOrigin" value="Pedir_Prestamo" />
       <string key="bpmn:messageSender" value="Pool_Cliente - 2" />
+      <string key="bpmn:request" value="Pool_Cliente - 2" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="7" />
@@ -263,6 +268,7 @@
       <string key="bpmn:messageTarget" value="Pool_Cliente - 2" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="1" />
+      <string key="bpmn:request" value="Pool_Cliente - 2" />
       <int key="bpmn:time" value="15" />
       <string key="bpmn:subTask" value="Fin_B" />
       <date key="time:timestamp" value="2026-01-01T00:02:07.000+00:00" />

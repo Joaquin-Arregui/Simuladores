@@ -1,0 +1,14 @@
+# Modelo de referencia 36 - dos tareas sin duracion seguidas de una con duracion.
+# Dos casos llegan en t=0 y t=30. Preparar y Sellar duran 0; Revisar dura 10.
+# La linea de tiempo debe devolver las tareas de duracion cero como ocurrencias
+# instantaneas, en el orden del registro, sin perder su identidad ni alargarlas.
+Element: [type=bpmn:Process, id_bpmn='Proceso_instantes', name='Tareas instantaneas', instances=2, frequency=30, userWithoutRole=['Ana', 'Luis'], userWithRole={}]
+Element: [type=bpmn:StartEvent, id_bpmn='Inicio', name='Inicio', subTask='Preparar']
+Element: [type=bpmn:Task, id_bpmn='Preparar', name='Preparar la solicitud', userTask='Ana', numberOfExecutions=1, minimumTime=0, maximumTime=0, subTask='Sellar']
+Element: [type=bpmn:Task, id_bpmn='Sellar', name='Sellar la solicitud', userTask='Ana', numberOfExecutions=1, minimumTime=0, maximumTime=0, subTask='Revisar']
+Element: [type=bpmn:Task, id_bpmn='Revisar', name='Revisar la solicitud', userTask='Luis', numberOfExecutions=1, minimumTime=10, maximumTime=10, subTask='Fin']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin', name='Fin', subTask='']
+Element: [type=bpmn:SequenceFlow, id_bpmn='Flujo_1', name='Inicio a Preparar', superElement='Inicio', subElement='Preparar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='Flujo_2', name='Preparar a Sellar', superElement='Preparar', subElement='Sellar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='Flujo_3', name='Sellar a Revisar', superElement='Sellar', subElement='Revisar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='Flujo_4', name='Revisar a Fin', superElement='Revisar', subElement='Fin']

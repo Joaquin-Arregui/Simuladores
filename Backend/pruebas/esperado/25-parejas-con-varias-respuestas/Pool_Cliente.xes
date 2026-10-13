@@ -63,11 +63,26 @@
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Esperar_Respuesta" />
       <string key="bpmn:execution" value="1" />
+      <string key="bpmn:request" value="Pool_Servicio - 1" />
       <date key="time:timestamp" value="2026-01-01T00:00:08.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:01:05.000+00:00" />
       <float key="time:duration" value="57.0" />
       <int key="bpmn:instance" value="1" />
       <int key="bpmn:occurrence" value="3" />
+      <string key="bpmn:participant" value="Pool_Cliente" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandByMessage · Esperar_Respuesta" />
+      <string key="bpmn:type" value="StandByMessage" />
+      <string key="bpmn:id" value="Esperar_Respuesta" />
+      <string key="bpmn:execution" value="2" />
+      <date key="time:timestamp" value="2026-01-01T00:00:08.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:01:05.000+00:00" />
+      <float key="time:duration" value="57.0" />
+      <int key="bpmn:instance" value="1" />
+      <boolean key="bpmn:cancelled" value="true" />
+      <int key="bpmn:occurrence" value="4" />
       <string key="bpmn:participant" value="Pool_Cliente" />
       <int key="bpmn:convocatoria" value="1" />
     </event>
@@ -78,6 +93,7 @@
       <string key="bpmn:id" value="Esperar_Respuesta" />
       <string key="bpmn:messageOrigin" value="Enviar_Respuesta" />
       <string key="bpmn:messageSender" value="Pool_Servicio - 1" />
+      <string key="bpmn:request" value="Pool_Servicio - 1" />
       <string key="bpmn:userTask" value="Carla" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="2" />
@@ -86,7 +102,7 @@
       <date key="time:endTime" value="2026-01-01T00:01:07.000+00:00" />
       <float key="time:duration" value="2.0" />
       <int key="bpmn:instance" value="1" />
-      <int key="bpmn:occurrence" value="4" />
+      <int key="bpmn:occurrence" value="5" />
       <string key="bpmn:participant" value="Pool_Cliente" />
       <int key="bpmn:convocatoria" value="1" />
     </event>
@@ -97,13 +113,14 @@
       <string key="bpmn:id" value="Leer" />
       <string key="bpmn:userTask" value="Carla" />
       <int key="bpmn:execution" value="1" />
+      <string key="bpmn:request" value="Pool_Servicio - 1" />
       <int key="bpmn:time" value="8" />
       <string key="bpmn:subTask" value="Fin_C" />
       <date key="time:timestamp" value="2026-01-01T00:01:07.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:01:15.000+00:00" />
       <float key="time:duration" value="8.0" />
       <int key="bpmn:instance" value="1" />
-      <int key="bpmn:occurrence" value="5" />
+      <int key="bpmn:occurrence" value="6" />
       <string key="bpmn:participant" value="Pool_Cliente" />
       <int key="bpmn:convocatoria" value="1" />
     </event>
@@ -115,7 +132,7 @@
       <string key="bpmn:subTask" value="" />
       <date key="time:timestamp" value="2026-01-01T00:01:15.000+00:00" />
       <int key="bpmn:instance" value="1" />
-      <int key="bpmn:occurrence" value="6" />
+      <int key="bpmn:occurrence" value="7" />
       <string key="bpmn:participant" value="Pool_Cliente" />
       <int key="bpmn:convocatoria" value="1" />
     </event>
@@ -161,6 +178,7 @@
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Esperar_Respuesta" />
       <string key="bpmn:execution" value="1" />
+      <string key="bpmn:request" value="Pool_Servicio - 2" />
       <date key="time:timestamp" value="2026-01-01T00:00:38.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:01:20.000+00:00" />
       <float key="time:duration" value="42.0" />
@@ -174,6 +192,7 @@
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Esperar_Respuesta" />
       <string key="bpmn:execution" value="2" />
+      <string key="bpmn:request" value="Pool_Servicio - 2" />
       <date key="time:timestamp" value="2026-01-01T00:00:38.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:01:56.000+00:00" />
       <float key="time:duration" value="78.0" />
@@ -183,20 +202,15 @@
       <int key="bpmn:convocatoria" value="1" />
     </event>
     <event>
-      <string key="concept:name" value="Esperar_Respuesta" />
-      <string key="bpmn:type" value="bpmn:ReceiveTask" />
-      <string key="bpmn:name" value="Recoger una respuesta" />
+      <string key="concept:name" value="StandByMessage · Esperar_Respuesta" />
+      <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Esperar_Respuesta" />
-      <string key="bpmn:messageOrigin" value="Enviar_Respuesta" />
-      <string key="bpmn:messageSender" value="Pool_Servicio - 2" />
-      <string key="bpmn:userTask" value="Carla" />
-      <int key="bpmn:execution" value="1" />
-      <int key="bpmn:time" value="1" />
-      <string key="bpmn:subTask" value="Leer" />
-      <date key="time:timestamp" value="2026-01-01T00:01:20.000+00:00" />
-      <date key="time:endTime" value="2026-01-01T00:01:21.000+00:00" />
-      <float key="time:duration" value="1.0" />
+      <string key="bpmn:execution" value="3" />
+      <date key="time:timestamp" value="2026-01-01T00:00:38.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:01:56.000+00:00" />
+      <float key="time:duration" value="78.0" />
       <int key="bpmn:instance" value="2" />
+      <boolean key="bpmn:cancelled" value="true" />
       <int key="bpmn:occurrence" value="5" />
       <string key="bpmn:participant" value="Pool_Cliente" />
       <int key="bpmn:convocatoria" value="1" />
@@ -208,12 +222,13 @@
       <string key="bpmn:id" value="Esperar_Respuesta" />
       <string key="bpmn:messageOrigin" value="Enviar_Respuesta" />
       <string key="bpmn:messageSender" value="Pool_Servicio - 2" />
+      <string key="bpmn:request" value="Pool_Servicio - 2" />
       <string key="bpmn:userTask" value="Carla" />
-      <int key="bpmn:execution" value="2" />
+      <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="1" />
       <string key="bpmn:subTask" value="Leer" />
-      <date key="time:timestamp" value="2026-01-01T00:01:56.000+00:00" />
-      <date key="time:endTime" value="2026-01-01T00:01:57.000+00:00" />
+      <date key="time:timestamp" value="2026-01-01T00:01:20.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:01:21.000+00:00" />
       <float key="time:duration" value="1.0" />
       <int key="bpmn:instance" value="2" />
       <int key="bpmn:occurrence" value="6" />
@@ -221,17 +236,20 @@
       <int key="bpmn:convocatoria" value="1" />
     </event>
     <event>
-      <string key="concept:name" value="Leer" />
-      <string key="bpmn:type" value="bpmn:Task" />
-      <string key="bpmn:name" value="Leer una respuesta" />
-      <string key="bpmn:id" value="Leer" />
+      <string key="concept:name" value="Esperar_Respuesta" />
+      <string key="bpmn:type" value="bpmn:ReceiveTask" />
+      <string key="bpmn:name" value="Recoger una respuesta" />
+      <string key="bpmn:id" value="Esperar_Respuesta" />
+      <string key="bpmn:messageOrigin" value="Enviar_Respuesta" />
+      <string key="bpmn:messageSender" value="Pool_Servicio - 2" />
+      <string key="bpmn:request" value="Pool_Servicio - 2" />
       <string key="bpmn:userTask" value="Carla" />
-      <int key="bpmn:execution" value="1" />
-      <int key="bpmn:time" value="7" />
-      <string key="bpmn:subTask" value="Fin_C" />
-      <date key="time:timestamp" value="2026-01-01T00:01:57.000+00:00" />
-      <date key="time:endTime" value="2026-01-01T00:02:04.000+00:00" />
-      <float key="time:duration" value="7.0" />
+      <int key="bpmn:execution" value="2" />
+      <int key="bpmn:time" value="1" />
+      <string key="bpmn:subTask" value="Leer" />
+      <date key="time:timestamp" value="2026-01-01T00:01:56.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:01:57.000+00:00" />
+      <float key="time:duration" value="1.0" />
       <int key="bpmn:instance" value="2" />
       <int key="bpmn:occurrence" value="7" />
       <string key="bpmn:participant" value="Pool_Cliente" />
@@ -243,7 +261,8 @@
       <string key="bpmn:name" value="Leer una respuesta" />
       <string key="bpmn:id" value="Leer" />
       <string key="bpmn:userTask" value="Carla" />
-      <int key="bpmn:execution" value="2" />
+      <int key="bpmn:execution" value="1" />
+      <string key="bpmn:request" value="Pool_Servicio - 2" />
       <int key="bpmn:time" value="7" />
       <string key="bpmn:subTask" value="Fin_C" />
       <date key="time:timestamp" value="2026-01-01T00:01:57.000+00:00" />
@@ -255,6 +274,24 @@
       <int key="bpmn:convocatoria" value="1" />
     </event>
     <event>
+      <string key="concept:name" value="Leer" />
+      <string key="bpmn:type" value="bpmn:Task" />
+      <string key="bpmn:name" value="Leer una respuesta" />
+      <string key="bpmn:id" value="Leer" />
+      <string key="bpmn:userTask" value="Carla" />
+      <int key="bpmn:execution" value="2" />
+      <string key="bpmn:request" value="Pool_Servicio - 2" />
+      <int key="bpmn:time" value="7" />
+      <string key="bpmn:subTask" value="Fin_C" />
+      <date key="time:timestamp" value="2026-01-01T00:01:57.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:02:04.000+00:00" />
+      <float key="time:duration" value="7.0" />
+      <int key="bpmn:instance" value="2" />
+      <int key="bpmn:occurrence" value="9" />
+      <string key="bpmn:participant" value="Pool_Cliente" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
       <string key="concept:name" value="Fin_C" />
       <string key="bpmn:type" value="bpmn:EndEvent" />
       <string key="bpmn:name" value="Fin del cliente" />
@@ -262,7 +299,7 @@
       <string key="bpmn:subTask" value="" />
       <date key="time:timestamp" value="2026-01-01T00:02:04.000+00:00" />
       <int key="bpmn:instance" value="2" />
-      <int key="bpmn:occurrence" value="9" />
+      <int key="bpmn:occurrence" value="10" />
       <string key="bpmn:participant" value="Pool_Cliente" />
       <int key="bpmn:convocatoria" value="1" />
     </event>
@@ -308,11 +345,26 @@
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Esperar_Respuesta" />
       <string key="bpmn:execution" value="1" />
+      <string key="bpmn:request" value="Pool_Servicio - 3" />
       <date key="time:timestamp" value="2026-01-01T00:01:08.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:01:55.000+00:00" />
       <float key="time:duration" value="47.0" />
       <int key="bpmn:instance" value="3" />
       <int key="bpmn:occurrence" value="3" />
+      <string key="bpmn:participant" value="Pool_Cliente" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandByMessage · Esperar_Respuesta" />
+      <string key="bpmn:type" value="StandByMessage" />
+      <string key="bpmn:id" value="Esperar_Respuesta" />
+      <string key="bpmn:execution" value="2" />
+      <date key="time:timestamp" value="2026-01-01T00:01:08.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:01:55.000+00:00" />
+      <float key="time:duration" value="47.0" />
+      <int key="bpmn:instance" value="3" />
+      <boolean key="bpmn:cancelled" value="true" />
+      <int key="bpmn:occurrence" value="4" />
       <string key="bpmn:participant" value="Pool_Cliente" />
       <int key="bpmn:convocatoria" value="1" />
     </event>
@@ -323,6 +375,7 @@
       <string key="bpmn:id" value="Esperar_Respuesta" />
       <string key="bpmn:messageOrigin" value="Enviar_Respuesta" />
       <string key="bpmn:messageSender" value="Pool_Servicio - 3" />
+      <string key="bpmn:request" value="Pool_Servicio - 3" />
       <string key="bpmn:userTask" value="Carla" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="1" />
@@ -331,7 +384,7 @@
       <date key="time:endTime" value="2026-01-01T00:01:56.000+00:00" />
       <float key="time:duration" value="1.0" />
       <int key="bpmn:instance" value="3" />
-      <int key="bpmn:occurrence" value="4" />
+      <int key="bpmn:occurrence" value="5" />
       <string key="bpmn:participant" value="Pool_Cliente" />
       <int key="bpmn:convocatoria" value="1" />
     </event>
@@ -342,13 +395,14 @@
       <string key="bpmn:id" value="Leer" />
       <string key="bpmn:userTask" value="Carla" />
       <int key="bpmn:execution" value="1" />
+      <string key="bpmn:request" value="Pool_Servicio - 3" />
       <int key="bpmn:time" value="8" />
       <string key="bpmn:subTask" value="Fin_C" />
       <date key="time:timestamp" value="2026-01-01T00:01:56.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:02:04.000+00:00" />
       <float key="time:duration" value="8.0" />
       <int key="bpmn:instance" value="3" />
-      <int key="bpmn:occurrence" value="5" />
+      <int key="bpmn:occurrence" value="6" />
       <string key="bpmn:participant" value="Pool_Cliente" />
       <int key="bpmn:convocatoria" value="1" />
     </event>
@@ -360,7 +414,7 @@
       <string key="bpmn:subTask" value="" />
       <date key="time:timestamp" value="2026-01-01T00:02:04.000+00:00" />
       <int key="bpmn:instance" value="3" />
-      <int key="bpmn:occurrence" value="6" />
+      <int key="bpmn:occurrence" value="7" />
       <string key="bpmn:participant" value="Pool_Cliente" />
       <int key="bpmn:convocatoria" value="1" />
     </event>
@@ -406,11 +460,26 @@
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Esperar_Respuesta" />
       <string key="bpmn:execution" value="1" />
+      <string key="bpmn:request" value="Pool_Servicio - 4" />
       <date key="time:timestamp" value="2026-01-01T00:01:38.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:02:11.000+00:00" />
       <float key="time:duration" value="33.0" />
       <int key="bpmn:instance" value="4" />
       <int key="bpmn:occurrence" value="3" />
+      <string key="bpmn:participant" value="Pool_Cliente" />
+      <int key="bpmn:convocatoria" value="1" />
+    </event>
+    <event>
+      <string key="concept:name" value="StandByMessage · Esperar_Respuesta" />
+      <string key="bpmn:type" value="StandByMessage" />
+      <string key="bpmn:id" value="Esperar_Respuesta" />
+      <string key="bpmn:execution" value="2" />
+      <date key="time:timestamp" value="2026-01-01T00:01:38.000+00:00" />
+      <date key="time:endTime" value="2026-01-01T00:02:11.000+00:00" />
+      <float key="time:duration" value="33.0" />
+      <int key="bpmn:instance" value="4" />
+      <boolean key="bpmn:cancelled" value="true" />
+      <int key="bpmn:occurrence" value="4" />
       <string key="bpmn:participant" value="Pool_Cliente" />
       <int key="bpmn:convocatoria" value="1" />
     </event>
@@ -421,6 +490,7 @@
       <string key="bpmn:id" value="Esperar_Respuesta" />
       <string key="bpmn:messageOrigin" value="Enviar_Respuesta" />
       <string key="bpmn:messageSender" value="Pool_Servicio - 4" />
+      <string key="bpmn:request" value="Pool_Servicio - 4" />
       <string key="bpmn:userTask" value="Carla" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="1" />
@@ -429,7 +499,7 @@
       <date key="time:endTime" value="2026-01-01T00:02:12.000+00:00" />
       <float key="time:duration" value="1.0" />
       <int key="bpmn:instance" value="4" />
-      <int key="bpmn:occurrence" value="4" />
+      <int key="bpmn:occurrence" value="5" />
       <string key="bpmn:participant" value="Pool_Cliente" />
       <int key="bpmn:convocatoria" value="1" />
     </event>
@@ -440,13 +510,14 @@
       <string key="bpmn:id" value="Leer" />
       <string key="bpmn:userTask" value="Carla" />
       <int key="bpmn:execution" value="1" />
+      <string key="bpmn:request" value="Pool_Servicio - 4" />
       <int key="bpmn:time" value="8" />
       <string key="bpmn:subTask" value="Fin_C" />
       <date key="time:timestamp" value="2026-01-01T00:02:12.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:02:20.000+00:00" />
       <float key="time:duration" value="8.0" />
       <int key="bpmn:instance" value="4" />
-      <int key="bpmn:occurrence" value="5" />
+      <int key="bpmn:occurrence" value="6" />
       <string key="bpmn:participant" value="Pool_Cliente" />
       <int key="bpmn:convocatoria" value="1" />
     </event>
@@ -458,7 +529,7 @@
       <string key="bpmn:subTask" value="" />
       <date key="time:timestamp" value="2026-01-01T00:02:20.000+00:00" />
       <int key="bpmn:instance" value="4" />
-      <int key="bpmn:occurrence" value="6" />
+      <int key="bpmn:occurrence" value="7" />
       <string key="bpmn:participant" value="Pool_Cliente" />
       <int key="bpmn:convocatoria" value="1" />
     </event>

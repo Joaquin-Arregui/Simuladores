@@ -34,6 +34,9 @@ mientras el comportamiento no deba cambiar, sus XES no deben cambiar.
 - `../../Modeler/ejemplos/` — no son del banco, pero el banco los comprueba: los
   ejemplos del Modeler, dibujados y guardados en él (5.6). Hoy, el proceso
   base, que cuenta el modelo `35`.
+- `linea_de_tiempo.mjs` — la línea de tiempo del visualizador
+  (`Modeler/lib/timeline`) con todos los registros congelados (ver
+  [La línea de tiempo](#la-línea-de-tiempo)).
 - `interfaz.mjs` — la interfaz del Modeler en un Chromium de verdad: abrir,
   los paneles, el menú de reemplazo, Ctrl+S, Simular y los registros (ver
   [La interfaz](#la-interfaz)).
@@ -82,6 +85,7 @@ mientras el comportamiento no deba cambiar, sus XES no deben cambiar.
 | `33-tres-modos-de-llegada` | Dos convocatorias con tres pools de orquestados: uno escalonado cada 3 s, uno simultaneo y uno uniforme entre 0 y 20 | Que un modo se aplique como otro, que las llegadas cuenten desde el principio de la simulacion y no desde la apertura de su ronda, o que una llegada uniforme caiga fuera de su ventana o entre dos segundos |
 | `34-llegadas-con-decimales` | Escalonados cada 0,1 s en dos rondas, y uniformes en la segunda, que se abre en t=5,3 | Que la comprobacion de las llegadas compare con la precision de la coma flotante y no con la del XES: el cuarto escalonado llega a los 0,3 s y 3 * 0,1 es 0.30000000000000004, asi que daba un falso error en las dos rondas |
 | `35-proceso-base` | La convocatoria entera del plan con 10 residentes: la SACU publica, recibe hasta que no puede llegar nada, evalua una por solicitud, publica los aceptados y responde a cada uno; los residentes llegan al azar en 120 s, deciden con dos gateways de porcentajes (60 % aceptados, la mitad del resto reclama) y la SACU recibe, evalua y responde las reclamaciones | Cualquier pieza del proceso que el plan llama base: el lote de las dos recepciones, las evaluaciones y los envios multiinstancia, la cola de tres personas y los gateways |
+| `36-tareas-instantaneas` | Dos casos, en t=0 y t=30, con dos tareas de duracion cero seguidas de una que dura diez segundos | Que las tareas instantaneas desaparezcan de las consultas de la linea de tiempo, pierdan su identidad u orden, ocupen tiempo inventado o se repitan entre ventanas consecutivas |
 | `con-avisos/envio-a-pool-externo` | Un mensaje dirigido al pool y no a un receptor | Que un envio que sale de la simulacion acabe en un error interno en vez de en un aviso |
 | `con-avisos/mismo-usuario-en-dos-pools` | El mismo nombre declarado en dos pools | Que dos pools vuelvan a competir por el mismo recurso |
 | `con-avisos/multiinstancia-con-numero-escrito` | Una convocatoria multiinstancia con numberOfExecutions=4 a dos casos | Que un numero que ya no se usa se ignore en silencio; N son los dos casos vivos |
@@ -533,6 +537,51 @@ a pasar `valida_bpmn.mjs` y se congela otra vez lo exportado con
 el nombre de la colaboración: es el `model:name` de los registros, y sin él el
 Modeler exporta `"Unnamed"`.
 
+## La línea de tiempo
+
+```
+node pruebas/linea_de_tiempo.mjs
+```
+
+El visualizador saca lo que ocurrió solo de los registros (D15), con
+`Modeler/lib/timeline`. Este script le pasa los de todos los modelos de
+`esperado/` y comprueba:
+
+- Que cada evento es una pieza de la línea, con un ID que no se repite y un
+  intervalo que no acaba antes de empezar, en el orden de su traza; y que el
+  mismo registro escrito en una sola línea o con las etiquetas en `xes:` da la
+  misma línea.
+- Que **ningún caso desaparece mientras vive**: en cada instante entre su
+  primer evento y el último tiene algo activo. Es lo que faltaba antes de la
+  6.1: una recepción multiinstancia que cerraba vacía dejaba al caso en
+  ninguna parte —el orquestador del `21`, entre 56 y 57—, porque la ejecución
+  que esperaba un sobre más se iba sin registrar su espera. Desde la 6.1 queda
+  como un `StandByMessage` cancelado, y el script repite la comprobación con el
+  `21` sin esas esperas para ver que entonces sí encuentra el hueco.
+- Que las solicitudes cuadran: la de una recepción es quien mandó el sobre, y
+  la de una respuesta, a quien va.
+- Lo que tiene que haber en instantes concretos, comprobado a mano con los
+  registros: dos ramas paralelas y una que espera a la otra en la unión (`03`);
+  las tres vueltas de un bucle, cada una con su ID (`03`); las diez
+  ejecuciones de «Evaluar una propuesta», tres trabajando y siete esperando a
+  una persona, cada una con su solicitud (`35`); las esperas canceladas de una
+  recepción con sobres y de una vacía (`35`, `21`); dos activaciones a la vez
+  de la misma recepción, las dos con la ejecución 1 y cada una con su ID, y la
+  respuesta que vuelve a quien escribió (`12`); y cuándo llega y cuándo
+  termina un residente (`35`).
+- Que las tareas de duración cero (`36`, XES generado por el motor) aparecen
+  en `passedBetween` con su identidad, estado, persona y orden originales.
+  Las ventanas excluyen el inicio e incluyen el fin, sin repetir las tareas
+  al avanzar; solo la tarea de diez segundos aparece activa en `at`.
+- Que un registro roto —sin cerrar, que no es XML o con una fecha que no se
+  entiende— no da una línea de tiempo a medias.
+
+Las esperas canceladas y `bpmn:request` cambiaron los registros congelados de
+los modelos con mensajes: se volvieron a congelar después de comprobar que lo
+único distinto eran las esperas canceladas —40, en los modelos con recepciones
+multiinstancia—, `bpmn:request` y, por las esperas nuevas, la numeración de
+`bpmn:occurrence`.
+
 ## El coste del proceso base
 
 ```
@@ -588,7 +637,8 @@ del motor, `integracion/`, `integracion-con-error/`, `exportadas/` y
 `Modeler/ejemplos/` y `formato-anterior/` en `valida_bpmn.mjs`, `integracion/` y
 `Modeler/ejemplos/` en `exporta_reglas.mjs`, las cinco carpetas de diagramas
 en `valida_esquema.py`, y el ejemplo, sus reglas exportadas y los registros
-congelados del `35` en `interfaz.mjs`. Sin esa comprobación, perder una
+congelados del `35` en `interfaz.mjs`, y los registros de `esperado/` en
+`linea_de_tiempo.mjs`. Sin esa comprobación, perder una
 carpeta entera —modelos y referencias a la vez, en un merge— daba verde con
 menos casos, o con ninguno, sin decir nada.
 

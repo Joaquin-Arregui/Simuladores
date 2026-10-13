@@ -44,6 +44,7 @@
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Esperar_Aviso" />
       <string key="bpmn:execution" value="1" />
+      <string key="bpmn:request" value="Pool_Taller - 1" />
       <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:00:26.000+00:00" />
       <float key="time:duration" value="26.0" />
@@ -59,6 +60,7 @@
       <string key="bpmn:id" value="Esperar_Aviso" />
       <string key="bpmn:messageOrigin" value="Avisar_Listo" />
       <string key="bpmn:messageSender" value="Pool_Taller - 1" />
+      <string key="bpmn:request" value="Pool_Taller - 1" />
       <string key="bpmn:subTask" value="Recoger" />
       <date key="time:timestamp" value="2026-01-01T00:00:26.000+00:00" />
       <int key="bpmn:instance" value="1" />
@@ -132,6 +134,7 @@
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Esperar_Aviso" />
       <string key="bpmn:execution" value="1" />
+      <string key="bpmn:request" value="Pool_Taller - 2" />
       <date key="time:timestamp" value="2026-01-01T00:00:40.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:00:51.000+00:00" />
       <float key="time:duration" value="11.0" />
@@ -147,6 +150,7 @@
       <string key="bpmn:id" value="Esperar_Aviso" />
       <string key="bpmn:messageOrigin" value="Avisar_Listo" />
       <string key="bpmn:messageSender" value="Pool_Taller - 2" />
+      <string key="bpmn:request" value="Pool_Taller - 2" />
       <string key="bpmn:subTask" value="Recoger" />
       <date key="time:timestamp" value="2026-01-01T00:00:51.000+00:00" />
       <int key="bpmn:instance" value="2" />

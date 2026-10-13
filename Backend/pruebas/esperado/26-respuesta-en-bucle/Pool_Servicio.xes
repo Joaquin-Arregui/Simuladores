@@ -63,6 +63,7 @@
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Recibir_Peticion" />
       <string key="bpmn:execution" value="1" />
+      <string key="bpmn:request" value="Pool_Cliente - 1" />
       <date key="time:timestamp" value="2026-01-01T00:00:02.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:00:08.000+00:00" />
       <float key="time:duration" value="6.0" />
@@ -78,6 +79,7 @@
       <string key="bpmn:id" value="Recibir_Peticion" />
       <string key="bpmn:messageOrigin" value="Enviar_Peticion" />
       <string key="bpmn:messageSender" value="Pool_Cliente - 1" />
+      <string key="bpmn:request" value="Pool_Cliente - 1" />
       <string key="bpmn:userTask" value="Sara" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="2" />
@@ -99,6 +101,7 @@
       <string key="bpmn:messageTarget" value="Pool_Cliente - 1" />
       <string key="bpmn:userTask" value="Sara" />
       <int key="bpmn:execution" value="1" />
+      <string key="bpmn:request" value="Pool_Cliente - 1" />
       <int key="bpmn:time" value="6" />
       <string key="bpmn:subTask" value="Fin_S" />
       <date key="time:timestamp" value="2026-01-01T00:00:10.000+00:00" />

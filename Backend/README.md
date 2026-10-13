@@ -275,6 +275,30 @@ su tipo delante, por ejemplo `StandBy · Activity_0xkea5f`, y su `time:duration`
 un número de segundos. Con este formato, herramientas de minería de procesos como
 PM4Py leen las fechas y las actividades sin conversiones.
 
+Es también lo único de lo que se alimenta el visualizador (D15), así que cada
+evento dice lo que hace falta para saber dónde está cada caso en cada instante:
+
+- Una ejecución de una tarea, la espera de un temporizador y las esperas del
+  motor tienen inicio y fin reales, `time:timestamp` y `time:endTime`. Las
+  esperas son `StandBy` (por una persona libre), `StandByMessage` (por un
+  sobre), `StandByData` (por unos datos) y `StandByJoin` (por la otra rama de
+  una unión, con `bpmn:incomingFlow`), y solo se registran si duran algo.
+- Los inicios, los fines, las compuertas y los lanzamientos son instantes: solo
+  `time:timestamp`. Una compuerta dice en `bpmn:selectedFlow` qué salidas tomó.
+- `bpmn:execution` numera las ejecuciones de una tarea en una activación, y
+  `bpmn:occurrence` identifica cada evento dentro de su caso: no se repite ni
+  en un bucle ni en dos ramas que pasen a la vez por la misma tarea.
+- `bpmn:request` (6.1) es la solicitud que atiende la ejecución: en una
+  recepción, el caso que mandó el sobre, también en su espera; en una tarea
+  que trabaja un lote o en un envío que responde, el caso que escribió a esa
+  recepción en esa misma ejecución. Así la evaluación *i*, la respuesta *i* y
+  la recepción *i* dicen la misma solicitud.
+- Cuando una recepción multiinstancia cierra (D7), la ejecución que esperaba un
+  sobre más se va, y su espera queda como un `StandByMessage` con
+  `bpmn:cancelled` a `true` (6.1). Cuenta desde donde cuentan las de su lote:
+  en paralelo, desde que se activó la recepción. Sin ella, una recepción que
+  cierra vacía dejaba al caso en ninguna parte mientras esperaba.
+
 ## Diferencias con el motor original
 
 Respecto al motor anterior a la limpieza:

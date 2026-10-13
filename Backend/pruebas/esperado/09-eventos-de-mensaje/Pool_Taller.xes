@@ -75,6 +75,7 @@
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Confirmar" />
       <string key="bpmn:execution" value="1" />
+      <string key="bpmn:request" value="Pool_Dueno - 1" />
       <date key="time:timestamp" value="2026-01-01T00:00:26.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:00:35.000+00:00" />
       <float key="time:duration" value="9.0" />
@@ -90,6 +91,7 @@
       <string key="bpmn:id" value="Confirmar" />
       <string key="bpmn:messageOrigin" value="Avisar_Recogido" />
       <string key="bpmn:messageSender" value="Pool_Dueno - 1" />
+      <string key="bpmn:request" value="Pool_Dueno - 1" />
       <string key="bpmn:subTask" value="Fin_T" />
       <date key="time:timestamp" value="2026-01-01T00:00:35.000+00:00" />
       <int key="bpmn:instance" value="1" />
@@ -176,6 +178,7 @@
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Confirmar" />
       <string key="bpmn:execution" value="1" />
+      <string key="bpmn:request" value="Pool_Dueno - 2" />
       <date key="time:timestamp" value="2026-01-01T00:00:51.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:00:59.000+00:00" />
       <float key="time:duration" value="8.0" />
@@ -191,6 +194,7 @@
       <string key="bpmn:id" value="Confirmar" />
       <string key="bpmn:messageOrigin" value="Avisar_Recogido" />
       <string key="bpmn:messageSender" value="Pool_Dueno - 2" />
+      <string key="bpmn:request" value="Pool_Dueno - 2" />
       <string key="bpmn:subTask" value="Fin_T" />
       <date key="time:timestamp" value="2026-01-01T00:00:59.000+00:00" />
       <int key="bpmn:instance" value="2" />

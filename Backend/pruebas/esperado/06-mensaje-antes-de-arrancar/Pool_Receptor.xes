@@ -44,6 +44,7 @@
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Recibir" />
       <string key="bpmn:execution" value="1" />
+      <string key="bpmn:request" value="Pool_Emisor - 1" />
       <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:00:04.000+00:00" />
       <float key="time:duration" value="4.0" />
@@ -59,6 +60,7 @@
       <string key="bpmn:id" value="Recibir" />
       <string key="bpmn:messageOrigin" value="Enviar" />
       <string key="bpmn:messageSender" value="Pool_Emisor - 1" />
+      <string key="bpmn:request" value="Pool_Emisor - 1" />
       <string key="bpmn:userTask" value="Beto" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="4" />
@@ -108,6 +110,7 @@
       <string key="bpmn:id" value="Recibir" />
       <string key="bpmn:messageOrigin" value="Enviar" />
       <string key="bpmn:messageSender" value="Pool_Emisor - 2" />
+      <string key="bpmn:request" value="Pool_Emisor - 2" />
       <string key="bpmn:userTask" value="Beto" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="3" />
@@ -157,6 +160,7 @@
       <string key="bpmn:id" value="Recibir" />
       <string key="bpmn:messageOrigin" value="Enviar" />
       <string key="bpmn:messageSender" value="Pool_Emisor - 3" />
+      <string key="bpmn:request" value="Pool_Emisor - 3" />
       <string key="bpmn:userTask" value="Beto" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="3" />
