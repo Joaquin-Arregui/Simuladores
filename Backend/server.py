@@ -62,8 +62,9 @@ def respuesta_de(result):
     y lo que comparten todos -la identificacion de la simulacion, la referencia
     del modelo y la version del formato- (D10).
 
-    `simulation` es el XES reunido, con todas las trazas: es lo que el Modeler
-    muestra mientras no sepa ofrecer los registros por separado (5.5).
+    El XES reunido, con todas las trazas, ya no va en la respuesta (5.6): el
+    Modeler ofrece los registros por separado desde la 5.5, y quien quiera la
+    ejecucion entera los reune con simulator.registros.reune_registros.
     """
     comunes = result.comunes
     modelo = {"id": comunes.get("model:id"), "name": comunes.get("model:name"),
@@ -77,7 +78,6 @@ def respuesta_de(result):
         "seed": result.seed,
         "logs": [{"pool": registro.pool, "name": registro.nombre, "xes": registro.xes}
                  for registro in result.registros],
-        "simulation": result.simulation,
         "warnings": result.warnings,
     }
 

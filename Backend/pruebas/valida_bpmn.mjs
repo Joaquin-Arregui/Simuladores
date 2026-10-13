@@ -44,8 +44,9 @@
 //    panel lo vuelve a aceptar con el mismo valor. JavaScript guarda 0.0000001
 //    como 1e-7, y un panel que solo admitiera decimales sin exponente marcaria
 //    como invalido lo que acaba de guardar. Lo que no vale se tiene que rechazar.
-//    Tambien los tiempos de una tarea (5.6): hasta entonces el descriptor los
-//    leia como enteros, y 2.5 se guardaba bien pero volvia como 2.
+//    Tambien los tiempos de una tarea y el porcentaje de una rama (5.6): hasta
+//    entonces el descriptor los leia como enteros, y 2.5 se guardaba bien pero
+//    volvia como 2.
 // 8. Que el Modeler ofrece un registro por pool con el nombre de su pool (5.5):
 //    con los registros congelados de cada modelo (esperado/), como los
 //    devuelve la API, Modeler/lib/logs da uno por pool, en su orden, cada uno
@@ -345,7 +346,7 @@ const CAMPOS_NUMERICOS = [
   // [elemento, propiedad, entero, minimo]
   ['P', 'frequency', false, 0], ['P', 'instances', true, 1], ['P', 'arrivalWindow', true, 0],
   ['Proc', 'frequency', false, 0], ['Proc', 'instance', true, 1], ['C', 'instance', true, 1],
-  ['T', 'minimumTime', false, 0], ['T', 'maximumTime', false, 0]
+  ['T', 'minimumTime', false, 0], ['T', 'maximumTime', false, 0], ['F', 'percentageOfBranches', false, 0]
 ];
 const VALEN = {
   decimal: ['0.0000001', '1e-7', '0.000000123', '2.5e-3', '0.1', '3', '0', '123456789.125',
@@ -355,7 +356,7 @@ const VALEN = {
 const NO_VALEN = { decimal: ['1e400', '-1', '.5', '1,5', 'abc'], entero: ['9007199254740992', '1e3', '2.5', '-3'] };
 const PLANTILLA = '<?xml version="1.0" encoding="UTF-8"?><bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" ' +
   'id="D" targetNamespace="x"><bpmn:collaboration id="C"><bpmn:participant id="P" processRef="Proc"/></bpmn:collaboration>' +
-  '<bpmn:process id="Proc"><bpmn:task id="T"/></bpmn:process></bpmn:definitions>';
+  '<bpmn:process id="Proc"><bpmn:task id="T"/><bpmn:sequenceFlow id="F"/></bpmn:process></bpmn:definitions>';
 const porId = raiz => {
   const ids = {};
   recorre(raiz, e => { if (e.id) ids[e.id] = e; });

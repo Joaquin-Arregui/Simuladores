@@ -107,11 +107,14 @@ document.addEventListener('DOMContentLoaded', function() {
     container.appendChild(fileInput);
   }
 
+  // Lo que se guarda con Ctrl+S y lo que se manda al simular. Con formato, un
+  // elemento por linea, como lo guarda Camunda Modeler: en una sola linea, un
+  // cambio cualquiera hacia ilegible la diferencia entre dos versiones.
   async function exportDefinitionsXML(modeler) {
     const moddle = modeler.get('moddle');
     const defs = modeler.get('canvas').getRootElement().businessObject.$parent;
     hardCleanDefinitions(modeler); // limpieza fuerte antes de serializar
-    const { xml } = await moddle.toXML(defs);
+    const { xml } = await moddle.toXML(defs, { format: true });
     return xml;
   }
 
@@ -392,7 +395,7 @@ document.addEventListener('DOMContentLoaded', function() {
         throw responseError(data, fallback);
       }
 
-      // Un XES por pool (D10); el reunido, data.simulation, ya no se usa aqui.
+      // Un XES por pool (D10); el reunido ya no viene en la respuesta (5.6).
       const logs = logsFromResponse(data);
       const warnings = Array.isArray(data.warnings)
         ? data.warnings.filter(warning => typeof warning === 'string')

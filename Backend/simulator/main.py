@@ -28,8 +28,9 @@ class SimulationResult(NamedTuple):
     `registros` es un XES por pool, en el orden de los pools (D10), y
     `comunes`, los metadatos que comparten: la identificacion de la simulacion,
     la referencia del modelo, la version del formato... `simulation` es el XES
-    reunido, todas las trazas en un solo registro, para el Modeler mientras no
-    sepa ofrecer los registros por separado (5.5).
+    reunido, todas las trazas en un solo registro: reunirlos es tambien la
+    revision de que el conjunto esta completo y es coherente. Lo usa el banco;
+    la API no lo devuelve desde la 5.6.
     """
     simulation: str
     warnings: List[str]

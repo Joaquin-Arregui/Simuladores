@@ -16,7 +16,7 @@
         {
           "name": "percentageOfBranches",
           "isAttr": true,
-          "type": "Integer"
+          "type": "Real"
         }
       ]
     }

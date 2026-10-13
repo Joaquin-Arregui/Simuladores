@@ -113,6 +113,10 @@ def sin_parametros_del_pool(reglas):
     return limpio if limpio != texto else None
 
 
+# Los campos de una respuesta correcta, ni uno mas: `simulation`, el XES
+# reunido, se retiro en la 5.6.
+CAMPOS_DE_LA_RESPUESTA = {"simulationId", "formatVersion", "model", "seed", "logs", "warnings"}
+
 # Lo unico que puede cambiar entre la API y la ejecucion directa: la referencia
 # del modelo -por la API incluye el diagrama, y sin marcas las reglas son otras-
 # y la identificacion de la simulacion, que sale de ella.
@@ -177,8 +181,9 @@ def compara_respuesta(datos, directo, content, diagrama_xml):
         if clave in huellas and comunes.get("model:" + clave) != valor:
             problemas.append("los registros dicen model:%s %r y lo mandado es %r"
                              % (clave, comunes.get("model:" + clave), valor))
-    if datos.get("simulation") != reune_registros(registros):
-        problemas.append("simulation no es la reunion de sus registros")
+    if set(datos) != CAMPOS_DE_LA_RESPUESTA:
+        problemas.append("la respuesta trae %s y tenia que traer %s"
+                         % (sorted(datos), sorted(CAMPOS_DE_LA_RESPUESTA)))
     return problemas
 
 

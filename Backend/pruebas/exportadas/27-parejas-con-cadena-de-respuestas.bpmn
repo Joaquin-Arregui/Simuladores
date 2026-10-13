@@ -1,2 +1,184 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:collab="http://collaboration" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:participantWithoutLane="http://participantWithoutLane" xmlns:user="http://user" id="Definitions_27_parejas_con_cadena_de_respuestas" targetNamespace="http://bpmn.io/schema/bpmn" exporter="my-bpmn-exporter" exporterVersion="1.0.0"><bpmn:collaboration id="Colaboracion" name="Parejas con cadena de respuestas" collab:instance="3"><bpmn:participant id="Pool_Cliente" name="Cliente" processRef="Process_Pool_Cliente" participantWithoutLane:frequency="100" participantWithoutLane:infiniteResources="true"><bpmn:extensionElements><participantWithoutLane:userWithoutRole>Carla</participantWithoutLane:userWithoutRole></bpmn:extensionElements></bpmn:participant><bpmn:participant id="Pool_Servicio" name="Servicio" processRef="Process_Pool_Servicio" participantWithoutLane:frequency="0" participantWithoutLane:infiniteResources="true"><bpmn:extensionElements><participantWithoutLane:userWithoutRole>Sara</participantWithoutLane:userWithoutRole></bpmn:extensionElements></bpmn:participant><bpmn:messageFlow id="Mensaje_Aviso" name="Aviso" sourceRef="Avisar" targetRef="Esperar_Aviso" /><bpmn:messageFlow id="Mensaje_Peticion" name="Peticion" sourceRef="Enviar_Peticion" targetRef="Recibir_Peticion" /><bpmn:messageFlow id="Mensaje_Respuesta" name="Respuesta" sourceRef="Responder" targetRef="Esperar_Respuesta" /></bpmn:collaboration><bpmn:process id="Process_Pool_Cliente" isExecutable="false"><bpmn:startEvent id="Inicio_C" name="Llega el cliente"><bpmn:outgoing>c1</bpmn:outgoing></bpmn:startEvent><bpmn:receiveTask id="Esperar_Aviso" name="Esperar el aviso" user:NumberOfExecutions="1" user:minimumTime="1" user:maximumTime="2"><bpmn:extensionElements><user:userTask>Carla</user:userTask></bpmn:extensionElements><bpmn:incoming>c1</bpmn:incoming><bpmn:outgoing>c2</bpmn:outgoing></bpmn:receiveTask><bpmn:sendTask id="Enviar_Peticion" name="Pedir" user:NumberOfExecutions="1" user:minimumTime="2" user:maximumTime="5"><bpmn:extensionElements><user:userTask>Carla</user:userTask></bpmn:extensionElements><bpmn:incoming>c2</bpmn:incoming><bpmn:outgoing>c3</bpmn:outgoing></bpmn:sendTask><bpmn:receiveTask id="Esperar_Respuesta" name="Recoger las respuestas" user:NumberOfExecutions="1" user:minimumTime="1" user:maximumTime="2"><bpmn:extensionElements><user:userTask>Carla</user:userTask></bpmn:extensionElements><bpmn:incoming>c3</bpmn:incoming><bpmn:outgoing>c4</bpmn:outgoing><bpmn:multiInstanceLoopCharacteristics /></bpmn:receiveTask><bpmn:endEvent id="Fin_C" name="Se va el cliente"><bpmn:incoming>c4</bpmn:incoming></bpmn:endEvent><bpmn:sequenceFlow id="c1" sourceRef="Inicio_C" targetRef="Esperar_Aviso" /><bpmn:sequenceFlow id="c2" sourceRef="Esperar_Aviso" targetRef="Enviar_Peticion" /><bpmn:sequenceFlow id="c3" sourceRef="Enviar_Peticion" targetRef="Esperar_Respuesta" /><bpmn:sequenceFlow id="c4" sourceRef="Esperar_Respuesta" targetRef="Fin_C" /></bpmn:process><bpmn:process id="Process_Pool_Servicio" isExecutable="false"><bpmn:startEvent id="Inicio_S" name="Arranca el servicio"><bpmn:outgoing>s1</bpmn:outgoing></bpmn:startEvent><bpmn:sendTask id="Avisar" name="Avisar a su cliente" user:NumberOfExecutions="1" user:minimumTime="1" user:maximumTime="2"><bpmn:extensionElements><user:userTask>Sara</user:userTask></bpmn:extensionElements><bpmn:incoming>s1</bpmn:incoming><bpmn:outgoing>s2</bpmn:outgoing></bpmn:sendTask><bpmn:receiveTask id="Recibir_Peticion" name="Recibir la peticion" user:NumberOfExecutions="1" user:minimumTime="1" user:maximumTime="2"><bpmn:extensionElements><user:userTask>Sara</user:userTask></bpmn:extensionElements><bpmn:incoming>s2</bpmn:incoming><bpmn:outgoing>s3</bpmn:outgoing></bpmn:receiveTask><bpmn:task id="Atender" name="Atender la peticion" user:NumberOfExecutions="1" user:minimumTime="20" user:maximumTime="40"><bpmn:extensionElements><user:userTask>Sara</user:userTask></bpmn:extensionElements><bpmn:incoming>s3</bpmn:incoming><bpmn:outgoing>s4</bpmn:outgoing></bpmn:task><bpmn:sendTask id="Responder" name="Responder" user:NumberOfExecutions="1" user:minimumTime="1" user:maximumTime="2"><bpmn:extensionElements><user:userTask>Sara</user:userTask></bpmn:extensionElements><bpmn:incoming>s4</bpmn:incoming><bpmn:outgoing>s5</bpmn:outgoing></bpmn:sendTask><bpmn:endEvent id="Fin_S" name="Fin del servicio"><bpmn:incoming>s5</bpmn:incoming></bpmn:endEvent><bpmn:sequenceFlow id="s1" sourceRef="Inicio_S" targetRef="Avisar" /><bpmn:sequenceFlow id="s2" sourceRef="Avisar" targetRef="Recibir_Peticion" /><bpmn:sequenceFlow id="s3" sourceRef="Recibir_Peticion" targetRef="Atender" /><bpmn:sequenceFlow id="s4" sourceRef="Atender" targetRef="Responder" /><bpmn:sequenceFlow id="s5" sourceRef="Responder" targetRef="Fin_S" /></bpmn:process><bpmndi:BPMNDiagram id="BPMNDiagram_1"><bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Colaboracion"><bpmndi:BPMNShape id="Pool_Cliente_di" bpmnElement="Pool_Cliente" isHorizontal="true"><dc:Bounds x="160" y="80" width="1140" height="150" /></bpmndi:BPMNShape><bpmndi:BPMNShape id="Pool_Servicio_di" bpmnElement="Pool_Servicio" isHorizontal="true"><dc:Bounds x="160" y="290" width="1140" height="150" /></bpmndi:BPMNShape><bpmndi:BPMNShape id="Inicio_C_di" bpmnElement="Inicio_C"><dc:Bounds x="272" y="122" width="36" height="36" /></bpmndi:BPMNShape><bpmndi:BPMNShape id="Esperar_Aviso_di" bpmnElement="Esperar_Aviso"><dc:Bounds x="410" y="100" width="100" height="80" /></bpmndi:BPMNShape><bpmndi:BPMNShape id="Enviar_Peticion_di" bpmnElement="Enviar_Peticion"><dc:Bounds x="580" y="100" width="100" height="80" /></bpmndi:BPMNShape><bpmndi:BPMNShape id="Esperar_Respuesta_di" bpmnElement="Esperar_Respuesta"><dc:Bounds x="750" y="100" width="100" height="80" /></bpmndi:BPMNShape><bpmndi:BPMNShape id="Fin_C_di" bpmnElement="Fin_C"><dc:Bounds x="952" y="122" width="36" height="36" /></bpmndi:BPMNShape><bpmndi:BPMNShape id="Inicio_S_di" bpmnElement="Inicio_S"><dc:Bounds x="272" y="332" width="36" height="36" /></bpmndi:BPMNShape><bpmndi:BPMNShape id="Avisar_di" bpmnElement="Avisar"><dc:Bounds x="410" y="310" width="100" height="80" /></bpmndi:BPMNShape><bpmndi:BPMNShape id="Recibir_Peticion_di" bpmnElement="Recibir_Peticion"><dc:Bounds x="580" y="310" width="100" height="80" /></bpmndi:BPMNShape><bpmndi:BPMNShape id="Atender_di" bpmnElement="Atender"><dc:Bounds x="750" y="310" width="100" height="80" /></bpmndi:BPMNShape><bpmndi:BPMNShape id="Responder_di" bpmnElement="Responder"><dc:Bounds x="920" y="310" width="100" height="80" /></bpmndi:BPMNShape><bpmndi:BPMNShape id="Fin_S_di" bpmnElement="Fin_S"><dc:Bounds x="1122" y="332" width="36" height="36" /></bpmndi:BPMNShape><bpmndi:BPMNEdge id="c1_di" bpmnElement="c1"><di:waypoint x="290" y="140" /><di:waypoint x="460" y="140" /></bpmndi:BPMNEdge><bpmndi:BPMNEdge id="c2_di" bpmnElement="c2"><di:waypoint x="460" y="140" /><di:waypoint x="630" y="140" /></bpmndi:BPMNEdge><bpmndi:BPMNEdge id="c3_di" bpmnElement="c3"><di:waypoint x="630" y="140" /><di:waypoint x="800" y="140" /></bpmndi:BPMNEdge><bpmndi:BPMNEdge id="c4_di" bpmnElement="c4"><di:waypoint x="800" y="140" /><di:waypoint x="970" y="140" /></bpmndi:BPMNEdge><bpmndi:BPMNEdge id="s1_di" bpmnElement="s1"><di:waypoint x="290" y="350" /><di:waypoint x="460" y="350" /></bpmndi:BPMNEdge><bpmndi:BPMNEdge id="s2_di" bpmnElement="s2"><di:waypoint x="460" y="350" /><di:waypoint x="630" y="350" /></bpmndi:BPMNEdge><bpmndi:BPMNEdge id="s3_di" bpmnElement="s3"><di:waypoint x="630" y="350" /><di:waypoint x="800" y="350" /></bpmndi:BPMNEdge><bpmndi:BPMNEdge id="s4_di" bpmnElement="s4"><di:waypoint x="800" y="350" /><di:waypoint x="970" y="350" /></bpmndi:BPMNEdge><bpmndi:BPMNEdge id="s5_di" bpmnElement="s5"><di:waypoint x="970" y="350" /><di:waypoint x="1140" y="350" /></bpmndi:BPMNEdge><bpmndi:BPMNEdge id="Mensaje_Aviso_di" bpmnElement="Mensaje_Aviso"><di:waypoint x="460" y="350" /><di:waypoint x="460" y="140" /></bpmndi:BPMNEdge><bpmndi:BPMNEdge id="Mensaje_Peticion_di" bpmnElement="Mensaje_Peticion"><di:waypoint x="630" y="140" /><di:waypoint x="630" y="350" /></bpmndi:BPMNEdge><bpmndi:BPMNEdge id="Mensaje_Respuesta_di" bpmnElement="Mensaje_Respuesta"><di:waypoint x="970" y="350" /><di:waypoint x="800" y="140" /></bpmndi:BPMNEdge></bpmndi:BPMNPlane></bpmndi:BPMNDiagram></bpmn:definitions>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:collab="http://collaboration" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:participantWithoutLane="http://participantWithoutLane" xmlns:user="http://user" id="Definitions_27_parejas_con_cadena_de_respuestas" targetNamespace="http://bpmn.io/schema/bpmn" exporter="my-bpmn-exporter" exporterVersion="1.0.0">
+  <bpmn:collaboration id="Colaboracion" name="Parejas con cadena de respuestas" collab:instance="3">
+    <bpmn:participant id="Pool_Cliente" name="Cliente" processRef="Process_Pool_Cliente" participantWithoutLane:frequency="100" participantWithoutLane:infiniteResources="true">
+      <bpmn:extensionElements>
+        <participantWithoutLane:userWithoutRole>Carla</participantWithoutLane:userWithoutRole>
+      </bpmn:extensionElements>
+    </bpmn:participant>
+    <bpmn:participant id="Pool_Servicio" name="Servicio" processRef="Process_Pool_Servicio" participantWithoutLane:frequency="0" participantWithoutLane:infiniteResources="true">
+      <bpmn:extensionElements>
+        <participantWithoutLane:userWithoutRole>Sara</participantWithoutLane:userWithoutRole>
+      </bpmn:extensionElements>
+    </bpmn:participant>
+    <bpmn:messageFlow id="Mensaje_Aviso" name="Aviso" sourceRef="Avisar" targetRef="Esperar_Aviso" />
+    <bpmn:messageFlow id="Mensaje_Peticion" name="Peticion" sourceRef="Enviar_Peticion" targetRef="Recibir_Peticion" />
+    <bpmn:messageFlow id="Mensaje_Respuesta" name="Respuesta" sourceRef="Responder" targetRef="Esperar_Respuesta" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_Pool_Cliente" isExecutable="false">
+    <bpmn:startEvent id="Inicio_C" name="Llega el cliente">
+      <bpmn:outgoing>c1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:receiveTask id="Esperar_Aviso" name="Esperar el aviso" user:NumberOfExecutions="1" user:minimumTime="1" user:maximumTime="2">
+      <bpmn:extensionElements>
+        <user:userTask>Carla</user:userTask>
+      </bpmn:extensionElements>
+      <bpmn:incoming>c1</bpmn:incoming>
+      <bpmn:outgoing>c2</bpmn:outgoing>
+    </bpmn:receiveTask>
+    <bpmn:sendTask id="Enviar_Peticion" name="Pedir" user:NumberOfExecutions="1" user:minimumTime="2" user:maximumTime="5">
+      <bpmn:extensionElements>
+        <user:userTask>Carla</user:userTask>
+      </bpmn:extensionElements>
+      <bpmn:incoming>c2</bpmn:incoming>
+      <bpmn:outgoing>c3</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:receiveTask id="Esperar_Respuesta" name="Recoger las respuestas" user:NumberOfExecutions="1" user:minimumTime="1" user:maximumTime="2">
+      <bpmn:extensionElements>
+        <user:userTask>Carla</user:userTask>
+      </bpmn:extensionElements>
+      <bpmn:incoming>c3</bpmn:incoming>
+      <bpmn:outgoing>c4</bpmn:outgoing>
+      <bpmn:multiInstanceLoopCharacteristics />
+    </bpmn:receiveTask>
+    <bpmn:endEvent id="Fin_C" name="Se va el cliente">
+      <bpmn:incoming>c4</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="c1" sourceRef="Inicio_C" targetRef="Esperar_Aviso" />
+    <bpmn:sequenceFlow id="c2" sourceRef="Esperar_Aviso" targetRef="Enviar_Peticion" />
+    <bpmn:sequenceFlow id="c3" sourceRef="Enviar_Peticion" targetRef="Esperar_Respuesta" />
+    <bpmn:sequenceFlow id="c4" sourceRef="Esperar_Respuesta" targetRef="Fin_C" />
+  </bpmn:process>
+  <bpmn:process id="Process_Pool_Servicio" isExecutable="false">
+    <bpmn:startEvent id="Inicio_S" name="Arranca el servicio">
+      <bpmn:outgoing>s1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sendTask id="Avisar" name="Avisar a su cliente" user:NumberOfExecutions="1" user:minimumTime="1" user:maximumTime="2">
+      <bpmn:extensionElements>
+        <user:userTask>Sara</user:userTask>
+      </bpmn:extensionElements>
+      <bpmn:incoming>s1</bpmn:incoming>
+      <bpmn:outgoing>s2</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:receiveTask id="Recibir_Peticion" name="Recibir la peticion" user:NumberOfExecutions="1" user:minimumTime="1" user:maximumTime="2">
+      <bpmn:extensionElements>
+        <user:userTask>Sara</user:userTask>
+      </bpmn:extensionElements>
+      <bpmn:incoming>s2</bpmn:incoming>
+      <bpmn:outgoing>s3</bpmn:outgoing>
+    </bpmn:receiveTask>
+    <bpmn:task id="Atender" name="Atender la peticion" user:NumberOfExecutions="1" user:minimumTime="20" user:maximumTime="40">
+      <bpmn:extensionElements>
+        <user:userTask>Sara</user:userTask>
+      </bpmn:extensionElements>
+      <bpmn:incoming>s3</bpmn:incoming>
+      <bpmn:outgoing>s4</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sendTask id="Responder" name="Responder" user:NumberOfExecutions="1" user:minimumTime="1" user:maximumTime="2">
+      <bpmn:extensionElements>
+        <user:userTask>Sara</user:userTask>
+      </bpmn:extensionElements>
+      <bpmn:incoming>s4</bpmn:incoming>
+      <bpmn:outgoing>s5</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:endEvent id="Fin_S" name="Fin del servicio">
+      <bpmn:incoming>s5</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="s1" sourceRef="Inicio_S" targetRef="Avisar" />
+    <bpmn:sequenceFlow id="s2" sourceRef="Avisar" targetRef="Recibir_Peticion" />
+    <bpmn:sequenceFlow id="s3" sourceRef="Recibir_Peticion" targetRef="Atender" />
+    <bpmn:sequenceFlow id="s4" sourceRef="Atender" targetRef="Responder" />
+    <bpmn:sequenceFlow id="s5" sourceRef="Responder" targetRef="Fin_S" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Colaboracion">
+      <bpmndi:BPMNShape id="Pool_Cliente_di" bpmnElement="Pool_Cliente" isHorizontal="true">
+        <dc:Bounds x="160" y="80" width="1140" height="150" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Pool_Servicio_di" bpmnElement="Pool_Servicio" isHorizontal="true">
+        <dc:Bounds x="160" y="290" width="1140" height="150" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Inicio_C_di" bpmnElement="Inicio_C">
+        <dc:Bounds x="272" y="122" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Esperar_Aviso_di" bpmnElement="Esperar_Aviso">
+        <dc:Bounds x="410" y="100" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Enviar_Peticion_di" bpmnElement="Enviar_Peticion">
+        <dc:Bounds x="580" y="100" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Esperar_Respuesta_di" bpmnElement="Esperar_Respuesta">
+        <dc:Bounds x="750" y="100" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Fin_C_di" bpmnElement="Fin_C">
+        <dc:Bounds x="952" y="122" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Inicio_S_di" bpmnElement="Inicio_S">
+        <dc:Bounds x="272" y="332" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Avisar_di" bpmnElement="Avisar">
+        <dc:Bounds x="410" y="310" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Recibir_Peticion_di" bpmnElement="Recibir_Peticion">
+        <dc:Bounds x="580" y="310" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Atender_di" bpmnElement="Atender">
+        <dc:Bounds x="750" y="310" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Responder_di" bpmnElement="Responder">
+        <dc:Bounds x="920" y="310" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Fin_S_di" bpmnElement="Fin_S">
+        <dc:Bounds x="1122" y="332" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="c1_di" bpmnElement="c1">
+        <di:waypoint x="290" y="140" />
+        <di:waypoint x="460" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="c2_di" bpmnElement="c2">
+        <di:waypoint x="460" y="140" />
+        <di:waypoint x="630" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="c3_di" bpmnElement="c3">
+        <di:waypoint x="630" y="140" />
+        <di:waypoint x="800" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="c4_di" bpmnElement="c4">
+        <di:waypoint x="800" y="140" />
+        <di:waypoint x="970" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="s1_di" bpmnElement="s1">
+        <di:waypoint x="290" y="350" />
+        <di:waypoint x="460" y="350" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="s2_di" bpmnElement="s2">
+        <di:waypoint x="460" y="350" />
+        <di:waypoint x="630" y="350" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="s3_di" bpmnElement="s3">
+        <di:waypoint x="630" y="350" />
+        <di:waypoint x="800" y="350" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="s4_di" bpmnElement="s4">
+        <di:waypoint x="800" y="350" />
+        <di:waypoint x="970" y="350" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="s5_di" bpmnElement="s5">
+        <di:waypoint x="970" y="350" />
+        <di:waypoint x="1140" y="350" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Mensaje_Aviso_di" bpmnElement="Mensaje_Aviso">
+        <di:waypoint x="460" y="350" />
+        <di:waypoint x="460" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Mensaje_Peticion_di" bpmnElement="Mensaje_Peticion">
+        <di:waypoint x="630" y="140" />
+        <di:waypoint x="630" y="350" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Mensaje_Respuesta_di" bpmnElement="Mensaje_Respuesta">
+        <di:waypoint x="970" y="350" />
+        <di:waypoint x="800" y="140" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

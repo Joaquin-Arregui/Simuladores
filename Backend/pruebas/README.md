@@ -34,6 +34,9 @@ mientras el comportamiento no deba cambiar, sus XES no deben cambiar.
 - `../../Modeler/ejemplos/` — no son del banco, pero el banco los comprueba: los
   ejemplos del Modeler, dibujados y guardados en él (5.6). Hoy, el proceso
   base, que cuenta el modelo `35`.
+- `interfaz.mjs` — la interfaz del Modeler en un Chromium de verdad: abrir,
+  los paneles, el menú de reemplazo, Ctrl+S, Simular y los registros (ver
+  [La interfaz](#la-interfaz)).
 - `lee_con_pm4py.py` — lee con PM4Py los registros congelados, los reúne y
   saca de ellos quién está libre (ver más abajo).
 
@@ -267,6 +270,7 @@ node pruebas/valida_bpmn.mjs
 python3 pruebas/valida_esquema.py
 node pruebas/exporta_reglas.mjs
 node pruebas/exporta_reglas.mjs --congela
+node pruebas/interfaz.mjs
 ```
 
 El resto del banco ejecuta las reglas directamente. Este manda lo mismo que el
@@ -280,9 +284,10 @@ sin abrir ningún puerto.
   directamente las reglas de `<modelo>`, y con los mismos avisos. Solo cambia
   la referencia del modelo: por la API incluye la huella del diagrama, y tiene
   que ser la de lo mandado, igual que `simulationId`, `model` y
-  `formatVersion` tienen que ser los de sus registros. `simulation`, el XES
-  reunido, que el Modeler mostraba hasta la 5.5, tiene que ser la reunión de los
-  registros. Aquí no hay nada congelado: la referencia es la ejecución
+  `formatVersion` tienen que ser los de sus registros. Y no puede traer más
+  campos que esos, los registros y los avisos: `simulation`, el XES reunido que
+  el Modeler mostraba hasta la 5.5, se retiró en la 5.6. Aquí no hay nada
+  congelado: la referencia es la ejecución
   directa. Si el modelo tiene tareas multiinstancia, se manda **otra vez sin
   ningún `multiInstanceType` en las reglas**: la marca tiene que llegar del
   dibujo (3.1) y las trazas tienen que ser las mismas. Y si sus pools tienen
@@ -432,15 +437,15 @@ avisos en las otras herramientas y, si hay uno del mismo nombre en
 
 Por último, `valida_bpmn.mjs` comprueba los **números del panel**
 (`Modeler/lib/numbers/`): cada valor que el panel acepta en las frecuencias,
-las instancias, la ventana de llegada y los tiempos de una tarea se guarda con
-los descriptores, se abre
-otra vez y, escrito como lo muestra el panel, el panel lo tiene que volver a
+las instancias, la ventana de llegada, los tiempos de una tarea y el porcentaje
+de una rama se guarda con los descriptores, se abre otra vez y, escrito como lo muestra el panel, el panel lo tiene que volver a
 aceptar con el mismo valor; y lo que no vale —negativos, `1e400`, enteros con
 decimales o mayores que 9007199254740991— se tiene que rechazar. JavaScript
 guarda 0.0000001 como `1e-7`, y un panel que solo admitiera decimales sin
 exponente marcaba como inválido lo que acababa de guardar. Y hasta la 5.6 el
-descriptor leía los tiempos de una tarea como enteros: 2.5 se guardaba bien,
-pero al volver a abrir el fichero era 2. Lo que se perdía era el parámetro del
+descriptor leía los tiempos de una tarea y los porcentajes como enteros: 2.5
+se guardaba bien, pero al volver a abrir el fichero era 2. Lo que se perdía era
+el parámetro del
 modelo: la duración simulada la redondea el motor al segundo en cualquier caso
 (ver `Backend/README.md`), pero entre los extremos que dice el modelo.
 
@@ -464,11 +469,12 @@ bpmn-moddle y los descriptores, migra las listas del formato anterior
 bpmn-js —que decide el orden en que el Modeler los pinta y los exporta, y el
 motor depende de ese orden: barajar las líneas de las reglas cambia el XES de
 32 modelos— y exporta las reglas con `Modeler/lib/rules`, el exportador del
-Modeler. Guarda el diagrama como el Modeler, con `moddle.toXML`, y con lo único
-que bpmn-js cambia al pintarlo: `isMarkerVisible` en las compuertas
-exclusivas. El resultado, `exportadas/<modelo>.txt` y `exportadas/<modelo>.bpmn`,
-es byte a byte lo que manda el Modeler de verdad: así se comprobó en un
-navegador con los 22 diagramas.
+Modeler. Guarda el diagrama como el Modeler, con `moddle.toXML` y con formato
+—un elemento por línea, desde la 5.6—, y con lo único que bpmn-js cambia al
+pintarlo: `isMarkerVisible` en las compuertas exclusivas. El resultado,
+`exportadas/<modelo>.txt` y `exportadas/<modelo>.bpmn`, es byte a byte lo que
+manda el Modeler de verdad: así se comprobó en un navegador con los 22
+diagramas, y con el ejemplo lo comprueba cada vez `interfaz.mjs`.
 
 Hace lo mismo con los ejemplos del Modeler, `Modeler/ejemplos/`, pero de ellos
 solo congela las reglas, en `exportadas/ejemplos/`: un ejemplo ya es lo que
@@ -484,6 +490,41 @@ pasar los dos: primero este, que muestra lo que cambia, y luego la integración,
 que dice si sigue simulando lo mismo. Necesita `npm install` hecho en
 `Modeler/`. `valida_esquema.py` comprueba también que lo guardado cumple el
 esquema de BPMN 2.0.
+
+### La interfaz
+
+`interfaz.mjs` prueba lo que solo existe en la página, con el Modeler compilado
+en un Chromium de verdad y el proceso base de `Modeler/ejemplos/`:
+
+- Se abre con **Open Existing Model** y se pinta entero, y **Ctrl+S** lo guarda
+  igual, byte a byte. Con acentos en un nombre, también, y en UTF-8.
+- **Simular** manda exactamente lo que `integracion.py` manda a la API —las
+  reglas de `exportadas/ejemplos/` y el propio fichero, sin semilla—. Con la
+  respuesta de la API, los registros congelados del `35`, la ventana ofrece
+  uno por pool con su nombre, sus casos y su fichero, y cada descarga es el
+  registro tal cual, en UTF-8, también con acentos en el nombre del pool.
+- Los paneles validan como el Backend, y lo que no vale se marca y no se
+  guarda: los tiempos de una tarea —iguales valen; un máximo menor que el
+  mínimo, no; 2.5 sobrevive a guardar y abrir—, el porcentaje de una rama —la
+  suma se explica y no se exige; más de 100, o todas las ramas a 0, no se
+  guardan—, las instancias del pool, la semilla y el nombre de la raíz.
+- El menú de reemplazo pone y quita la marca de multiinstancia de una tarea y
+  la de multiplicidad de un pool, y las dos llegan al fichero y a las reglas.
+- Las personas de una tarea se añaden en el panel y llegan a
+  `extensionElements` y a las reglas.
+
+En ninguna puede salir una ventana emergente ni un error en la consola. No
+hace falta el Backend: **Simular** se responde con la respuesta de la API, que
+es la que `integracion.py` comprueba, así que entre los dos cubren el camino
+entero, del clic al XES. Compila el Modeler como `npm run bundle`, pero en una
+carpeta temporal: prueba siempre las fuentes de hoy y no toca `example/dist`.
+Necesita `npm install` en `Modeler/` —trae Playwright— y, una vez,
+`npx playwright install chromium`; con un Chromium ya instalado, se le puede
+indicar con `CHROMIUM_PATH`. Tarda en torno a un minuto. Que detecta lo que
+tiene que detectar se comprobó volviendo a poner, a la vez, el campo de
+porcentajes anterior a la 5.6, un mínimo igual al máximo como error, el
+guardado en una sola línea y la descarga de `downloadjs` sin codificar: falla
+en las cuatro pruebas que los cubren.
 
 Si cambia un modelo que tiene diagrama, se regenera con
 `python3 pruebas/bpmn_desde_reglas.py pruebas/modelos/<modelo>.txt`, se vuelve
@@ -545,8 +586,9 @@ está vacío: `modelos/`, `modelos-con-avisos/` y `modelos-con-error/` en el ban
 del motor, `integracion/`, `integracion-con-error/`, `exportadas/` y
 `Modeler/ejemplos/` en el de integración, la carpeta de diagramas,
 `Modeler/ejemplos/` y `formato-anterior/` en `valida_bpmn.mjs`, `integracion/` y
-`Modeler/ejemplos/` en `exporta_reglas.mjs`, y las cinco carpetas de diagramas
-en `valida_esquema.py`. Sin esa comprobación, perder una
+`Modeler/ejemplos/` en `exporta_reglas.mjs`, las cinco carpetas de diagramas
+en `valida_esquema.py`, y el ejemplo, sus reglas exportadas y los registros
+congelados del `35` en `interfaz.mjs`. Sin esa comprobación, perder una
 carpeta entera —modelos y referencias a la vez, en un merge— daba verde con
 menos casos, o con ninguno, sin decir nada.
 

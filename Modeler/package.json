@@ -39,6 +39,7 @@
     "css-loader": "^7.1.2",
     "eslint": "^8.57.0",
     "eslint-plugin-bpmn-io": "^1.0.1",
+    "playwright": "1.63.0",
     "raw-loader": "^4.0.2",
     "style-loader": "^4.0.0",
     "webpack": "^5.94.0",
@@ -50,11 +51,11 @@
     "@bpmn-io/properties-panel": "^3.23.0",
     "bpmn-js": "^17.11.1",
     "bpmn-js-properties-panel": "^5.25.0",
+    "diagram-js": "^14.11.0",
     "downloadjs": "^1.4.7",
     "file-open": "^0.1.1",
-    "inherits-browser": "^0.1.0",
-    "diagram-js": "^14.11.0",
     "htm": "^3.1.1",
+    "inherits-browser": "^0.1.0",
     "preact": "^10.23.1"
   },
   "private": true

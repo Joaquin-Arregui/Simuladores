@@ -14,6 +14,10 @@ npm start
 La aplicación se abre en `http://localhost:9000`. **Open Existing Model** abre un archivo local; también se puede arrastrar un BPMN al lienzo. **Simular** envía las reglas y el XML a `http://localhost:3000/simulate`. El Backend debe estar ejecutándose para simular. **Última simulación** muestra el último resultado correcto de la sesión. Los tiempos de las tareas, la frecuencia y los temporizadores se expresan en segundos.
 
 El resultado de una simulación es **un registro XES por pool** (ver abajo); **Ctrl+S** guarda el diagrama.
+Lo guarda con formato, un elemento por línea, como Camunda Modeler; hasta la
+5.6 lo guardaba en una sola línea, y cualquier cambio dejaba ilegible la
+diferencia entre dos versiones del fichero. Al simular se manda ese mismo
+texto.
 
 Durante una ejecución se desactiva el botón de simulación. Los errores de
 validación, ejecución, conexión o tiempo máximo aparecen en la interfaz y no
@@ -123,7 +127,14 @@ npm run lint
 npm run bundle
 ```
 
-La compilación genera exclusivamente `example/dist`; conserva los HTML y fuentes de `example`. Para servir la compilación, publica toda la carpeta `example`. `npm run all` revisa el código con ESLint y compila. Por ahora no hay pruebas automáticas.
+La compilación genera exclusivamente `example/dist`; conserva los HTML y fuentes de `example`. Para servir la compilación, publica toda la carpeta `example`. `npm run all` revisa el código con ESLint y compila.
+
+Las pruebas del Modeler están en el banco del Backend: el código de `lib/` lo
+prueban sin navegador `valida_bpmn.mjs` y `exporta_reglas.mjs`, y la interfaz,
+en un Chromium de verdad, `interfaz.mjs` (ver
+[el banco](../Backend/pruebas/README.md#la-interfaz)). Para esta hace falta,
+una vez, `npx playwright install chromium`, que descarga el Chromium de
+Playwright.
 
 ## Estructura
 
@@ -172,7 +183,7 @@ la **semilla** (`collab:seed` o `model:seed`), junto al número de instancias de
 la colaboración, o al del proceso y su frecuencia. La colaboración tiene además
 ahí su nombre, **Model name**, que los registros guardan como `model:name`: el
 panel **General** de bpmn-js no lo ofrece para una colaboración, y sin él el
-modelo se exportaba como `Unnamed`. Vacía, el motor genera una y
+modelo se exportaba como `Unnamed`. Con la semilla vacía, el motor genera una y
 la deja en los registros; con la misma semilla y el mismo modelo sale la misma
 simulación. Se guarda como texto para que una semilla grande no pierda cifras.
 
@@ -197,6 +208,16 @@ mayor que JavaScript guarda exacto. Las frecuencias admiten también notación
 científica, porque es como JavaScript las escribe en el `.bpmn` por debajo de
 1e-6 y desde 1e21 —0.0000001 se guarda como `1e-7`—; al mostrarlas, el panel
 las escribe sin exponente siempre que puede hacerlo sin perder nada.
+
+El porcentaje de una rama de una compuerta, **Percentage of Branches** (5.6),
+es un número de 0 a 100, con decimales. Como en el Backend, no hace falta que
+las ramas de una compuerta sumen 100: debajo del campo, el panel dice cuánto
+suman y qué hará el simulador —repartir en proporción lo que no suma 100 y
+avisar, o dar a las ramas sin porcentaje lo que falta hasta 100—. Además de lo
+que pase de 100, solo no se guarda lo que el Backend rechazaría: que ninguna
+rama de la compuerta se pueda elegir, todas a 0. Hasta la 5.6 el panel exigía
+que sumaran 100, lo marcaba en rojo pero lo guardaba igual, y se quedaba con la
+parte entera: 33.3 se guardaba como 33.
 
 Al simular, estos parámetros van en las reglas (ver abajo) y en el diagrama. El
 Backend lee además del diagrama la semilla, y lo que unas reglas no digan; si

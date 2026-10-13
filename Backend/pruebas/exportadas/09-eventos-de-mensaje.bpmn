@@ -1,2 +1,155 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:collab="http://collaboration" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:participantWithoutLane="http://participantWithoutLane" xmlns:user="http://user" id="Definitions_09_eventos_de_mensaje" targetNamespace="http://bpmn.io/schema/bpmn" exporter="my-bpmn-exporter" exporterVersion="1.0.0"><bpmn:collaboration id="Colaboracion" name="Taller y dueno" collab:instance="2"><bpmn:participant id="Pool_Taller" name="Taller" processRef="Process_Pool_Taller" participantWithoutLane:frequency="0"><bpmn:extensionElements><participantWithoutLane:userWithoutRole>Ana</participantWithoutLane:userWithoutRole></bpmn:extensionElements></bpmn:participant><bpmn:participant id="Pool_Dueno" name="Dueno" processRef="Process_Pool_Dueno" participantWithoutLane:frequency="40"><bpmn:extensionElements><participantWithoutLane:userWithoutRole>Beto</participantWithoutLane:userWithoutRole></bpmn:extensionElements></bpmn:participant><bpmn:messageFlow id="Aviso" name="Listo" sourceRef="Avisar_Listo" targetRef="Esperar_Aviso" /><bpmn:messageFlow id="Recogido" name="Recogido" sourceRef="Avisar_Recogido" targetRef="Confirmar" /></bpmn:collaboration><bpmn:process id="Process_Pool_Taller" isExecutable="false"><bpmn:startEvent id="Ini_T" name="Entra el coche"><bpmn:outgoing>t1</bpmn:outgoing></bpmn:startEvent><bpmn:task id="Reparar" name="Reparar el coche" user:NumberOfExecutions="1" user:minimumTime="20" user:maximumTime="30"><bpmn:extensionElements><user:userTask>Ana</user:userTask></bpmn:extensionElements><bpmn:incoming>t1</bpmn:incoming><bpmn:outgoing>t2</bpmn:outgoing></bpmn:task><bpmn:intermediateThrowEvent id="Avisar_Listo" name="Avisar de que esta listo"><bpmn:incoming>t2</bpmn:incoming><bpmn:outgoing>t3</bpmn:outgoing><bpmn:messageEventDefinition id="MessageEventDefinition_Avisar_Listo" /></bpmn:intermediateThrowEvent><bpmn:intermediateCatchEvent id="Confirmar" name="Confirmar la recogida"><bpmn:incoming>t3</bpmn:incoming><bpmn:outgoing>t4</bpmn:outgoing><bpmn:messageEventDefinition id="MessageEventDefinition_Confirmar" /></bpmn:intermediateCatchEvent><bpmn:endEvent id="Fin_T" name="Fin del taller"><bpmn:incoming>t4</bpmn:incoming></bpmn:endEvent><bpmn:sequenceFlow id="t1" sourceRef="Ini_T" targetRef="Reparar" /><bpmn:sequenceFlow id="t2" sourceRef="Reparar" targetRef="Avisar_Listo" /><bpmn:sequenceFlow id="t3" sourceRef="Avisar_Listo" targetRef="Confirmar" /><bpmn:sequenceFlow id="t4" sourceRef="Confirmar" targetRef="Fin_T" /></bpmn:process><bpmn:process id="Process_Pool_Dueno" isExecutable="false"><bpmn:startEvent id="Ini_D" name="Deja el coche"><bpmn:outgoing>d1</bpmn:outgoing></bpmn:startEvent><bpmn:intermediateCatchEvent id="Esperar_Aviso" name="Esperar el aviso"><bpmn:incoming>d1</bpmn:incoming><bpmn:outgoing>d2</bpmn:outgoing><bpmn:messageEventDefinition id="MessageEventDefinition_Esperar_Aviso" /></bpmn:intermediateCatchEvent><bpmn:task id="Recoger" name="Recoger el coche" user:NumberOfExecutions="1" user:minimumTime="5" user:maximumTime="10"><bpmn:extensionElements><user:userTask>Beto</user:userTask></bpmn:extensionElements><bpmn:incoming>d2</bpmn:incoming><bpmn:outgoing>d3</bpmn:outgoing></bpmn:task><bpmn:intermediateThrowEvent id="Avisar_Recogido" name="Avisar de la recogida"><bpmn:incoming>d3</bpmn:incoming><bpmn:outgoing>d4</bpmn:outgoing><bpmn:messageEventDefinition id="MessageEventDefinition_Avisar_Recogido" /></bpmn:intermediateThrowEvent><bpmn:endEvent id="Fin_D" name="Fin del dueno"><bpmn:incoming>d4</bpmn:incoming></bpmn:endEvent><bpmn:sequenceFlow id="d1" sourceRef="Ini_D" targetRef="Esperar_Aviso" /><bpmn:sequenceFlow id="d2" sourceRef="Esperar_Aviso" targetRef="Recoger" /><bpmn:sequenceFlow id="d3" sourceRef="Recoger" targetRef="Avisar_Recogido" /><bpmn:sequenceFlow id="d4" sourceRef="Avisar_Recogido" targetRef="Fin_D" /></bpmn:process><bpmndi:BPMNDiagram id="BPMNDiagram_1"><bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Colaboracion"><bpmndi:BPMNShape id="Pool_Taller_di" bpmnElement="Pool_Taller" isHorizontal="true"><dc:Bounds x="160" y="80" width="970" height="150" /></bpmndi:BPMNShape><bpmndi:BPMNShape id="Pool_Dueno_di" bpmnElement="Pool_Dueno" isHorizontal="true"><dc:Bounds x="160" y="290" width="970" height="150" /></bpmndi:BPMNShape><bpmndi:BPMNShape id="Ini_T_di" bpmnElement="Ini_T"><dc:Bounds x="272" y="122" width="36" height="36" /></bpmndi:BPMNShape><bpmndi:BPMNShape id="Reparar_di" bpmnElement="Reparar"><dc:Bounds x="410" y="100" width="100" height="80" /></bpmndi:BPMNShape><bpmndi:BPMNShape id="Avisar_Listo_di" bpmnElement="Avisar_Listo"><dc:Bounds x="612" y="122" width="36" height="36" /></bpmndi:BPMNShape><bpmndi:BPMNShape id="Confirmar_di" bpmnElement="Confirmar"><dc:Bounds x="782" y="122" width="36" height="36" /></bpmndi:BPMNShape><bpmndi:BPMNShape id="Fin_T_di" bpmnElement="Fin_T"><dc:Bounds x="952" y="122" width="36" height="36" /></bpmndi:BPMNShape><bpmndi:BPMNShape id="Ini_D_di" bpmnElement="Ini_D"><dc:Bounds x="272" y="332" width="36" height="36" /></bpmndi:BPMNShape><bpmndi:BPMNShape id="Esperar_Aviso_di" bpmnElement="Esperar_Aviso"><dc:Bounds x="442" y="332" width="36" height="36" /></bpmndi:BPMNShape><bpmndi:BPMNShape id="Recoger_di" bpmnElement="Recoger"><dc:Bounds x="580" y="310" width="100" height="80" /></bpmndi:BPMNShape><bpmndi:BPMNShape id="Avisar_Recogido_di" bpmnElement="Avisar_Recogido"><dc:Bounds x="782" y="332" width="36" height="36" /></bpmndi:BPMNShape><bpmndi:BPMNShape id="Fin_D_di" bpmnElement="Fin_D"><dc:Bounds x="952" y="332" width="36" height="36" /></bpmndi:BPMNShape><bpmndi:BPMNEdge id="t1_di" bpmnElement="t1"><di:waypoint x="290" y="140" /><di:waypoint x="460" y="140" /></bpmndi:BPMNEdge><bpmndi:BPMNEdge id="t2_di" bpmnElement="t2"><di:waypoint x="460" y="140" /><di:waypoint x="630" y="140" /></bpmndi:BPMNEdge><bpmndi:BPMNEdge id="t3_di" bpmnElement="t3"><di:waypoint x="630" y="140" /><di:waypoint x="800" y="140" /></bpmndi:BPMNEdge><bpmndi:BPMNEdge id="t4_di" bpmnElement="t4"><di:waypoint x="800" y="140" /><di:waypoint x="970" y="140" /></bpmndi:BPMNEdge><bpmndi:BPMNEdge id="d1_di" bpmnElement="d1"><di:waypoint x="290" y="350" /><di:waypoint x="460" y="350" /></bpmndi:BPMNEdge><bpmndi:BPMNEdge id="d2_di" bpmnElement="d2"><di:waypoint x="460" y="350" /><di:waypoint x="630" y="350" /></bpmndi:BPMNEdge><bpmndi:BPMNEdge id="d3_di" bpmnElement="d3"><di:waypoint x="630" y="350" /><di:waypoint x="800" y="350" /></bpmndi:BPMNEdge><bpmndi:BPMNEdge id="d4_di" bpmnElement="d4"><di:waypoint x="800" y="350" /><di:waypoint x="970" y="350" /></bpmndi:BPMNEdge><bpmndi:BPMNEdge id="Aviso_di" bpmnElement="Aviso"><di:waypoint x="630" y="140" /><di:waypoint x="460" y="350" /></bpmndi:BPMNEdge><bpmndi:BPMNEdge id="Recogido_di" bpmnElement="Recogido"><di:waypoint x="800" y="350" /><di:waypoint x="800" y="140" /></bpmndi:BPMNEdge></bpmndi:BPMNPlane></bpmndi:BPMNDiagram></bpmn:definitions>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:collab="http://collaboration" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:participantWithoutLane="http://participantWithoutLane" xmlns:user="http://user" id="Definitions_09_eventos_de_mensaje" targetNamespace="http://bpmn.io/schema/bpmn" exporter="my-bpmn-exporter" exporterVersion="1.0.0">
+  <bpmn:collaboration id="Colaboracion" name="Taller y dueno" collab:instance="2">
+    <bpmn:participant id="Pool_Taller" name="Taller" processRef="Process_Pool_Taller" participantWithoutLane:frequency="0">
+      <bpmn:extensionElements>
+        <participantWithoutLane:userWithoutRole>Ana</participantWithoutLane:userWithoutRole>
+      </bpmn:extensionElements>
+    </bpmn:participant>
+    <bpmn:participant id="Pool_Dueno" name="Dueno" processRef="Process_Pool_Dueno" participantWithoutLane:frequency="40">
+      <bpmn:extensionElements>
+        <participantWithoutLane:userWithoutRole>Beto</participantWithoutLane:userWithoutRole>
+      </bpmn:extensionElements>
+    </bpmn:participant>
+    <bpmn:messageFlow id="Aviso" name="Listo" sourceRef="Avisar_Listo" targetRef="Esperar_Aviso" />
+    <bpmn:messageFlow id="Recogido" name="Recogido" sourceRef="Avisar_Recogido" targetRef="Confirmar" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_Pool_Taller" isExecutable="false">
+    <bpmn:startEvent id="Ini_T" name="Entra el coche">
+      <bpmn:outgoing>t1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:task id="Reparar" name="Reparar el coche" user:NumberOfExecutions="1" user:minimumTime="20" user:maximumTime="30">
+      <bpmn:extensionElements>
+        <user:userTask>Ana</user:userTask>
+      </bpmn:extensionElements>
+      <bpmn:incoming>t1</bpmn:incoming>
+      <bpmn:outgoing>t2</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:intermediateThrowEvent id="Avisar_Listo" name="Avisar de que esta listo">
+      <bpmn:incoming>t2</bpmn:incoming>
+      <bpmn:outgoing>t3</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_Avisar_Listo" />
+    </bpmn:intermediateThrowEvent>
+    <bpmn:intermediateCatchEvent id="Confirmar" name="Confirmar la recogida">
+      <bpmn:incoming>t3</bpmn:incoming>
+      <bpmn:outgoing>t4</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_Confirmar" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:endEvent id="Fin_T" name="Fin del taller">
+      <bpmn:incoming>t4</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="t1" sourceRef="Ini_T" targetRef="Reparar" />
+    <bpmn:sequenceFlow id="t2" sourceRef="Reparar" targetRef="Avisar_Listo" />
+    <bpmn:sequenceFlow id="t3" sourceRef="Avisar_Listo" targetRef="Confirmar" />
+    <bpmn:sequenceFlow id="t4" sourceRef="Confirmar" targetRef="Fin_T" />
+  </bpmn:process>
+  <bpmn:process id="Process_Pool_Dueno" isExecutable="false">
+    <bpmn:startEvent id="Ini_D" name="Deja el coche">
+      <bpmn:outgoing>d1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:intermediateCatchEvent id="Esperar_Aviso" name="Esperar el aviso">
+      <bpmn:incoming>d1</bpmn:incoming>
+      <bpmn:outgoing>d2</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_Esperar_Aviso" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:task id="Recoger" name="Recoger el coche" user:NumberOfExecutions="1" user:minimumTime="5" user:maximumTime="10">
+      <bpmn:extensionElements>
+        <user:userTask>Beto</user:userTask>
+      </bpmn:extensionElements>
+      <bpmn:incoming>d2</bpmn:incoming>
+      <bpmn:outgoing>d3</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:intermediateThrowEvent id="Avisar_Recogido" name="Avisar de la recogida">
+      <bpmn:incoming>d3</bpmn:incoming>
+      <bpmn:outgoing>d4</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_Avisar_Recogido" />
+    </bpmn:intermediateThrowEvent>
+    <bpmn:endEvent id="Fin_D" name="Fin del dueno">
+      <bpmn:incoming>d4</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="d1" sourceRef="Ini_D" targetRef="Esperar_Aviso" />
+    <bpmn:sequenceFlow id="d2" sourceRef="Esperar_Aviso" targetRef="Recoger" />
+    <bpmn:sequenceFlow id="d3" sourceRef="Recoger" targetRef="Avisar_Recogido" />
+    <bpmn:sequenceFlow id="d4" sourceRef="Avisar_Recogido" targetRef="Fin_D" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Colaboracion">
+      <bpmndi:BPMNShape id="Pool_Taller_di" bpmnElement="Pool_Taller" isHorizontal="true">
+        <dc:Bounds x="160" y="80" width="970" height="150" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Pool_Dueno_di" bpmnElement="Pool_Dueno" isHorizontal="true">
+        <dc:Bounds x="160" y="290" width="970" height="150" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Ini_T_di" bpmnElement="Ini_T">
+        <dc:Bounds x="272" y="122" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Reparar_di" bpmnElement="Reparar">
+        <dc:Bounds x="410" y="100" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Avisar_Listo_di" bpmnElement="Avisar_Listo">
+        <dc:Bounds x="612" y="122" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Confirmar_di" bpmnElement="Confirmar">
+        <dc:Bounds x="782" y="122" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Fin_T_di" bpmnElement="Fin_T">
+        <dc:Bounds x="952" y="122" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Ini_D_di" bpmnElement="Ini_D">
+        <dc:Bounds x="272" y="332" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Esperar_Aviso_di" bpmnElement="Esperar_Aviso">
+        <dc:Bounds x="442" y="332" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Recoger_di" bpmnElement="Recoger">
+        <dc:Bounds x="580" y="310" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Avisar_Recogido_di" bpmnElement="Avisar_Recogido">
+        <dc:Bounds x="782" y="332" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Fin_D_di" bpmnElement="Fin_D">
+        <dc:Bounds x="952" y="332" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="t1_di" bpmnElement="t1">
+        <di:waypoint x="290" y="140" />
+        <di:waypoint x="460" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="t2_di" bpmnElement="t2">
+        <di:waypoint x="460" y="140" />
+        <di:waypoint x="630" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="t3_di" bpmnElement="t3">
+        <di:waypoint x="630" y="140" />
+        <di:waypoint x="800" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="t4_di" bpmnElement="t4">
+        <di:waypoint x="800" y="140" />
+        <di:waypoint x="970" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="d1_di" bpmnElement="d1">
+        <di:waypoint x="290" y="350" />
+        <di:waypoint x="460" y="350" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="d2_di" bpmnElement="d2">
+        <di:waypoint x="460" y="350" />
+        <di:waypoint x="630" y="350" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="d3_di" bpmnElement="d3">
+        <di:waypoint x="630" y="350" />
+        <di:waypoint x="800" y="350" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="d4_di" bpmnElement="d4">
+        <di:waypoint x="800" y="350" />
+        <di:waypoint x="970" y="350" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Aviso_di" bpmnElement="Aviso">
+        <di:waypoint x="630" y="140" />
+        <di:waypoint x="460" y="350" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Recogido_di" bpmnElement="Recogido">
+        <di:waypoint x="800" y="350" />
+        <di:waypoint x="800" y="140" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

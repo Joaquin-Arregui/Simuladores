@@ -14,7 +14,8 @@
 //    decide el orden en que el Modeler los pinta y los guarda en su
 //    elementRegistry. Las reglas salen en ese orden, y el motor depende de el.
 // 3. Exporta las reglas con Modeler/lib/rules, el exportador del Modeler, y
-//    guarda el diagrama como lo guarda el Modeler (moddle.toXML). Al pintar una
+//    guarda el diagrama como lo guarda el Modeler (moddle.toXML, con formato
+//    desde la 5.6: un elemento por linea). Al pintar una
 //    compuerta exclusiva, bpmn-js le pone isMarkerVisible en el DI
 //    (ElementFactory); se hace igual aqui, para que lo guardado sea lo mismo.
 //
@@ -98,7 +99,7 @@ async function exporta(xml) {
   migrateLegacyPeople(moddle, definiciones);
   const { elementos, errores } = elementosDelRegistro(definiciones);
   const reglas = exportRules(elementos, definiciones);
-  const { xml: guardado } = await moddle.toXML(definiciones);
+  const { xml: guardado } = await moddle.toXML(definiciones, { format: true });
   return { reglas, guardado, avisos: [...warnings.map(w => w.message.split('\n')[0]), ...errores] };
 }
 
