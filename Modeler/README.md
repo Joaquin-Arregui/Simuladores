@@ -33,6 +33,15 @@ La compilación genera exclusivamente `example/dist`; conserva los HTML y fuente
 
 - `example/src`: inicio, editor y exportación de reglas para el simulador.
 - `provider` y `descriptors`: propiedades de simulación y su serialización BPMN.
+  El pool guarda en el `.bpmn`, con el prefijo `participantWithoutLane`, los
+  mismos atributos que lleva en las reglas: `frequency` (número, admite
+  decimales), `instances` (entero; las del orquestador son convocatorias
+  sucesivas y las de los demás pools, casos por convocatoria), `orchestrationRole`
+  (`orchestrator` u `orchestrated`), `infiniteResources` (booleano), `arrivalMode`
+  (`staggered`, `simultaneous` o `uniform`) y `arrivalWindow` (entero, la T de la
+  llegada uniforme). El marcador de multiplicidad es el estándar,
+  `bpmn:participantMultiplicity`. Los paneles para editarlos son la 5.3, y su
+  exportación a las reglas, la 5.4.
 - `lib/resize-all-rules`: regla de redimensionado del editor.
 
 El modelador ya no incluye chatbot, mapa de calor, biblioteca de animación de tokens ni Scheduler/CSV. Los archivos con Scheduler se rechazan al importarlos para evitar interpretarlos como tareas ordinarias. Usuarios y roles se conservan.

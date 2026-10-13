@@ -19,6 +19,13 @@
 //    multiplicidad-, que son las que el motor lee del dibujo. Lo unico que se
 //    tolera que no entienda son los elementos propios del Modeler, y se cuentan:
 //    que otra herramienta los abra sin avisos es la 5.2.
+// 5. Que los atributos propios de cada pool (5.1) -frequency, instances,
+//    orchestrationRole, infiniteResources, arrivalMode y arrivalWindow- salen
+//    de abrir y guardar escritos igual que estaban en el fichero, y que los
+//    descriptores los leen con su tipo. Lo de (3) no basta: compara lo abierto
+//    con lo reabierto, y si el descriptor lee mal un valor -frequency=0.1 como
+//    entero se queda en 0- la primera lectura ya lo ha perdido y la segunda
+//    coincide con ella. Aqui se compara el texto, leido sin descriptores.
 //
 // Es independiente de validation.py a proposito: si el generador y la
 // validacion del Backend compartieran un malentendido sobre el BPMN, aqui
@@ -83,6 +90,56 @@ function instantanea(raiz) {
   return porClave;
 }
 
+// El tipo con el que el Modeler tiene que leer cada atributo propio del pool.
+const ATRIBUTOS_DEL_POOL = {
+  frequency: 'numero', instances: 'entero', orchestrationRole: 'texto',
+  infiniteResources: 'booleano', arrivalMode: 'texto', arrivalWindow: 'entero'
+};
+const ES_DEL_TIPO = {
+  numero: v => typeof v === 'number' && Number.isFinite(v),
+  entero: v => Number.isInteger(v),
+  texto: v => typeof v === 'string',
+  booleano: v => typeof v === 'boolean'
+};
+
+// Los atributos propios de cada pool tal como estan escritos en el XML: leidos
+// sin descriptores, bpmn-moddle los deja en $attrs con su texto.
+async function atributosEscritos(xml) {
+  const { rootElement } = await otraHerramienta.fromXML(xml);
+  const escritos = {};
+  recorre(rootElement, e => {
+    if (e.$type !== 'bpmn:Participant') return;
+    escritos[e.id] = Object.fromEntries(Object.entries(e.$attrs || {})
+      .filter(([k]) => k.startsWith('participantWithoutLane:')).sort());
+  });
+  return escritos;
+}
+
+async function atributosDelPool(xml, guardado, rootElement) {
+  const antes = await atributosEscritos(xml), despues = await atributosEscritos(guardado);
+  const problemas = [];
+  let cuantos = 0;
+  for (const pool of new Set([...Object.keys(antes), ...Object.keys(despues)])) {
+    const a = antes[pool] || {}, d = despues[pool] || {};
+    for (const clave of new Set([...Object.keys(a), ...Object.keys(d)])) {
+      cuantos += 1;
+      if (a[clave] !== d[clave]) {
+        problemas.push(`${pool}: ${clave}=${JSON.stringify(a[clave])} sale como ${JSON.stringify(d[clave])} al abrir y guardar`);
+      }
+    }
+  }
+  recorre(rootElement, e => {
+    if (e.$type !== 'bpmn:Participant') return;
+    for (const [nombre, tipo] of Object.entries(ATRIBUTOS_DEL_POOL)) {
+      if (!(`participantWithoutLane:${nombre}` in (antes[e.id] || {}))) continue;
+      if (!ES_DEL_TIPO[tipo](e.get(nombre))) {
+        problemas.push(`${e.id}: el Modeler lee ${nombre} como ${JSON.stringify(e.get(nombre))}, y tenia que ser ${tipo}`);
+      }
+    }
+  });
+  return { problemas, cuantos };
+}
+
 function cambiosAlGuardar(antes, despues) {
   const cambios = [];
   for (const clave of new Set([...Object.keys(antes), ...Object.keys(despues)])) {
@@ -131,6 +188,8 @@ for (const fichero of ficheros) {
   const { xml: guardado } = await moddle.toXML(rootElement);
   const { rootElement: reabierto } = await moddle.fromXML(guardado);
   problemas.push(...cambiosAlGuardar(instantanea(rootElement), instantanea(reabierto)));
+  const delPool = await atributosDelPool(xml, guardado, rootElement);
+  problemas.push(...delPool.problemas);
 
   const ajeno = await otraHerramienta.fromXML(xml);
   const propios = ajeno.warnings.filter(w => PREFIJOS_DEL_MODELER.some(p => w.message.includes(`<${p}:`)));
@@ -157,7 +216,7 @@ for (const fichero of ficheros) {
     for (const p of problemas.slice(0, 12)) console.log(`         ${p}`);
     if (problemas.length > 12) console.log(`         ... y ${problemas.length - 12} mas`);
   } else {
-    console.log(`${fichero.padEnd(34)} ok      ${elementos} elementos con forma, igual tras abrir y guardar`);
+    console.log(`${fichero.padEnd(34)} ok      ${elementos} elementos con forma, igual tras abrir y guardar; ${delPool.cuantos} atributos de pool, escritos igual`);
     console.log(`${''.padEnd(34)}         otra herramienta: ve las ${marcas} marcas; no entiende ${propios.length} elementos propios del Modeler (5.2)`);
   }
 }

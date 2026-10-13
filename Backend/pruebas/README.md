@@ -300,10 +300,12 @@ de `validate_diagram_correspondence`, los cinco diagramas de correlación rota d
 `integracion-con-error/` daban **200**.
 
 Los diagramas están **generados** con `bpmn_desde_reglas.py` y congelados como
-ficheros, no dibujados: el Modeler aún no sabe escribir los atributos del hito 2
-(`instances`, `orchestrationRole`, `infiniteResources`), que son el hito 5. Lo
-que sí llevan es lo que el Modeler escribiría hoy: la estructura BPMN, los
-atributos de sus descriptores y los dos marcadores estándar,
+ficheros, no dibujados: el Modeler aún no tiene paneles para los atributos de
+los hitos 2 a 4 (5.3) ni los exporta a las reglas (5.4). Lo que sí llevan es lo
+que el Modeler guarda hoy: la estructura BPMN, los atributos de sus
+descriptores —desde la 5.1 también los del pool: `instances`,
+`orchestrationRole`, `infiniteResources`, `arrivalMode` y `arrivalWindow`, con
+los mismos nombres que en las reglas— y los dos marcadores estándar,
 `participantMultiplicity` y `multiInstanceLoopCharacteristics`. Que el XML es
 BPMN de verdad no lo dice el Backend sino `valida_bpmn.mjs`, con bpmn-moddle
 —la librería con la que bpmn-js abre un diagrama— y los descriptores del
@@ -316,6 +318,15 @@ los descriptores `UserTask` y `userWithoutRole` son listas de elementos hijos, y
 escritas como un atributo con comas bpmn-moddle las abre como una cadena y las
 guarda letra a letra —Ana se convertía en A, n y a—. El generador escribe ahora
 un elemento por usuario en tareas, procesos, pools y carriles.
+
+`valida_bpmn.mjs` comprueba también que **los atributos propios de cada pool
+sobreviven a abrir y guardar** (5.1): leídos sin descriptores, tal como están
+escritos en el fichero, tienen que salir escritos igual, y con los descriptores
+del Modeler se tienen que leer con su tipo —`instances` y `arrivalWindow`
+enteros, `frequency` número, `infiniteResources` booleano—. Comparar lo abierto
+con lo reabierto no basta: con `frequency` declarada como entero, `0.1` se leía
+como `0` al abrir, y lo reabierto coincidía con ese `0`. Por eso el `34`, que
+llega cada 0,1 s, tiene diagrama.
 
 `valida_bpmn.mjs` abre cada diagrama, por último, **como otra herramienta**:
 con bpmn-moddle sin los descriptores del Modeler. Tienen que seguir ahí todos los

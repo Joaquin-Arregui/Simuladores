@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:collab="http://collaboration" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:participantWithoutLane="http://participantWithoutLane" xmlns:sequenceFlow="http://sequenceFlow" xmlns:user="http://user" id="Definitions_35_proceso_base" targetNamespace="http://bpmn.io/schema/bpmn" exporter="my-bpmn-exporter" exporterVersion="1.0.0">
   <bpmn:collaboration id="Colaboracion" collab:instance="1">
-    <bpmn:participant id="Pool_SACU" name="SACU" processRef="Process_Pool_SACU" participantWithoutLane:frequency="0">
+    <bpmn:participant id="Pool_SACU" name="SACU" processRef="Process_Pool_SACU" participantWithoutLane:frequency="0" participantWithoutLane:instances="1" participantWithoutLane:orchestrationRole="orchestrator">
       <participantWithoutLane:userWithoutRole>Ana</participantWithoutLane:userWithoutRole>
       <participantWithoutLane:userWithoutRole>Bea</participantWithoutLane:userWithoutRole>
       <participantWithoutLane:userWithoutRole>Carlos</participantWithoutLane:userWithoutRole>
       <bpmn:participantMultiplicity />
     </bpmn:participant>
-    <bpmn:participant id="Pool_Residente" name="Residente" processRef="Process_Pool_Residente" participantWithoutLane:frequency="0">
+    <bpmn:participant id="Pool_Residente" name="Residente" processRef="Process_Pool_Residente" participantWithoutLane:frequency="0" participantWithoutLane:instances="10" participantWithoutLane:orchestrationRole="orchestrated" participantWithoutLane:infiniteResources="true" participantWithoutLane:arrivalMode="uniform" participantWithoutLane:arrivalWindow="120">
       <participantWithoutLane:userWithoutRole>Residente</participantWithoutLane:userWithoutRole>
       <bpmn:participantMultiplicity />
     </bpmn:participant>

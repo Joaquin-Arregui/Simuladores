@@ -4,7 +4,7 @@
     <bpmn:participant id="Pool_Cliente" name="Cliente" processRef="Process_Pool_Cliente" participantWithoutLane:frequency="40">
       <participantWithoutLane:userWithoutRole>Carla</participantWithoutLane:userWithoutRole>
     </bpmn:participant>
-    <bpmn:participant id="Pool_Servicio" name="Servicio" processRef="Process_Pool_Servicio" participantWithoutLane:frequency="0">
+    <bpmn:participant id="Pool_Servicio" name="Servicio" processRef="Process_Pool_Servicio" participantWithoutLane:frequency="0" participantWithoutLane:infiniteResources="true">
       <participantWithoutLane:userWithoutRole>Sara</participantWithoutLane:userWithoutRole>
       <participantWithoutLane:userWithoutRole>Diego</participantWithoutLane:userWithoutRole>
     </bpmn:participant>

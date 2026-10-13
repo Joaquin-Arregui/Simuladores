@@ -8,11 +8,12 @@ de integracion o al cambiar su modelo, y el resultado se congela como fichero:
 el banco de integracion lee el .bpmn, no lo regenera, para que un fallo de este
 generador no pueda taparse con uno igual en la validacion.
 
-Por que generado y no dibujado: el Modeler aun no sabe escribir los atributos
-del hito 2 (instances, orchestrationRole, infiniteResources), que son el hito 5.
-Lo que si escribe el dibujo es lo que el Modeler escribiria hoy: la estructura
-BPMN, los atributos de sus descriptores y los dos marcadores estandar,
-participantMultiplicity y multiInstanceLoopCharacteristics. La comprobacion
+Por que generado y no dibujado: el Modeler aun no tiene paneles para los
+atributos de los hitos 2 a 4 (5.3) ni los exporta a las reglas (5.4). Lo que si
+lleva el dibujo es lo que el Modeler guarda hoy: la estructura BPMN, los
+atributos de sus descriptores -desde la 5.1 tambien los del pool: instances,
+orchestrationRole, infiniteResources, arrivalMode y arrivalWindow- y los dos
+marcadores estandar, participantMultiplicity y multiInstanceLoopCharacteristics. La comprobacion
 independiente de que el XML es BPMN valido la hace valida_bpmn.mjs con
 bpmn-moddle, la misma libreria con la que bpmn-js lo abre.
 """
@@ -262,6 +263,13 @@ def genera(ruta_reglas):
                 atributos["processRef"] = procesos[p]
             if part.frequency is not None:
                 atributos[q("participantWithoutLane", "frequency")] = str(part.frequency)
+            # Los atributos del pool que el descriptor guarda desde la 5.1, con
+            # los mismos nombres que en las reglas.
+            for nombre, valor in (("instances", part.instances), ("orchestrationRole", part.role),
+                                  ("infiniteResources", "true" if part.infinite_resources else None),
+                                  ("arrivalMode", part.arrival_mode), ("arrivalWindow", part.arrival_window)):
+                if valor is not None:
+                    atributos[q("participantWithoutLane", nombre)] = str(valor)
             nodo_part = ET.SubElement(colaboracion, q("bpmn", "participant"), atributos)
             usuarios(nodo_part, "participantWithoutLane", "userWithoutRole", part.users)
             if part.multiplicity:

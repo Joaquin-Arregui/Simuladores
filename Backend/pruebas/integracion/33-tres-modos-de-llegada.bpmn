@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:collab="http://collaboration" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:participantWithoutLane="http://participantWithoutLane" xmlns:user="http://user" id="Definitions_33_tres_modos_de_llegada" targetNamespace="http://bpmn.io/schema/bpmn" exporter="my-bpmn-exporter" exporterVersion="1.0.0">
   <bpmn:collaboration id="Colaboracion" collab:instance="1">
-    <bpmn:participant id="Pool_Orquestador" name="Orquestador" processRef="Process_Pool_Orquestador" participantWithoutLane:frequency="0">
+    <bpmn:participant id="Pool_Orquestador" name="Orquestador" processRef="Process_Pool_Orquestador" participantWithoutLane:frequency="0" participantWithoutLane:instances="2" participantWithoutLane:orchestrationRole="orchestrator">
       <participantWithoutLane:userWithoutRole>Ana</participantWithoutLane:userWithoutRole>
       <bpmn:participantMultiplicity />
     </bpmn:participant>
-    <bpmn:participant id="Pool_Escalonado" name="Escalonado" processRef="Process_Pool_Escalonado" participantWithoutLane:frequency="3">
+    <bpmn:participant id="Pool_Escalonado" name="Escalonado" processRef="Process_Pool_Escalonado" participantWithoutLane:frequency="3" participantWithoutLane:instances="3" participantWithoutLane:orchestrationRole="orchestrated" participantWithoutLane:infiniteResources="true" participantWithoutLane:arrivalMode="staggered">
       <participantWithoutLane:userWithoutRole>Beto</participantWithoutLane:userWithoutRole>
       <bpmn:participantMultiplicity />
     </bpmn:participant>
-    <bpmn:participant id="Pool_Simultaneo" name="Simultaneo" processRef="Process_Pool_Simultaneo" participantWithoutLane:frequency="0">
+    <bpmn:participant id="Pool_Simultaneo" name="Simultaneo" processRef="Process_Pool_Simultaneo" participantWithoutLane:frequency="0" participantWithoutLane:instances="3" participantWithoutLane:orchestrationRole="orchestrated" participantWithoutLane:infiniteResources="true" participantWithoutLane:arrivalMode="simultaneous">
       <participantWithoutLane:userWithoutRole>Carla</participantWithoutLane:userWithoutRole>
       <bpmn:participantMultiplicity />
     </bpmn:participant>
-    <bpmn:participant id="Pool_Uniforme" name="Uniforme" processRef="Process_Pool_Uniforme" participantWithoutLane:frequency="0">
+    <bpmn:participant id="Pool_Uniforme" name="Uniforme" processRef="Process_Pool_Uniforme" participantWithoutLane:frequency="0" participantWithoutLane:instances="4" participantWithoutLane:orchestrationRole="orchestrated" participantWithoutLane:infiniteResources="true" participantWithoutLane:arrivalMode="uniform" participantWithoutLane:arrivalWindow="20">
       <participantWithoutLane:userWithoutRole>Dario</participantWithoutLane:userWithoutRole>
       <bpmn:participantMultiplicity />
     </bpmn:participant>

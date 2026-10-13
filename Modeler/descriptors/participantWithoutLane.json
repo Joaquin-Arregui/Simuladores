@@ -16,6 +16,31 @@
           {
             "name": "frequency",
             "isAttr": true,
+            "type": "Real"
+          },
+          {
+            "name": "instances",
+            "isAttr": true,
+            "type": "Integer"
+          },
+          {
+            "name": "orchestrationRole",
+            "isAttr": true,
+            "type": "String"
+          },
+          {
+            "name": "infiniteResources",
+            "isAttr": true,
+            "type": "Boolean"
+          },
+          {
+            "name": "arrivalMode",
+            "isAttr": true,
+            "type": "String"
+          },
+          {
+            "name": "arrivalWindow",
+            "isAttr": true,
             "type": "Integer"
           },
           {
