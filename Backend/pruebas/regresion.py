@@ -330,6 +330,14 @@ def main():
         print("         %s" % linea)
     fallos += fallos_criterio
 
+    # El proceso base (4.6): con muchos residentes, lo declarado y sin aprendizaje.
+    lineas, fallos_base = banco.revisa_proceso_base()
+    print("%-34s %s" % ("proceso base (%s)" % banco.CRITERIO_DEL_PROCESO_BASE["modelo"],
+                        "ok" if not fallos_base else "FALLA"))
+    for linea in lineas:
+        print("         %s" % linea)
+    fallos += fallos_base
+
     # Las convocatorias en serie (4.1 y 4.2): rondas sin solapes ni huecos,
     # casos nuevos en cada una y nada que pase de una a otra.
     lineas, fallos_rondas = banco.revisa_convocatorias()

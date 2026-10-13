@@ -642,3 +642,137 @@ def revisa_llegadas():
     lineas.insert(0, "%d referencias y %d ejecuciones de %s; %s" % (
         len(todos), ejecuciones, criterio["modelo"], "; ".join(resumen)))
     return lineas, fallos
+
+
+# El proceso base (4.6): la convocatoria entera, con 100 residentes y varias
+# semillas. Con una sola semilla y 10 residentes, la referencia no dice si los
+# gateways reparten lo declarado ni si el lote cuadra con mas casos. Aqui:
+# - que todos los que llegan presentan su solicitud, y que se recibe, se evalua
+#   y se responde exactamente eso; y lo mismo con las reclamaciones;
+# - que los aceptados quedan alrededor del porcentaje declarado, y los que
+#   reclaman alrededor del suyo: dentro de tres desviaciones tipicas de la
+#   binomial, que con mil residentes son unos 4,6 puntos;
+# - que la duracion de una evaluacion no depende de cuantas lleve ya quien la
+#   hace (D14): la segunda mitad de las de cada persona no puede durar mas de un
+#   10 % menos que la primera. Con el aprendizaje por repeticion del motor
+#   original, que acortaba un 5 % cada vez, durarian la mitad.
+CRITERIO_DEL_PROCESO_BASE = {
+    "modelo": "35-proceso-base",
+    "pool": "Pool_Residente",
+    "casos": 100,
+    "semillas": range(1, 11),
+    "solicitudes": (("Enviar_Solicitud", "bpmn:SendTask"), ("Recibir_Solicitudes", "bpmn:ReceiveTask"),
+                    ("Evaluar_Propuestas", "bpmn:Task"), ("Enviar_Resultados", "bpmn:SendTask")),
+    "reclamaciones": (("Reclamar", "bpmn:SendTask"), ("Recibir_Reclamaciones", "bpmn:ReceiveTask"),
+                      ("Evaluar_Reclamaciones", "bpmn:Task"), ("Enviar_Reevaluaciones", "bpmn:SendTask"),
+                      ("Fin_Reclamada", "bpmn:EndEvent")),
+    "finales": ("Fin_Aceptada", "Fin_Rechazada", "Fin_Reclamada"),
+    # (gateway, rama): el porcentaje declarado se lee de las reglas.
+    "aceptada": ("Aceptada", "Fin_Aceptada"),
+    "reclama": ("Decide_Reclamar", "Reclamar"),
+    "evaluacion": ("Evaluar_Propuestas", "bpmn:Task"),
+    "acortamiento_maximo": 0.10,
+}
+
+
+def con_casos(texto, pool, casos):
+    """Las mismas reglas con otro numero de instancias en un pool."""
+    import re
+    nuevo, cambios = re.subn(r"(id_bpmn='%s'[^\n]*?instances=)\d+" % re.escape(pool), r"\g<1>%d" % casos, texto)
+    if cambios != 1:
+        raise ValueError("no se encuentran las instancias de %s" % pool)
+    return nuevo
+
+
+def porcentaje_declarado(texto, origen, destino):
+    """El porcentaje de la rama origen -> destino, tal como esta en las reglas."""
+    from simulator.parser import parse_bpmn_elements
+    elementos = parse_bpmn_elements(texto, [])[0]
+    for elemento in elementos.values():
+        if (type(elemento).__name__ == "BPMNSequenceFlow" and elemento.superElement == origen
+                and elemento.subElement == destino):
+            return elemento.percentageOfBranches / 100
+    raise ValueError("no hay rama de %s a %s" % (origen, destino))
+
+
+def duraciones_por_turno(xes, ident, tipo):
+    """[(persona, [duraciones en el orden en que las hizo])] de un elemento."""
+    import xml.etree.ElementTree as ET
+    por_persona = {}
+    for evento in ET.fromstring(xes.encode("utf-8")).iter("{http://www.xes-standard.org/}event"):
+        valores = {hijo.get("key"): hijo.get("value") for hijo in evento}
+        if valores.get("bpmn:id") == ident and valores.get("bpmn:type") == tipo:
+            por_persona.setdefault(valores.get("bpmn:userTask"), []).append(
+                (valores["time:timestamp"], float(valores["time:duration"])))
+    return [(persona, [duracion for _, duracion in sorted(turnos)]) for persona, turnos in sorted(por_persona.items())]
+
+
+def revisa_proceso_base():
+    """(lineas, fallos) del proceso base con muchos residentes y varias semillas."""
+    import math
+    import time
+    criterio = CRITERIO_DEL_PROCESO_BASE
+    ruta = MODELOS / (criterio["modelo"] + ".txt")
+    if not ruta.exists():
+        return ["falta el modelo %s" % ruta.name], 1
+    base = ruta.read_text(encoding="utf-8")
+    texto = con_casos(base, criterio["pool"], criterio["casos"])
+    p_acepta = porcentaje_declarado(base, *criterio["aceptada"])
+    p_reclama = porcentaje_declarado(base, *criterio["reclama"])
+    lineas, fallos = [], 0
+    casos = aceptados = rechazados = reclaman = 0
+    primeras, segundas, segundos = [], [], 0.0
+    for semilla in criterio["semillas"]:
+        inicio = time.perf_counter()
+        try:
+            xes = processSimulation(texto, seed=semilla).simulation
+        except Exception as error:
+            lineas.append("semilla %d: %s: %s" % (semilla, type(error).__name__, error))
+            fallos += 1
+            continue
+        segundos += time.perf_counter() - inicio
+        finales = {final: cuenta_eventos(xes, final, "bpmn:EndEvent") for final in criterio["finales"]}
+        solicitudes = {ident: cuenta_eventos(xes, ident, tipo) for ident, tipo in criterio["solicitudes"]}
+        reclamaciones = {ident: cuenta_eventos(xes, ident, tipo) for ident, tipo in criterio["reclamaciones"]}
+        if set(solicitudes.values()) != {criterio["casos"]} or sum(finales.values()) != criterio["casos"]:
+            lineas.append("semilla %d: con %d residentes, %s y terminan %s"
+                          % (semilla, criterio["casos"], solicitudes, finales))
+            fallos += 1
+        if len(set(reclamaciones.values())) != 1:
+            lineas.append("semilla %d: las reclamaciones no cuadran: %s" % (semilla, reclamaciones))
+            fallos += 1
+        casos += criterio["casos"]
+        aceptados += finales[criterio["aceptada"][1]]
+        rechazados += criterio["casos"] - finales[criterio["aceptada"][1]]
+        reclaman += reclamaciones[criterio["reclama"][1]]
+        for _, duraciones in duraciones_por_turno(xes, *criterio["evaluacion"]):
+            mitad = len(duraciones) // 2
+            primeras += duraciones[:mitad]
+            segundas += duraciones[len(duraciones) - mitad:]
+
+    def alrededor(que, cuantos, de, declarado):
+        margen = 3 * math.sqrt(declarado * (1 - declarado) / de) if de else 0
+        visto = cuantos / de if de else float("nan")
+        texto_ = "%s %d de %d (%.1f %%, declarado %.0f %%, margen %.1f puntos)" % (
+            que, cuantos, de, 100 * visto, 100 * declarado, 100 * margen)
+        return texto_, de and abs(visto - declarado) <= margen
+
+    resumen = []
+    for que, cuantos, de, declarado in (("aceptados", aceptados, casos, p_acepta),
+                                        ("reclaman", reclaman, rechazados, p_reclama)):
+        texto_, bien = alrededor(que, cuantos, de, declarado)
+        resumen.append(texto_)
+        if not bien:
+            lineas.append("%s: fuera de lo declarado" % texto_)
+            fallos += 1
+    media = lambda valores: sum(valores) / len(valores) if valores else float("nan")
+    resumen.append("evaluaciones de cada persona: la primera mitad dura %.1f s de media y la segunda %.1f s"
+                   % (media(primeras), media(segundas)))
+    if not primeras or media(segundas) < (1 - criterio["acortamiento_maximo"]) * media(primeras):
+        lineas.append("las evaluaciones se acortan al repetirlas: %.1f s y luego %.1f s"
+                      % (media(primeras), media(segundas)))
+        fallos += 1
+    ejecutadas = len(criterio["semillas"])
+    lineas.insert(0, "%d semillas con %d residentes, %.2f s por simulacion; %s"
+                  % (ejecutadas, criterio["casos"], segundos / ejecutadas, "; ".join(resumen)))
+    return lineas, fallos

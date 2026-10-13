@@ -67,6 +67,7 @@ mientras el comportamiento no deba cambiar, sus XES no deben cambiar.
 | `32-convocatorias-que-empiezan-de-cero` | Tres rondas de un orquestador con dos personas, y una tarea que la cola da a quien menos ha trabajado y que lee un dato por defecto | Que los contadores de la cola pasen de una ronda a otra (Preparar iria a Carla en la segunda), o que los casos de las rondas 2 y 3 se queden sin sus datos por defecto |
 | `33-tres-modos-de-llegada` | Dos convocatorias con tres pools de orquestados: uno escalonado cada 3 s, uno simultaneo y uno uniforme entre 0 y 20 | Que un modo se aplique como otro, que las llegadas cuenten desde el principio de la simulacion y no desde la apertura de su ronda, o que una llegada uniforme caiga fuera de su ventana o entre dos segundos |
 | `34-llegadas-con-decimales` | Escalonados cada 0,1 s en dos rondas, y uniformes en la segunda, que se abre en t=5,3 | Que la comprobacion de las llegadas compare con la precision de la coma flotante y no con la del XES: el cuarto escalonado llega a los 0,3 s y 3 * 0,1 es 0.30000000000000004, asi que daba un falso error en las dos rondas |
+| `35-proceso-base` | La convocatoria entera del plan con 10 residentes: la SACU publica, recibe hasta que no puede llegar nada, evalua una por solicitud, publica los aceptados y responde a cada uno; los residentes llegan al azar en 120 s, deciden con dos gateways de porcentajes (60 % aceptados, la mitad del resto reclama) y la SACU recibe, evalua y responde las reclamaciones | Cualquier pieza del proceso que el plan llama base: el lote de las dos recepciones, las evaluaciones y los envios multiinstancia, la cola de tres personas y los gateways |
 | `con-avisos/envio-a-pool-externo` | Un mensaje dirigido al pool y no a un receptor | Que un envio que sale de la simulacion acabe en un error interno en vez de en un aviso |
 | `con-avisos/mismo-usuario-en-dos-pools` | El mismo nombre declarado en dos pools | Que dos pools vuelvan a competir por el mismo recurso |
 | `con-avisos/multiinstancia-con-numero-escrito` | Una convocatoria multiinstancia con numberOfExecutions=4 a dos casos | Que un numero que ya no se usa se ignore en silencio; N son los dos casos vivos |
@@ -149,7 +150,7 @@ python3 pruebas/regresion.py
 python3 pruebas/regresion.py --acepta-reorganizacion
 ```
 
-Compara cinco cosas que no conviene confundir, y vigila cinco más:
+Compara cinco cosas que no conviene confundir, y vigila seis más:
 
 - **Comportamiento** — qué le ocurre a **cada caso**: qué eventos tiene, cuándo,
   con qué recurso y qué rama elige cada compuerta. Cualquier diferencia es un
@@ -213,6 +214,17 @@ Compara cinco cosas que no conviene confundir, y vigila cinco más:
   (`banco.revisa_llegadas`). Los instantes se comparan con la precisión del
   XES, un milisegundo (`banco.PRECISION_DEL_XES`), y no con la de la coma
   flotante: el `34` llega cada 0,1 s.
+- **El proceso base** — el `35` se ejecuta además con 100 residentes y las
+  semillas 1 a 10 (`banco.CRITERIO_DEL_PROCESO_BASE`). Todos los que llegan
+  presentan su solicitud, y se recibe, se evalúa y se responde exactamente eso;
+  lo mismo con las reclamaciones. Los aceptados tienen que quedar alrededor del
+  porcentaje declarado en las reglas, y los que reclaman alrededor del suyo:
+  dentro de tres desviaciones típicas de la binomial, unos 4,6 puntos con mil
+  residentes. Y la duración de una evaluación no puede depender de cuántas
+  lleve ya quien la hace (D14): la segunda mitad de las de cada persona no puede
+  durar más de un 10 % menos que la primera; con el aprendizaje por repetición
+  del motor original durarían la mitad. Dice también cuánto tarda cada
+  simulación.
 
 En las tareas multiinstancia del banco `numberOfExecutions` vale 1, que es lo
 que escribe el Modeler: desde la 3.2 N se calcula en ejecución y ese campo no se
@@ -315,6 +327,33 @@ en Camunda o Bizagi es la 5.2.
 Si cambia un modelo que tiene diagrama, se regenera con
 `python3 pruebas/bpmn_desde_reglas.py pruebas/modelos/<modelo>.txt` y se vuelve
 a pasar `valida_bpmn.mjs`.
+
+## El coste del proceso base
+
+```
+python3 pruebas/mide_proceso_base.py
+python3 pruebas/mide_proceso_base.py --casos 10 50 100 500 1000 --semillas 5
+```
+
+Ejecuta el `35` cambiando solo el número de residentes, con cinco semillas por
+cada N, y reparte el tiempo de una simulación entre simular —el proceso hijo
+que corre SimPy—, los registros —revisar y reunir los XES de cada pool— y el
+resto —leer y validar las reglas, generar el script y leer los ficheros—. Los
+tiempos dependen de la máquina y no entran en la regresión; lo que importa es
+cómo crecen con N. En la máquina en la que se escribió esto (Python 3.10, Linux):
+
+| N | total medio | simular | registros | resto | eventos | XES | dura (simulado) |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 10 | 0,11 s | 0,09 s | 0,00 s | 0,01 s | 148 | 118 KB | 353 s |
+| 50 | 0,19 s | 0,15 s | 0,02 s | 0,02 s | 748 | 583 KB | 981 s |
+| 100 | 0,29 s | 0,23 s | 0,03 s | 0,03 s | 1.509 | 1.173 KB | 1.788 s |
+| 1.000 | 2,65 s | 1,83 s | 0,37 s | 0,45 s | 16.124 | 12.375 KB | 16.321 s |
+
+Con 10 residentes casi todo es arrancar el proceso hijo; de 100 en adelante el
+coste crece en proporción a N, tanto el de simular como el de los registros, y
+mil residentes caben de sobra en el plazo de 300 s. Lo que crece también es la
+convocatoria simulada: con tres personas evaluando, la cola de la SACU es el
+cuello de botella, y eso es justo lo que el experimento quiere medir (D4).
 
 ## Los registros con PM4Py
 
