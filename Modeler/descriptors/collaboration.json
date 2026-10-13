@@ -17,6 +17,11 @@
             "name": "instance",
             "isAttr": true,
             "type": "Integer"
+          },
+          {
+            "name": "seed",
+            "isAttr": true,
+            "type": "String"
           }
         ]
       }

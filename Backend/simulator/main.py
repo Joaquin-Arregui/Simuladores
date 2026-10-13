@@ -8,7 +8,8 @@ import sys
 from tempfile import TemporaryDirectory
 from typing import Dict, List, NamedTuple, Tuple
 
-from simulator.parser import aplica_marcas_del_diagrama, parse_bpmn_elements
+from simulator.parser import (aplica_marcas_del_diagrama, aplica_parametros_del_diagrama,
+                              parse_bpmn_elements, semilla_del_diagrama)
 from simulator.generateScript import DEFAULT_START_DATE, generateScript
 from simulator.registros import (COMUNES, Registro, huella_de_las_reglas, huella_del_diagrama,
                                  metadatos, reune_registros)
@@ -100,6 +101,31 @@ def resolve_seed(value=None) -> int:
     return value
 
 
+def elige_semilla(peticion, diagram_root):
+    """La semilla de la simulacion: la de la peticion, o la guardada en el
+    diagrama (5.3), que el Modeler pone en el panel de la raiz.
+
+    Las dos pueden venir; si dicen distinto, no se elige por nadie: se rechaza.
+    Si no viene ninguna, la genera resolve_seed (D11).
+    """
+    guardada = semilla_del_diagrama(diagram_root) if diagram_root is not None else None
+    if guardada is None:
+        return resolve_seed(peticion)
+    texto, donde = guardada
+    try:
+        del_diagrama = resolve_seed(texto)
+    except ValueError:
+        raise ValueError(f"{donde}: la semilla del diagrama es {texto!r}, y tiene que ser un entero entre "
+                         f"0 y {MAX_SEED}; si se deja vacía, el motor genera una.") from None
+    if peticion is None or (isinstance(peticion, str) and not peticion.strip()):
+        return del_diagrama
+    de_la_peticion = resolve_seed(peticion)
+    if de_la_peticion != del_diagrama:
+        raise ValueError(f"{donde}: el diagrama guarda la semilla {del_diagrama} y la petición trae "
+                         f"{de_la_peticion}; quita una de las dos o haz que coincidan.")
+    return del_diagrama
+
+
 # Keep diagnostic files inside the same temporary directory as the simulation.
 CHILD_RUNNER = """
 import json
@@ -132,16 +158,18 @@ def processSimulation(rules: str, *, diagram_xml=None, timeout_seconds=None, see
     if isinstance(timeout_seconds, bool) or not isinstance(timeout_seconds, int) or timeout_seconds <= 0:
         raise SimulationConfigurationError("El límite de ejecución debe ser un entero positivo.")
     start_date = get_simulation_start_date()
-    seed = resolve_seed(seed)
     warnings = []
     diagram_root = None
     if diagram_xml is not None:
         diagram_root = validate_diagram_xml(diagram_xml, warnings)
+    seed = elige_semilla(seed, diagram_root)
     elements, process, starts, message_starts = parse_bpmn_elements(rules, warnings)
-    # La marca de multiinstancia sale del dibujo (3.1), antes de validar nada,
-    # para que la validacion vea el modelo que se va a simular.
+    # La marca de multiinstancia (3.1) y los parametros de cada pool (5.3) salen
+    # tambien del dibujo, antes de validar nada, para que la validacion vea el
+    # modelo que se va a simular.
     if diagram_root is not None:
         aplica_marcas_del_diagrama(elements, diagram_root)
+        aplica_parametros_del_diagrama(elements, diagram_root)
     validate_simulation(elements, process, starts, message_starts, warnings)
     # Con las dos cosas validadas por separado, que cuenten el mismo modelo.
     if diagram_root is not None:

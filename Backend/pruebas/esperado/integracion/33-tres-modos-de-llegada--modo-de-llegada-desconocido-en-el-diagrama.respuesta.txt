@@ -1,0 +1,1 @@
+HTTP 400: Pool_Uniforme (bpmn:Participant): en el diagrama arrivalMode='aleatorio', y tiene que ser staggered, simultaneous o uniform.

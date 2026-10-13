@@ -1,0 +1,1 @@
+HTTP 400: Proceso_simple (bpmn:Process, model:seed): la semilla del diagrama es 'siete', y tiene que ser un entero entre 0 y 9007199254740991; si se deja vacía, el motor genera una.

@@ -18,7 +18,12 @@
         {
           "name": "frequency",
           "isAttr": true,
-          "type": "Integer"
+          "type": "Real"
+        },
+        {
+          "name": "seed",
+          "isAttr": true,
+          "type": "String"
         },
         {
           "name": "userWithoutRole",

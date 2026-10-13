@@ -15,7 +15,9 @@ Dos grupos de diagramas:
   congela nada: la referencia es la ejecucion directa.
   Si el modelo tiene tareas multiinstancia, se manda ademas con las reglas SIN
   ningun multiInstanceType: la marca tiene que llegar del dibujo (3.1) y el XES
-  tiene que ser el mismo.
+  tiene que ser el mismo. Y si sus pools tienen parametros -instances, el
+  marcador, el rol, los recursos infinitos, el modo de llegada y su ventana-,
+  con las reglas SIN ellos: los aporta el dibujo (5.3), con el mismo XES.
 - `integracion-con-error/<modelo>--<variante>.bpmn` -- el diagrama esta roto o
   no cuenta lo mismo que las reglas de <modelo>, y la API tiene que rechazarlo
   con un 400 o un 422 y el mensaje congelado en esperado/integracion/. Un 500 no
@@ -38,6 +40,7 @@ from xml.etree import ElementTree as ET
 
 import banco
 import server
+from simulator.main import processSimulation
 from simulator.registros import (XES, FORMATO_DEL_REGISTRO, Registro, huella_de_las_reglas,
                                  huella_del_diagrama, id_de_simulacion, metadatos, reune_registros,
                                  revisa_registros)
@@ -71,6 +74,24 @@ def sin_marcas(reglas):
     ha dibujado la marca; None si no tenian ninguno."""
     texto = reglas.read_text(encoding="utf-8")
     limpio = re.sub(r""",\s*multiInstanceType=['"](?:true|false)['"]""", "", texto)
+    return limpio if limpio != texto else None
+
+
+# Los parametros de un pool que el Modeler guarda en el diagrama y el Backend
+# lee de el si las reglas no los dicen (5.3). frequency no esta: en las reglas
+# es obligatoria.
+PARAMETROS_DEL_POOL = ("instances", "participantMultiplicity", "orchestrationRole",
+                       "infiniteResources", "arrivalMode", "arrivalWindow")
+
+
+def sin_parametros_del_pool(reglas):
+    """Las reglas sin los parametros de los pools, como las exporta el Modeler
+    hasta la 5.4; None si no tenian ninguno. Solo en las lineas de los
+    Participant: instances tambien es de la colaboracion y del proceso."""
+    patron = re.compile(r",\s*(?:%s)=(?:'[^']*'|\"[^\"]*\"|[^,\]\s]+)" % "|".join(PARAMETROS_DEL_POOL))
+    texto = reglas.read_text(encoding="utf-8")
+    limpio = "".join(patron.sub("", linea) if "type=bpmn:Participant" in linea else linea
+                     for linea in texto.splitlines(keepends=True))
     return limpio if limpio != texto else None
 
 
@@ -330,25 +351,112 @@ def revisa_correctos(cliente):
         else:
             print("%-38s ok      HTTP 200, %d registros, mismas trazas y mismos avisos"
                   % (nombre, len(registros)))
-        # 3.1: la marca dibujada basta, sin escribir nada a mano en las reglas.
-        limpio = sin_marcas(reglas)
-        if limpio is None:
-            continue
-        codigo, datos = manda(cliente, reglas, diagrama, content=limpio)
-        etiqueta = "  ...sin multiInstanceType"
-        if codigo != 200:
-            print("%-38s HTTP %d   %s" % (etiqueta, codigo, datos.get("error", "")))
-            fallos += 1
-        else:
+        # 3.1 y 5.3: lo dibujado basta, sin escribir nada a mano en las reglas.
+        for etiqueta, limpio, que, llega in (("  ...sin multiInstanceType", sin_marcas(reglas), "la marca", "llega"),
+                                             ("  ...sin parametros del pool", sin_parametros_del_pool(reglas),
+                                              "los parametros del pool", "llegan")):
+            if limpio is None:
+                continue
+            codigo, datos = manda(cliente, reglas, diagrama, content=limpio)
+            if codigo != 200:
+                print("%-38s HTTP %d   %s" % (etiqueta, codigo, datos.get("error", "")))
+                fallos += 1
+                continue
             problemas = compara_respuesta(datos, directo, limpio, diagrama.read_text(encoding="utf-8"))
             if problemas:
-                print("%-38s DISTINTO  la marca del dibujo no ha llegado al motor" % etiqueta)
+                print("%-38s DISTINTO  %s del dibujo no %s al motor" % (etiqueta, que, llega))
                 for linea in problemas:
                     print("         %s" % linea)
                 fallos += 1
             else:
-                print("%-38s ok      la marca llega del dibujo: mismas trazas" % etiqueta)
+                print("%-38s ok      %s %s del dibujo: mismas trazas" % (etiqueta, que, llega))
     return fallos, varios
+
+
+def con_semilla(xml, semilla):
+    """El diagrama con la semilla en su raiz, donde la guarda el panel (5.3):
+    collab:seed en la colaboracion o, si es un proceso solo, model:seed."""
+    if "<bpmn:collaboration " in xml:
+        return re.sub(r'(<bpmn:collaboration id="[^"]*")', r'\1 collab:seed="%s"' % semilla, xml, count=1)
+    return re.sub(r'(<bpmn:process id="[^"]*")', r'\1 model:seed="%s"' % semilla, xml, count=1)
+
+
+def revisa_lo_que_aporta_el_diagrama(cliente):
+    """Lo que el diagrama aporta (5.3) se valida como si viniera en las reglas,
+    y la semilla del diagrama manda cuando la peticion no trae ninguna. Cuantos
+    fallos."""
+    fallos = 0
+    d33 = DIAGRAMAS / "33-tres-modos-de-llegada.bpmn"
+    r33 = reglas_de(d33.stem)
+    x33 = d33.read_text(encoding="utf-8")
+    limpio = sin_parametros_del_pool(r33)
+    # Con las reglas sin parametros, un valor del dibujo que no vale se rechaza
+    # con el mismo mensaje que si viniera en ellas.
+    for caso, viejo, nuevo, esperado in (
+            ("uniforme sin T", ' participantWithoutLane:arrivalWindow="20"', "",
+             "la llegada uniforme necesita arrivalWindow"),
+            ("instances=0", 'participantWithoutLane:instances="4"', 'participantWithoutLane:instances="0"',
+             "instances debe ser un entero positivo")):
+        etiqueta = "dibujo validado: " + caso
+        if x33.count(viejo) != 1:
+            print("%-38s FALTA  el diagrama 33 ya no tiene %s" % (etiqueta, viejo.strip()))
+            fallos += 1
+            continue
+        respuesta = cliente.post("/simulate", json={"content": limpio, "diagramXML": x33.replace(viejo, nuevo),
+                                                    "seed": banco.SEMILLA})
+        error = (respuesta.get_json(silent=True) or {}).get("error", "")
+        if respuesta.status_code in CODIGOS_PREVISTOS and esperado in error:
+            print("%-38s ok      HTTP %d: %s" % (etiqueta, respuesta.status_code, esperado))
+        else:
+            print("%-38s FALLA  esperaba %r; HTTP %d: %s" % (etiqueta, esperado, respuesta.status_code, error))
+            fallos += 1
+    # Lo que escribe JavaScript: una frecuencia de 0.0000001 se guarda en el
+    # diagrama como 1e-7, y asi la exportara el Modeler a las reglas (5.4).
+    etiqueta = "dibujo con exponente: frequency=1e-7"
+    viejos = ('participantWithoutLane:frequency="3"', "id_bpmn='Pool_Escalonado', name='Escalonado', frequency=3,")
+    texto33 = r33.read_text(encoding="utf-8")
+    if x33.count(viejos[0]) != 1 or texto33.count(viejos[1]) != 1:
+        print("%-38s FALTA  el 33 ya no tiene la frequency=3 del Pool_Escalonado" % etiqueta)
+        fallos += 1
+    else:
+        xml = x33.replace(viejos[0], 'participantWithoutLane:frequency="1e-7"')
+        content = texto33.replace(viejos[1], viejos[1].replace("frequency=3", "frequency=1e-7"))
+        respuesta = cliente.post("/simulate", json={"content": content, "diagramXML": xml, "seed": banco.SEMILLA})
+        datos = respuesta.get_json(silent=True) or {}
+        problemas = (compara_respuesta(datos, processSimulation(content, seed=banco.SEMILLA), content, xml)
+                     if respuesta.status_code == 200 else ["HTTP %d: %s" % (respuesta.status_code, datos.get("error"))])
+        if problemas:
+            print("%-38s FALLA" % etiqueta)
+            for linea in problemas:
+                print("         %s" % linea)
+            fallos += 1
+        else:
+            print("%-38s ok      HTTP 200, las mismas trazas que las reglas" % etiqueta)
+    # La semilla del diagrama, sin semilla en la peticion: la de la colaboracion
+    # y la de un proceso solo dan lo mismo que la ejecucion directa con ella, y
+    # otra semilla en el diagrama es otra simulacion.
+    d01 = DIAGRAMAS / "01-simple.bpmn"
+    for etiqueta, diagrama, semilla in (("semilla del diagrama: colaboracion", d33, banco.SEMILLA),
+                                        ("semilla del diagrama: proceso", d01, banco.SEMILLA),
+                                        ("semilla del diagrama: otra", d33, banco.SEMILLA + 1)):
+        reglas = reglas_de(diagrama.stem)
+        xml = con_semilla(diagrama.read_text(encoding="utf-8"), semilla)
+        content = reglas.read_text(encoding="utf-8")
+        respuesta = cliente.post("/simulate", json={"content": content, "diagramXML": xml})
+        datos = respuesta.get_json(silent=True) or {}
+        problemas = [] if respuesta.status_code == 200 else ["HTTP %d: %s" % (respuesta.status_code, datos.get("error"))]
+        if not problemas and datos.get("seed") != semilla:
+            problemas.append("la respuesta dice seed=%r" % datos.get("seed"))
+        if not problemas and semilla == banco.SEMILLA:
+            problemas += compara_respuesta(datos, banco.ejecuta(reglas), content, xml)
+        if problemas:
+            print("%-38s FALLA" % etiqueta)
+            for linea in problemas:
+                print("         %s" % linea)
+            fallos += 1
+        else:
+            print("%-38s ok      seed=%d sin semilla en la peticion" % (etiqueta, semilla))
+    return fallos
 
 
 def respuestas_de_error(cliente):
@@ -386,6 +494,7 @@ def main():
         fallos += revisa_otras_escrituras(varios)
     fallos += revisa_nombres_vacios(cliente)
     fallos += revisa_identificacion(cliente)
+    fallos += revisa_lo_que_aporta_el_diagrama(cliente)
     errores = respuestas_de_error(cliente)
     for diagrama, texto, previsto in errores:
         nombre = "con-error/" + diagrama.name

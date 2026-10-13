@@ -1,0 +1,1 @@
+HTTP 400: Colaboracion (bpmn:Collaboration, collab:seed): el diagrama guarda la semilla 7 y la petición trae 20260101; quita una de las dos o haz que coincidan.

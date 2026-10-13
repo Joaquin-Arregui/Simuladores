@@ -29,6 +29,16 @@ detectar elementos y comportamientos BPMN que las reglas no representan. La
 ejecución utiliza las reglas. Los clientes que envíen solo reglas reciben la
 validación de ese formato, sin la comprobación adicional del XML original.
 
+Del diagrama sale además lo que se configura en el Modeler y las reglas pueden
+no decir: la marca de multiinstancia de cada tarea (3.1) y los parámetros de
+cada pool (5.3) —el marcador de multiplicidad y, con el prefijo
+`participantWithoutLane`, `instances`, `orchestrationRole`, `infiniteResources`,
+`arrivalMode`, `arrivalWindow` y `frequency`—. Lo que las reglas no dicen lo
+aporta el diagrama, y se valida igual que si viniera en ellas; si los dos lo
+dicen y no coincide, la petición se rechaza con un 400 que nombra el elemento,
+el parámetro y los dos valores, porque reglas y diagrama cuentan modelos
+distintos.
+
 El campo opcional `seed` fija la semilla de la simulación; ver [Semilla](#semilla).
 
 Una simulación correcta devuelve un registro XES por pool, lo que comparten, los
@@ -114,10 +124,13 @@ cada tarea, la rama de cada compuerta y las repeticiones de los bucles. Con las
 mismas reglas, la misma semilla y la misma fecha de inicio
 (`SIMULATION_START_DATE`), dos ejecuciones dan exactamente el mismo XES.
 
-La semilla llega en el campo opcional `seed` de `POST /simulate`: un entero entre
+La semilla llega en el campo opcional `seed` de `POST /simulate`, o guardada en
+el diagrama: el Modeler la pone en el panel de la raíz, como `collab:seed` en la
+colaboración o `model:seed` en el proceso si es uno solo. Es un entero entre
 0 y 9007199254740991 (el mayor que JavaScript conserva exacto), como número o
-como texto. Si falta o llega vacío, el motor genera una entre 0 y 4294967295. En
-los dos casos la respuesta la devuelve en `seed` y cada registro la guarda como
+como texto. Si llegan las dos y no coinciden, la petición se rechaza con un 400.
+Si no llega ninguna, el motor genera una entre 0 y 4294967295. En todos los
+casos la respuesta la devuelve en `seed` y cada registro la guarda como
 atributo del log:
 
 ```xml

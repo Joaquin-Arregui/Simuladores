@@ -40,11 +40,49 @@ La compilación genera exclusivamente `example/dist`; conserva los HTML y fuente
   (`orchestrator` u `orchestrated`), `infiniteResources` (booleano), `arrivalMode`
   (`staggered`, `simultaneous` o `uniform`) y `arrivalWindow` (entero, la T de la
   llegada uniforme). El marcador de multiplicidad es el estándar,
-  `bpmn:participantMultiplicity`. Los paneles para editarlos son la 5.3, y su
-  exportación a las reglas, la 5.4.
+  `bpmn:participantMultiplicity`. Se editan en el panel del pool (ver abajo); su
+  exportación a las reglas es la 5.4.
+- `lib/numbers`: cómo validan, leen y muestran los números los paneles.
 - `lib/people`: dónde se guardan las listas de personas (ver abajo) y la
   migración de los ficheros anteriores a la 5.2.
 - `lib/resize-all-rules`: regla de redimensionado del editor.
+
+### Parámetros de simulación en el panel
+
+Al seleccionar un **pool**, con carriles o sin ellos, el panel muestra:
+
+| Campo | Qué es | Se guarda como |
+| --- | --- | --- |
+| Orchestration role | Orquestador, orquestado o sin rol | `orchestrationRole` |
+| Instances | Con el orquestador, convocatorias sucesivas; con los demás, casos por convocatoria. Solo cuenta con el marcador de multiplicidad, que se pone desde el menú de reemplazo del pool (la llave inglesa, **Participant multiplicity**) | `instances` |
+| Infinite resources | Sus tareas no compiten por una persona | `infiniteResources` |
+| Arrival mode | Escalonada (una cada *frequency* segundos), simultánea (todas al abrirse la convocatoria) o uniforme (cada una en un segundo entero al azar entre 0 y T) | `arrivalMode` |
+| Frequency (s) | Segundos entre llegadas de la escalonada; admite decimales | `frequency` |
+| Arrival window T (s) | La T de la uniforme, en segundos enteros | `arrivalWindow` |
+
+Frequency solo aparece con la llegada escalonada y T con la uniforme; en el
+orquestador, que tiene un caso por convocatoria y llega al abrirse, no aparece
+ninguno de los tres. Un valor puesto donde no cuenta se sigue mostrando, para
+poder quitarlo. Los pools sin carriles tienen además su lista de personas.
+
+En la **raíz** —la colaboración, o el proceso si el diagrama es uno solo— está
+la **semilla** (`collab:seed` o `model:seed`), junto al número de instancias de
+la colaboración, o al del proceso y su frecuencia. Vacía, el motor genera una y
+la deja en los registros; con la misma semilla y el mismo modelo sale la misma
+simulación. Se guarda como texto para que una semilla grande no pierda cifras.
+
+Cada campo se valida como lo valida el Backend (enteros donde hacen falta,
+nada negativo, T obligatoria con la llegada uniforme, instancias obligatorias
+con el marcador, semilla entre 0 y 9007199254740991): lo que no vale se marca
+en rojo y no se guarda. Los enteros llegan como mucho a 9007199254740991, el
+mayor que JavaScript guarda exacto. Las frecuencias admiten también notación
+científica, porque es como JavaScript las escribe en el `.bpmn` por debajo de
+1e-6 y desde 1e21 —0.0000001 se guarda como `1e-7`—; al mostrarlas, el panel
+las escribe sin exponente siempre que puede hacerlo sin perder nada. El Backend lee estos parámetros y la semilla del
+diagrama que recibe al simular cuando las reglas no los dicen, y los valida
+igual; si las reglas dicen otra cosa, rechaza la simulación nombrando el pool y
+los dos valores. Así lo que se pone en el panel llega al motor ya, aunque la
+exportación a las reglas sea la 5.4.
 
 ### Multiinstancia
 

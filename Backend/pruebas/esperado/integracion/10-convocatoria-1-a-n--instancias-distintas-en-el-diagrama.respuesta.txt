@@ -1,0 +1,1 @@
+HTTP 400: Pool_Orquestado (bpmn:Participant): en el diagrama instances=5 y en las reglas 4.

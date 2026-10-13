@@ -276,7 +276,11 @@ sin abrir ningún puerto.
   registros. Aquí no hay nada congelado: la referencia es la ejecución
   directa. Si el modelo tiene tareas multiinstancia, se manda **otra vez sin
   ningún `multiInstanceType` en las reglas**: la marca tiene que llegar del
-  dibujo (3.1) y las trazas tienen que ser las mismas.
+  dibujo (3.1) y las trazas tienen que ser las mismas. Y si sus pools tienen
+  parámetros, **otra vez sin ellos** —`instances`, `participantMultiplicity`,
+  `orchestrationRole`, `infiniteResources`, `arrivalMode` y `arrivalWindow`,
+  como los exporta el Modeler hasta la 5.4—: los aporta el diagrama (5.3), con
+  las mismas trazas.
 - Con la primera respuesta que trae varios registros se comprueba que la
   revisión de un conjunto (`simulator.registros.revisa_registros`) detecta los
   rotos —que no haya ninguno, que falte uno, que esté duplicado o mal formado,
@@ -293,10 +297,22 @@ sin abrir ningún puerto.
   las líneas, y se copian con los espacios de nombres que necesitan.
 - La identificación de la simulación se puede reproducir: el mismo modelo con
   la misma semilla da la misma, y con otra semilla, o sin el diagrama, otra.
+- Lo que aporta el diagrama se valida como si viniera en las reglas (5.3): con
+  las reglas del `33` sin parámetros de pool, un diagrama con la llegada
+  uniforme sin `arrivalWindow`, o con `instances="0"`, se rechaza con el mismo
+  mensaje que daría en las reglas. Una frecuencia escrita con exponente, como
+  la escribe JavaScript —`1e-7`, que es 0.0000001—, se lee y coincide con la
+  de las reglas. Y la semilla guardada en el diagrama
+  —`collab:seed` en la colaboración del `33`, `model:seed` en el proceso del
+  `01`— manda cuando la petición no trae ninguna: con la del banco da las
+  mismas trazas que la ejecución directa, y con otra, otra simulación.
 - `integracion-con-error/<modelo>--<variante>.bpmn` es un diagrama roto, o uno
   que no cuenta lo mismo que las reglas de `<modelo>`. Tiene que fallar con un
   400 o un 422 y el mensaje congelado en `esperado/integracion/`. Un 200 o un
-  500 no se congelan nunca.
+  500 no se congelan nunca. Desde la 5.3 están también los parámetros del pool
+  y la semilla guardados en el diagrama: un `instances` que no coincide con el
+  de las reglas, un modo de llegada que no existe, una semilla que no es un
+  entero y una que no coincide con la de la petición.
 
 Por qué hace falta: el motor simula las **reglas**, no el diagrama. Si el
 exportador del Modeler descarta o cambia algo, o si reglas y diagrama vienen de
@@ -305,8 +321,9 @@ de `validate_diagram_correspondence`, los cinco diagramas de correlación rota d
 `integracion-con-error/` daban **200**.
 
 Los diagramas están **generados** con `bpmn_desde_reglas.py` y congelados como
-ficheros, no dibujados: el Modeler aún no tiene paneles para los atributos de
-los hitos 2 a 4 (5.3) ni los exporta a las reglas (5.4). Lo que sí llevan es lo
+ficheros, no dibujados: así cada diagrama cuenta exactamente lo mismo que las
+reglas de su modelo, y el Modeler no exporta aún a las reglas los atributos de
+los hitos 2 a 4 (5.4), aunque desde la 5.3 se pongan en sus paneles. Lo que sí llevan es lo
 que el Modeler guarda hoy: la estructura BPMN, los atributos de sus
 descriptores —desde la 5.1 también los del pool: `instances`,
 `orchestrationRole`, `infiniteResources`, `arrivalMode` y `arrivalWindow`, con
@@ -376,6 +393,15 @@ reemplazo, y uno del `01` con un rol añadido desde el panel—, y
 entera a `extensionElements`, no quedar nada en el sitio antiguo, abrir sin
 avisos en las otras herramientas y, si hay uno del mismo nombre en
 `integracion/`, salir igual que él.
+
+Por último, `valida_bpmn.mjs` comprueba los **números del panel**
+(`Modeler/lib/numbers/`): cada valor que el panel acepta en las frecuencias,
+las instancias y la ventana de llegada se guarda con los descriptores, se abre
+otra vez y, escrito como lo muestra el panel, el panel lo tiene que volver a
+aceptar con el mismo valor; y lo que no vale —negativos, `1e400`, enteros con
+decimales o mayores que 9007199254740991— se tiene que rechazar. JavaScript
+guarda 0.0000001 como `1e-7`, y un panel que solo admitiera decimales sin
+exponente marcaba como inválido lo que acababa de guardar.
 
 Si cambia un modelo que tiene diagrama, se regenera con
 `python3 pruebas/bpmn_desde_reglas.py pruebas/modelos/<modelo>.txt` y se vuelve

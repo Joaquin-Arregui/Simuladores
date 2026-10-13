@@ -37,6 +37,12 @@
 //    nada en el sitio antiguo, lo que sale abre sin avisos en las otras
 //    herramientas, y si hay un diagrama del mismo nombre en integracion/ sale
 //    igual que el.
+// 7. Que un numero que el panel acepta vuelve al panel como valido (5.3): se
+//    guarda en el campo con los descriptores, se abre otra vez, y lo leido,
+//    escrito como lo muestra el panel -Modeler/lib/numbers/numbers.js-, el
+//    panel lo vuelve a aceptar con el mismo valor. JavaScript guarda 0.0000001
+//    como 1e-7, y un panel que solo admitiera decimales sin exponente marcaria
+//    como invalido lo que acaba de guardar. Lo que no vale se tiene que rechazar.
 //
 // Es independiente de validation.py a proposito: si el generador y la
 // validacion del Backend compartieran un malentendido sobre el BPMN, aqui
@@ -62,6 +68,10 @@ const moddle = new BpmnModdle({
 // La migracion del Modeler, la misma que hace al abrir un fichero.
 const { migrateLegacyPeople, entriesOf, PEOPLE_TYPES } =
   await import(pathToFileURL(join(modeler, 'lib', 'people', 'people.js')).href);
+
+// Como valida, lee y muestra los numeros el panel.
+const { checkNumber, parseNumber, formatNumber } =
+  await import(pathToFileURL(join(modeler, 'lib', 'numbers', 'numbers.js')).href);
 
 const json = ruta => JSON.parse(readFileSync(require.resolve(ruta), 'utf8'));
 const otraHerramienta = new BpmnModdle();
@@ -318,6 +328,66 @@ for (const fichero of anteriores) {
     console.log(`${fichero.padEnd(34)} ok      ${movidas} entradas de ${antes.length} listas pasan a extensionElements; sin avisos en las otras herramientas${igual}`);
   }
 }
+// (7) Los numeros del panel: lo que acepta, guardado y vuelto a abrir, lo acepta igual.
+const CAMPOS_NUMERICOS = [
+  // [elemento, propiedad, entero, minimo]
+  ['P', 'frequency', false, 0], ['P', 'instances', true, 1], ['P', 'arrivalWindow', true, 0],
+  ['Proc', 'frequency', false, 0], ['Proc', 'instance', true, 1], ['C', 'instance', true, 1]
+];
+const VALEN = {
+  decimal: ['0.0000001', '1e-7', '0.000000123', '2.5e-3', '0.1', '3', '0', '123456789.125',
+    '1000000000000000000000', '1e+21', '5e-324'],
+  entero: ['1', '20', '9007199254740991']
+};
+const NO_VALEN = { decimal: ['1e400', '-1', '.5', '1,5', 'abc'], entero: ['9007199254740992', '1e3', '2.5', '-3'] };
+const PLANTILLA = '<?xml version="1.0" encoding="UTF-8"?><bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" ' +
+  'id="D" targetNamespace="x"><bpmn:collaboration id="C"><bpmn:participant id="P" processRef="Proc"/></bpmn:collaboration>' +
+  '<bpmn:process id="Proc"/></bpmn:definitions>';
+const porId = raiz => {
+  const ids = {};
+  recorre(raiz, e => { if (e.id) ids[e.id] = e; });
+  return ids;
+};
+const problemasNumeros = [];
+let probados = 0, rechazados = 0;
+for (const [id, propiedad, integer, minimum] of CAMPOS_NUMERICOS) {
+  const opciones = { integer, minimum };
+  for (const texto of VALEN[integer ? 'entero' : 'decimal']) {
+    const campo = `${id}.${propiedad}=${texto}`;
+    if (checkNumber(texto, opciones) !== null) {
+      problemasNumeros.push(`${campo}: el panel lo rechaza`);
+      continue;
+    }
+    const valor = parseNumber(texto, opciones);
+    const { rootElement } = await moddle.fromXML(PLANTILLA);
+    porId(rootElement)[id].set(propiedad, valor);
+    const { xml } = await moddle.toXML(rootElement);
+    const leido = porId((await moddle.fromXML(xml)).rootElement)[id].get(propiedad);
+    const mostrado = formatNumber(leido);
+    probados += 1;
+    if (checkNumber(mostrado, opciones) !== null) {
+      problemasNumeros.push(`${campo}: se guarda, se abre y el panel muestra ${JSON.stringify(mostrado)}, que rechaza`);
+    } else if (parseNumber(mostrado, opciones) !== valor || Number(leido) !== valor) {
+      problemasNumeros.push(`${campo}: se guarda ${valor} y vuelve ${JSON.stringify(mostrado)}`);
+    }
+  }
+  const malos = [...NO_VALEN[integer ? 'entero' : 'decimal'], ...(minimum > 0 ? ['0'] : [])];
+  for (const texto of malos) {
+    if (checkNumber(texto, opciones) === null) {
+      problemasNumeros.push(`${id}.${propiedad}=${JSON.stringify(texto)}: el panel lo acepta`);
+    } else {
+      rechazados += 1;
+    }
+  }
+}
+console.log('\nNumeros del panel (Modeler/lib/numbers), guardados y vueltos a abrir:');
+if (problemasNumeros.length) {
+  fallos += 1;
+  for (const p of problemasNumeros) console.log(`         ${p}`);
+} else {
+  console.log(`${CAMPOS_NUMERICOS.length} campos      ok      ${probados} valores vuelven al panel validos e iguales; ${rechazados} que no valen, rechazados`);
+}
+
 const total = ficheros.length + anteriores.length;
 console.log(fallos ? `\n${fallos} diagrama(s) con problemas.` : `\n${total} diagramas validos para bpmn-moddle.`);
 process.exit(fallos ? 1 : 0);
