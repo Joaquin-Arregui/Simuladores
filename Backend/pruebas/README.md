@@ -37,6 +37,11 @@ mientras el comportamiento no deba cambiar, sus XES no deben cambiar.
 - `linea_de_tiempo.mjs` — la línea de tiempo del visualizador
   (`Modeler/lib/timeline`) con todos los registros congelados (ver
   [La línea de tiempo](#la-línea-de-tiempo)).
+- `capa_de_dibujo.mjs` — la capa de dibujo del visualizador
+  (`Modeler/lib/drawing`) en un Chromium de verdad: las marcas siguen a su
+  elemento (ver [La capa de dibujo](#la-capa-de-dibujo)).
+- `navegador.mjs` — lo que comparten las pruebas en navegador: servir los
+  ficheros y abrir Chromium.
 - `interfaz.mjs` — la interfaz del Modeler en un Chromium de verdad: abrir,
   los paneles, el menú de reemplazo, Ctrl+S, Simular y los registros (ver
   [La interfaz](#la-interfaz)).
@@ -582,6 +587,49 @@ los modelos con mensajes: se volvieron a congelar después de comprobar que lo
 multiinstancia—, `bpmn:request` y, por las esperas nuevas, la numeración de
 `bpmn:occurrence`.
 
+## La capa de dibujo
+
+```
+node pruebas/capa_de_dibujo.mjs
+```
+
+El visualizador dibuja sus marcas en una capa del lienzo de bpmn-js
+(`Modeler/lib/drawing`, 6.2). Este script abre el proceso base en el bpmn-js de
+las dependencias del Modeler, con esa capa, y le pone seis marcas: en el centro
+de una tarea, de un evento y de una compuerta, en la esquina de otra tarea, a
+mitad de un flujo y a un cuarto de un flujo de mensaje. Cada vez comprueba que
+cada marca está en la pantalla donde bpmn-js pinta su elemento —en el ancla de
+su forma, y la de un flujo sobre el trazo y en el punto que da el navegador
+con `getPointAtLength`—, con una tolerancia de 0,05 píxeles:
+
+- al abrir, al arrastrar el diagrama con el ratón y al desplazarlo con la
+  rueda;
+- al ampliarlo y al reducirlo con Ctrl y la rueda, y al encajarlo en la
+  ventana;
+- al mover una tarea con el ratón, desde debajo de su marca: la marca la sigue
+  y la del flujo que sale de ella va a su nuevo trazo;
+- con un clic sobre una marca, que tiene que seleccionar el elemento de debajo;
+- al borrar un elemento con Supr, cuando su marca se tiene que ocultar, y al
+  deshacer con Ctrl+Z, cuando tiene que volver a su sitio;
+- al cambiar el ID de una tarea, con el mismo comando que el campo ID del
+  panel General: su marca se tiene que ocultar, porque las marcas van por ID y
+  ese ya no existe, y seguir oculta al mover la tarea con el ratón, al borrarla
+  y al deshacer el borrado y el movimiento; al deshacer el cambio de ID tiene
+  que volver a su sitio, y al rehacerlo, ocultarse otra vez. Hasta que se
+  corrigió, la marca se quedaba visible donde estaba, porque el cambio llega
+  con el ID nuevo;
+- y al abrir otro diagrama, cuando no puede quedar ninguna.
+
+bpmn-js redondea los codos de los flujos y eso acorta su trazo: con codos, el
+punto de la capa puede alejarse del del navegador hasta 5 unidades del diagrama
+por codo, pero siempre tiene que quedar sobre el trazo. Para ver que la
+comprobación distingue, se saca la capa del grupo que bpmn-js transforma y se
+amplía: las seis marcas tienen que dejar de estar en su sitio. Antes, sin
+navegador, prueba la geometría: las anclas de una caja y el punto a una
+fracción de un recorrido, con codos, tramos de longitud cero y fracciones fuera
+de rango. Necesita lo mismo que `interfaz.mjs`: `npm install` en `Modeler/` y,
+una vez, `npx playwright install chromium`, o `CHROMIUM_PATH`.
+
 ## El coste del proceso base
 
 ```
@@ -637,8 +685,9 @@ del motor, `integracion/`, `integracion-con-error/`, `exportadas/` y
 `Modeler/ejemplos/` y `formato-anterior/` en `valida_bpmn.mjs`, `integracion/` y
 `Modeler/ejemplos/` en `exporta_reglas.mjs`, las cinco carpetas de diagramas
 en `valida_esquema.py`, y el ejemplo, sus reglas exportadas y los registros
-congelados del `35` en `interfaz.mjs`, y los registros de `esperado/` en
-`linea_de_tiempo.mjs`. Sin esa comprobación, perder una
+congelados del `35` en `interfaz.mjs`, los registros de `esperado/` en
+`linea_de_tiempo.mjs`, y el ejemplo en `capa_de_dibujo.mjs`. Sin esa
+comprobación, perder una
 carpeta entera —modelos y referencias a la vez, en un merge— daba verde con
 menos casos, o con ninguno, sin decir nada.
 

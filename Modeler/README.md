@@ -161,6 +161,8 @@ Playwright.
 - `lib/resize-all-rules`: regla de redimensionado del editor.
 - `lib/timeline`: la línea de tiempo del visualizador, desde los registros (ver
   abajo).
+- `lib/drawing`: la capa de dibujo del visualizador, marcas sobre el lienzo
+  (ver abajo).
 
 ### Parámetros de simulación en el panel
 
@@ -290,6 +292,32 @@ cosmético y no está en la línea (6.3). Tampoco hay esperas por un tope de
 concurrencia: el motor no tiene topes, y lo que espera una ejecución
 multiinstancia es a una persona libre de su pool. El banco la comprueba con
 todos los registros de referencia (`Backend/pruebas/linea_de_tiempo.mjs`).
+
+### La capa de dibujo
+
+`lib/drawing` es donde el visualizador dibujará sobre el diagrama (6.2): un
+módulo de diagram-js que se añade en `additionalModules` y se usa como el
+servicio `drawingLayer`. `addMark(id, opciones)` pone una marca SVG en el
+elemento de ese ID BPMN —en el centro de su caja o en otra ancla: `top`,
+`bottom-left`…—, y si el elemento es un flujo, a una fracción de su
+recorrido (`fraction`), girada como su tramo si se pide (`rotate`), que es lo
+que necesita el tránsito cosmético de la 6.3. `draw(grupo)` dibuja la marca;
+sin él, un círculo. Cada marca se puede mover a otro elemento (`moveTo`) o
+quitar (`remove`); `positionOf` y `pointAlong` dan los mismos puntos sin
+dibujar nada.
+
+Las marcas van en una capa del propio lienzo, dentro del grupo que bpmn-js
+transforma al ampliar, reducir y arrastrar, y en coordenadas del diagrama: por
+eso siguen pegadas a su elemento sin recalcular nada. Si el elemento se mueve
+o su flujo cambia de recorrido, la marca se coloca otra vez; si se borra, se
+oculta, y vuelve con él al deshacer. Las marcas van por ID: si el elemento
+cambia de ID —el campo ID del panel General—, la suya se oculta, porque ya no
+hay ningún elemento con ese ID, y vuelve a su sitio al deshacer el cambio. Al
+abrir otro diagrama se quitan todas.
+No capturan el ratón: el diagrama se selecciona y se edita a través de ellas.
+El banco lo comprueba en un Chromium de verdad
+(`Backend/pruebas/capa_de_dibujo.mjs`). Todavía no la usa ninguna página: la
+usará el modo de visualización (6.7).
 
 ### Las reglas que se mandan al simular
 

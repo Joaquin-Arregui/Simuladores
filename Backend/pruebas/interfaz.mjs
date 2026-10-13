@@ -34,11 +34,12 @@
 // instalado se puede usar ese: CHROMIUM_PATH=<ejecutable>.
 import { spawnSync } from 'child_process';
 import { createRequire } from 'module';
-import { createServer } from 'http';
-import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync } from 'fs';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
-import { dirname, extname, join, relative, sep } from 'path';
+import { dirname, join, relative } from 'path';
 import { fileURLToPath } from 'url';
+
+import { abreChromium, sirve } from './navegador.mjs';
 
 const aqui = dirname(fileURLToPath(import.meta.url));
 const modeler = join(aqui, '..', '..', 'Modeler');
@@ -77,40 +78,16 @@ if (compilacion.status !== 0) {
 
 // La pagina, servida como la sirve cualquier servidor de ficheros; dist/, la
 // recien compilada.
-const TIPOS = {
-  '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css',
-  '.png': 'image/png', '.svg': 'image/svg+xml', '.woff': 'font/woff', '.woff2': 'font/woff2',
-  '.ttf': 'font/ttf', '.eot': 'application/vnd.ms-fontobject', '.map': 'application/json'
-};
-const servidor = createServer((peticion, respuesta) => {
-  const camino = decodeURIComponent(new URL(peticion.url, 'http://x').pathname);
-  const raiz = camino.startsWith('/dist/') ? dist : pagina;
-  const ruta = join(raiz, camino.startsWith('/dist/') ? camino.slice('/dist'.length) : camino);
-  if (!ruta.startsWith(raiz + sep) || !existsSync(ruta) || statSync(ruta).isDirectory()) {
-    respuesta.writeHead(404).end();
-    return;
-  }
-  respuesta.writeHead(200, { 'Content-Type': TIPOS[extname(ruta)] || 'application/octet-stream' });
-  respuesta.end(readFileSync(ruta));
-});
-await new Promise(listo => servidor.listen(0, '127.0.0.1', listo));
-const base = `http://127.0.0.1:${servidor.address().port}`;
+const servidor = await sirve([ [ '/', pagina ], [ '/dist/', dist ] ]);
+const base = servidor.base;
 
-// Sin un locale UTF-8, Chromium en Linux llama «download» a cualquier descarga
-// con un acento en el nombre: el Modeler no tiene nada que ver.
-const entorno = { ...process.env };
-if (process.platform !== 'win32' && !/utf-?8/i.test(entorno.LC_ALL || entorno.LANG || '')) {
-  entorno.LANG = entorno.LC_ALL = 'C.UTF-8';
-}
 let navegador;
 try {
-  navegador = await chromium.launch({ env: entorno,
-    ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}) });
+  navegador = await abreChromium(chromium);
 } catch (error) {
-  servidor.close();
+  servidor.cierra();
   rmSync(dist, { recursive: true, force: true });
-  sale(`No se puede abrir Chromium (${error.message.split('\n')[0]}): npx playwright install chromium en ` +
-    'Modeler/, o CHROMIUM_PATH=<ejecutable>.');
+  sale(error.message);
 }
 
 // La respuesta de la API para el ejemplo: los registros congelados del 35, en
@@ -472,7 +449,7 @@ try {
   });
 } finally {
   await navegador.close();
-  servidor.close();
+  servidor.cierra();
   rmSync(dist, { recursive: true, force: true });
 }
 
