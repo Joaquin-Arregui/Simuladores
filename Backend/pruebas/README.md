@@ -53,6 +53,10 @@ mientras el comportamiento no deba cambiar, sus XES no deben cambiar.
   está libre u ocupado, con qué ejecución y para qué solicitud, y la cola del
   pool, contrastadas con el XES y en un Chromium de verdad (ver
   [El orquestador y sus recursos](#el-orquestador-y-sus-recursos)).
+- `reproduccion.mjs` — la reproducción del visualizador: convocatoria,
+  filtro de casos e instante, con el reproductor sin navegador y con el
+  Modeler compilado en un Chromium de verdad (ver
+  [La reproducción](#la-reproducción)).
 - `navegador.mjs` — lo que comparten las pruebas en navegador: servir los
   ficheros y abrir Chromium.
 - `interfaz.mjs` — la interfaz del Modeler en un Chromium de verdad: abrir,
@@ -888,6 +892,87 @@ plantilla va a la derecha de todo el diagrama. Lo dibujado
 estropeado —sin Hugo, o con Ana en la ejecución de Bea— tiene que fallar.
 Necesita lo mismo que `capa_de_dibujo.mjs`.
 
+## La reproducción
+
+```
+node pruebas/reproduccion.mjs
+```
+
+La barra de reproducción del Modeler (6.7) con el reproductor
+(`Modeler/lib/player`). Sin navegador, con todos los modelos de `esperado/`:
+
+- Las convocatorias: cada caso en una, cada una con la ventana de sus casos, y
+  una detrás de otra; en el `31`, de 0 a 88, de 88 a 151 y de 151 a 217 s.
+- El filtro, «1-3, 7», y once que no se entienden —también números enormes,
+  que antes colgaban la página—; y que el resumen de cada
+  pool —en curso, por llegar y terminados— no cambia con el filtro en ninguno
+  de los 1151 instantes, salvo cuántos se ven.
+- El reloj: avanza desde su último punto de partida sin acumular errores —a
+  × 3, 16 s en fotogramas de 16 ms son exactamente 48 s—, se para al final, en
+  pausa se queda donde se paró o se saltó, y al cambiar de velocidad sigue
+  desde donde estaba.
+- La convocatoria como alcance: la escena de cada convocatoria de cada modelo
+  con más de una, hecha con solo sus casos (`timeline.only`), tiene en cada
+  instante las pelotas, los recuentos de las zonas, la plantilla y la cola de
+  la escena de toda la simulación quedándose con lo de sus casos; en el `31`,
+  al acabar la primera, a los 88 s, nadie está ocupado y la cola está vacía, y
+  en la segunda, a los 88, Ana está ocupada y hay dos en la cola; igual a los
+  151 s con la segunda y la tercera.
+
+Después, el Modeler compilado como con `npm run bundle`, en una carpeta
+temporal, y en un Chromium de verdad con el reloj de la página en la mano
+(`page.clock`): avanza solo cuando la prueba lo dice, en fotogramas de 16 ms.
+Simular se responde con los registros congelados, y se reproduce sobre el
+diagrama de integración de su modelo:
+
+- **Reproducir y saltar dibujan lo mismo**: el `39` entero a × 5, y en cada
+  uno de sus 108 fotogramas, las mismas pelotas —caso, elemento, estado, zona,
+  ejecución y persona—, sobres, insignias, buzones, plantillas y reloj que
+  saltando a ese instante exacto. Mientras se reproduce, el tránsito mueve las
+  marcas, y un sobre que se recoge en el acto se ve llegar aunque ya esté
+  recogido: eso es cosmético y no cuenta. Al pausar, el dibujo es idéntico,
+  también dónde está cada marca, al de saltar ahí y al de salir, volver a
+  entrar y saltar ahí. Saltar mientras se reproduce —con el instante exacto,
+  «cambio siguiente» o la barra de tiempo— y cambiar de velocidad siguen
+  exactamente desde ahí, e **Ir** sin haber escrito nada no mueve el instante,
+  aunque el campo lo muestre redondeado. En el `14`, con el buzón lleno y las
+  insignias, lo mismo en 50 fotogramas.
+- **Con eventos simultáneos y cancelaciones**: reproduciendo a × 1
+  exactamente hasta los 22 s del `39` —la recogida cancela su espera de más—,
+  los 23 —cuatro evaluaciones empiezan y tres esperan a la vez—, los 37 y los
+  49, lo dibujado es lo de saltar ahí y lo de llegar con «cambio siguiente».
+- **El filtro no cambia ningún recuento**: en el `39`, con los solicitantes
+  «3, 5-6», se ven sus pelotas y las de la comisión, y solo los sobres entre
+  casos que se ven; las insignias, los buzones, las plantillas y el resumen son
+  los de antes, salvo cuántos se ven, también reproduciendo. En el `14`, con 50
+  orquestados y «1-3», las insignias y el buzón «× 36» siguen como estaban. Un
+  filtro que no se entiende se marca, se explica y no filtra.
+- **La convocatoria**, con el `31`: se elige una de las tres o todas, la barra
+  de tiempo va de su principio a su fin, solo se ven sus casos y el resumen
+  cuenta los suyos. Es el alcance también de la plantilla y de la cola: en los
+  bordes, a los 88 y a los 151 s, cada convocatoria solo tiene lo suyo
+  —contrastado con la plantilla de toda la simulación quedándose con sus
+  casos—, y con todas, a los 88 s Ana ya trabaja para el orquestador 2. El
+  filtro, dentro de la segunda, conserva sus recuentos.
+- El salto exacto, sin redondear —22,123456789 s—, y fuera de la ventana, a su
+  borde; **Salir** no deja nada dibujado y devuelve los botones de simular y
+  el foco a **Reproducir**; abrir otro diagrama cierra la reproducción, y
+  **Reproducir** no se activa hasta simularlo; mientras se simula, tampoco; y
+  la barra no tapa la paleta ni el logotipo de bpmn.io, tampoco a 1366 × 768.
+- **Otro diagrama mientras se simula**: con el `39` simulándose se abre el
+  `01`; al llegar la respuesta, del `39`, **Reproducir** sigue desactivado, no
+  se dibuja nada y el estado lo explica. Simulando el `01`, se activa.
+
+Ninguna puede sacar una ventana emergente ni un error en la consola. Se ha
+comprobado que las comprobaciones distinguen con diez versiones estropeadas:
+un reloj que suma pasos, insignias que cuentan solo lo que se ve, marcas que
+no se borran de un fotograma a otro, un resumen que cuenta solo lo que se ve,
+un salto que no reinicia el reloj mientras se reproduce, una barra que tapa la
+paleta, un Ir que salta a lo redondeado, un Reproducir que sigue activo con
+otro diagrama, uno que se activa con la respuesta de un diagrama que ya no
+está abierto y una convocatoria que solo filtra lo que se dibuja; todas
+fallan. Necesita lo mismo que `interfaz.mjs`.
+
 ## El coste del proceso base
 
 ```
@@ -951,7 +1036,9 @@ el `35` en `escena.mjs`, los registros de `esperado/` y los diagramas del
 `14` y el `35` en `zonas.mjs`, y los registros de `esperado/` y los diagramas
 del `02`, el `10`, el `27` y el `35` en `colores.mjs`, y los registros de
 `esperado/` —con el `39`— y los diagramas del `39`, el `08` y el `01` en
-`plantilla.mjs`. Sin esa comprobación, perder una carpeta entera —modelos y referencias a la vez, en un merge— daba verde con
+`plantilla.mjs`, y los registros de `esperado/` —con el `39`, el `31` y el
+`14`— y sus diagramas en `reproduccion.mjs`. Sin esa comprobación, perder una
+carpeta entera —modelos y referencias a la vez, en un merge— daba verde con
 menos casos, o con ninguno, sin decir nada.
 
 ## Reproducibilidad

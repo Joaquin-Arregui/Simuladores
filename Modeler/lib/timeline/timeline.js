@@ -248,6 +248,7 @@ export function timelineFromLogs(logs) {
 
 class Timeline {
   constructor(read, cases, items, startDate) {
+    this._read = read;
     const header = (read.find(log => log.header['simulation:id']) || read[0]).header;
     this.simulationId = header['simulation:id'] ?? null;
     this.seed = header['simulation:seed'] ?? null;
@@ -275,6 +276,16 @@ class Timeline {
 
   case(id) {
     return this._byCase.get(id) || null;
+  }
+
+  // La linea de tiempo de solo esos casos -una convocatoria (6.7)-: sus piezas,
+  // con su orden, y los mismos pools y la misma cabecera. Lo que se saca de
+  // ella -lo que hay en cada instante, los mensajes, las plantillas- es solo
+  // de esos casos.
+  only(ids) {
+    const keep = ids instanceof Set ? ids : new Set(ids);
+    return new Timeline(this._read, this.cases.filter(entry => keep.has(entry.id)),
+      this.items.filter(item => keep.has(item.case)), this.startDate);
   }
 
   pool(id) {

@@ -1,12 +1,13 @@
-// La vista de la escena (6.3 a 6.6): dibuja sobre el diagrama, con la capa de
+// La vista de la escena (6.3 a 6.7): dibuja sobre el diagrama, con la capa de
 // dibujo (lib/drawing), las pelotas y los sobres de un instante, las tres zonas
 // de cada tarea con sus insignias, la plantilla de cada pool y el reloj de la
 // simulacion.
 //
 // Es un modulo de diagram-js -el servicio `sceneView`-, sin mas dependencias
 // que la capa de dibujo. `load(timeline)` le da la linea de tiempo de una
-// simulacion del diagrama abierto, y `show(t, { transit, threshold })` dibuja
-// ese instante y devuelve la escena que ha dibujado (lib/scene/scene.js). Al
+// simulacion del diagrama abierto, y `show(t, { transit, threshold, cases })`
+// dibuja ese instante y devuelve la escena que ha dibujado
+// (lib/scene/scene.js), entera aunque no se dibuje entera. Al
 // abrir otro diagrama, o con clear(), la simulacion se descarga, y show exige
 // otro load. Cada pelota, cada sobre y cada insignia es una marca con su ID,
 // que se reutiliza de un instante a otro: entre dos instantes solo se mueve, o
@@ -32,6 +33,15 @@
 //   transito, recorre su flujo de mensaje.
 // - El reloj, encima del lienzo, marca siempre el instante simulado t, tambien
 //   durante el transito, que es cosmetico.
+// - Con `cases` (6.7), solo se dibujan las pelotas de esos casos y los sobres
+//   entre dos de ellos. Lo que cuenta sigue contando todo: una zona con mas
+//   ejecuciones de las que caben es una insignia con todas, aunque el filtro
+//   deje pocas; un buzon lleno, igual; y las plantillas, con todas las
+//   personas ocupadas.
+// - Cada pelota y cada sobre dice en data-transit si se dibuja en transito,
+//   por su flujo. Un sobre que acaba de salir se ve llegar aunque ya este
+//   recogido (data-pickup) o cuente ya en un buzon lleno, el de su recepcion
+//   (data-to): eso es el transito, cosmetico.
 //
 // Las zonas se miden con el tamano que tiene la tarea al dibujar el instante:
 // si se agranda, se reparten de nuevo en el siguiente. Los recuentos son los de
@@ -203,7 +213,7 @@ function drawEnvelope(envelope) {
   return group => {
     group.setAttribute('class', 'drawing-mark scene-envelope');
     setData(group, { kind: 'envelope', id: envelope.id, sender: envelope.sender, target: envelope.target,
-      request: envelope.request, flow: envelope.flow, message: envelope.message });
+      request: envelope.request, flow: envelope.flow, message: envelope.message, pickup: envelope.pickup, to: envelope.to });
     svg('title', {}, group).textContent = `${envelope.message || 'Mensaje'} de ${envelope.sender} a ${envelope.target}, ` +
       `solicitud de ${envelope.request}`;
 
@@ -585,10 +595,20 @@ function thresholdOf(value) {
   return Number.isNaN(n) ? null : Math.max(0, n);
 }
 
+// Los casos que se dibujan (6.7): `cases` -un Set o cualquier lista de IDs-, o
+// todos si no se da.
+function casesOf(value) {
+  if (value === undefined || value === null) return null;
+  return value instanceof Set ? value : new Set(value);
+}
+
 SceneView.prototype.show = function(t, options = {}) {
   if (!this._scene) throw new Error('No hay ninguna simulacion cargada: sceneView.load(timeline).');
   const threshold = thresholdOf(options.threshold);
   const state = this._scene.at(t, options);
+  const visible = casesOf(options.cases);
+  const drawn = id => !visible || visible.has(id);
+  const drawnEnvelope = envelope => drawn(envelope.sender) && drawn(envelope.target);
   this._shown = { t, options: { ...options } };
   const seen = new Set();
   const labelHeights = new Map();
@@ -601,7 +621,7 @@ SceneView.prototype.show = function(t, options = {}) {
   const travel = ball => {
     const withTag = tagged(ball, finite);
     this._mark(`ball ${ball.id}`, drawBall(ball, withTag), ball.transit.flow, { fraction: ball.transit.fraction },
-      ballSignature(ball, withTag), seen);
+      ballSignature(ball, withTag), seen).node.dataset.transit = 'true';
   };
 
   // Las pelotas de cada elemento. Las que van en transito se dibujan en su
@@ -631,12 +651,12 @@ SceneView.prototype.show = function(t, options = {}) {
             seen);
           continue;
         }
-        inZone.filter(ball => ball.transit).forEach(travel);
-        const still = inZone.filter(ball => !ball.transit);
+        inZone.filter(ball => ball.transit && drawn(ball.case)).forEach(travel);
+        const still = inZone.filter(ball => !ball.transit && drawn(ball.case));
         grid(still.length, geometry.cols, cx, geometry.cy, geometry.rowStep).forEach((place, i) => {
           const withTag = tagged(still[i], finite);
           this._mark(`ball ${still[i].id}`, drawBall(still[i], withTag), element, { anchor: 'top-left', ...place },
-            ballSignature(still[i], withTag), seen);
+            ballSignature(still[i], withTag), seen).node.dataset.transit = 'false';
         });
       }
       continue;
@@ -650,11 +670,13 @@ SceneView.prototype.show = function(t, options = {}) {
         JSON.stringify([ all, color ]), seen);
       continue;
     }
-    balls.filter(ball => ball.transit).forEach(travel);
-    const still = balls.filter(ball => !ball.transit).sort(byCase);
+    balls.filter(ball => ball.transit && drawn(ball.case)).forEach(travel);
+    const still = balls.filter(ball => !ball.transit && drawn(ball.case)).sort(byCase);
     const cols = Math.max(1, Math.floor(((shape ? shape.width : STEP) - 4) / STEP));
-    grid(still.length, cols, 0, 0).forEach((place, i) => this._mark(`ball ${still[i].id}`, drawBall(still[i]), element,
-      place, ballSignature(still[i], false), seen));
+    grid(still.length, cols, 0, 0).forEach((place, i) => {
+      this._mark(`ball ${still[i].id}`, drawBall(still[i]), element, place, ballSignature(still[i], false), seen)
+        .node.dataset.transit = 'false';
+    });
   }
 
   // Los sobres: en transito, siempre por su flujo de mensaje, que es lo que
@@ -667,8 +689,10 @@ SceneView.prototype.show = function(t, options = {}) {
   }
   for (const envelope of state.envelopes) {
     if (envelope.transit) {
-      this._mark(`envelope ${envelope.id}`, drawEnvelope(envelope), envelope.transit.flow,
-        { fraction: envelope.transit.fraction }, 'envelope', seen);
+      if (drawnEnvelope(envelope)) {
+        this._mark(`envelope ${envelope.id}`, drawEnvelope(envelope), envelope.transit.flow,
+          { fraction: envelope.transit.fraction }, 'envelope', seen).node.dataset.transit = 'true';
+      }
       continue;
     }
     if (!mailboxes.has(envelope.to)) mailboxes.set(envelope.to, []);
@@ -688,8 +712,10 @@ SceneView.prototype.show = function(t, options = {}) {
         { anchor: 'top-left', dx: 12, dy: -14 - labelHeight }, `${count} ${color}`, seen);
       continue;
     }
-    envelopes.forEach((envelope, index) => this._mark(`envelope ${envelope.id}`, drawEnvelope(envelope), element,
-      { anchor: 'top-left', dx: 12 + index * ENVELOPE_STEP, dy: -22 - labelHeight }, 'envelope', seen));
+    envelopes.filter(drawnEnvelope).forEach((envelope, index) => {
+      this._mark(`envelope ${envelope.id}`, drawEnvelope(envelope), element,
+        { anchor: 'top-left', dx: 12 + index * ENVELOPE_STEP, dy: -22 - labelHeight }, 'envelope', seen).node.dataset.transit = 'false';
+    });
   }
 
   this._rosters(state.staff, seen);
@@ -822,8 +848,11 @@ SceneView.prototype._rosters = function(staff, seen) {
 // sus pools, y los nombres de las tareas, encima-, como
 // zoom('fit-viewport'), que solo mira el diagrama: sin ampliar y con un
 // margen de `padding`. Solo cuentan las marcas que se ven: una cuyo elemento
-// ya no esta se oculta, y no se sabe donde estaria.
-SceneView.prototype.fit = function(padding = 10) {
+// ya no esta se oculta, y no se sabe donde estaria. `margins` son los pixeles
+// de cada borde del lienzo que tapa algo -la paleta, una barra-: lo encajado
+// queda en el resto.
+SceneView.prototype.fit = function(padding = 10, margins = {}) {
+  const edge = { left: 0, right: 0, top: 0, bottom: 0, ...margins };
   const marks = this._drawingLayer.marks().filter(mark => mark.point).map(mark => {
     const box = mark.node.getBBox();
     return { x: box.x + mark.point.x, y: box.y + mark.point.y, width: box.width, height: box.height };
@@ -835,8 +864,10 @@ SceneView.prototype.fit = function(padding = 10) {
   const width = Math.max(...boxes.map(box => box.x + box.width)) + padding - left;
   const height = Math.max(...boxes.map(box => box.y + box.height)) + padding - top;
   const outer = this._canvas.getSize();
-  const scale = Math.min(1, outer.width / width, outer.height / height);
-  this._canvas.viewbox({ x: left, y: top, width: outer.width / scale, height: outer.height / scale });
+  const free = { width: Math.max(1, outer.width - edge.left - edge.right), height: Math.max(1, outer.height - edge.top - edge.bottom) };
+  const scale = Math.min(1, free.width / width, free.height / height);
+  this._canvas.viewbox({ x: left - edge.left / scale, y: top - edge.top / scale, width: outer.width / scale,
+    height: outer.height / scale });
   return scale;
 };
 

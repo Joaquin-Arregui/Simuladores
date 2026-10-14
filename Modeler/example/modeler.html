@@ -26,9 +26,33 @@
     <div class="simulation-actions">
       <button class="link active" id="js-simulate" title="Simular el modelo BPMN">Simular</button>
       <button class="link active" id="js-continue" title="Ver la última simulación completada" disabled>Última simulación</button>
+      <button class="link active" id="js-replay" title="Reproducir la última simulación sobre el diagrama" disabled>Reproducir</button>
     </div>
     <p id="simulation-status" class="simulation-status" role="status" aria-live="polite">Listo para simular.</p>
   </div>
+  <section id="replay" class="replay" aria-label="Reproducción de la simulación" hidden>
+    <div class="replay-row">
+      <button type="button" id="replay-play" class="replay-play" aria-pressed="false">Reproducir</button>
+      <button type="button" id="replay-start" title="Al principio" aria-label="Al principio">⏮</button>
+      <button type="button" id="replay-previous" title="Al cambio anterior" aria-label="Al cambio anterior">◀</button>
+      <button type="button" id="replay-next" title="Al cambio siguiente" aria-label="Al cambio siguiente">▶</button>
+      <input type="range" id="replay-time" class="replay-time" min="0" max="0" step="any" aria-label="Instante simulado">
+      <label class="replay-instant">t =
+        <input type="number" id="replay-instant" step="any" aria-label="Instante exacto, en segundos"> s
+      </label>
+      <button type="button" id="replay-go">Ir</button>
+      <label>Velocidad <select id="replay-speed" title="Segundos simulados por segundo real"></select></label>
+      <button type="button" id="replay-exit" class="replay-exit">Salir</button>
+    </div>
+    <div class="replay-row">
+      <label id="replay-call-box">Convocatoria <select id="replay-call"></select></label>
+      <fieldset class="replay-filters">
+        <legend>Casos que se ven</legend>
+        <div id="replay-filters"></div>
+      </fieldset>
+    </div>
+    <p id="replay-summary" class="replay-summary" role="status" aria-live="polite"></p>
+  </section>
   <div class="modal-overlay" style="display: none;">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="simulation-title" tabindex="-1">
       <h2 id="simulation-title">Resultados de la simulación</h2>

@@ -11,7 +11,7 @@ npm install
 npm start
 ```
 
-La aplicación se abre en `http://localhost:9000`. **Open Existing Model** abre un archivo local; también se puede arrastrar un BPMN al lienzo. **Simular** envía las reglas y el XML a `http://localhost:3000/simulate`. El Backend debe estar ejecutándose para simular. **Última simulación** muestra el último resultado correcto de la sesión. Los tiempos de las tareas, la frecuencia y los temporizadores se expresan en segundos.
+La aplicación se abre en `http://localhost:9000`. **Open Existing Model** abre un archivo local; también se puede arrastrar un BPMN al lienzo. **Simular** envía las reglas y el XML a `http://localhost:3000/simulate`. El Backend debe estar ejecutándose para simular. **Última simulación** muestra el último resultado correcto de la sesión, y **Reproducir** lo reproduce sobre el diagrama (ver [La reproducción](#la-reproducción)). Los tiempos de las tareas, la frecuencia y los temporizadores se expresan en segundos.
 
 El resultado de una simulación es **un registro XES por pool** (ver abajo); **Ctrl+S** guarda el diagrama.
 Lo guarda con formato, un elemento por línea, como Camunda Modeler; hasta la
@@ -142,7 +142,8 @@ descarga el Chromium de Playwright.
 - `ejemplos`: diagramas dibujados y guardados con el Modeler; hoy, el
   proceso base (ver arriba).
 - `example/src`: inicio y editor; al pulsar **Simular**, `taskHandlers.js`
-  exporta las reglas con `lib/rules`.
+  exporta las reglas con `lib/rules`, y `replay.js` es la barra de
+  reproducción.
 - `provider` y `descriptors`: propiedades de simulación y su serialización BPMN.
   El pool guarda en el `.bpmn`, con el prefijo `participantWithoutLane`, los
   mismos atributos que lleva en las reglas: `frequency` (número, admite
@@ -167,6 +168,8 @@ descarga el Chromium de Playwright.
 - `lib/scene`: las pelotas de los casos, los sobres, las tres zonas de cada
   tarea, el color de cada caso, la plantilla de cada pool y el reloj del
   visualizador (ver abajo).
+- `lib/player`: lo que se reproduce y en qué instante —convocatorias, filtro
+  de casos, resumen y reloj—, sin dibujar nada (ver abajo).
 
 ### Parámetros de simulación en el panel
 
@@ -298,7 +301,8 @@ con lo que dice la cabecera de su registro: su nombre, su rol, si sus recursos
 son finitos o infinitos (`resources`), su plantilla entera (`staff`, también
 quien no llegó a trabajar; `null` si el registro no la trae), sus carriles con
 su carril padre y sus personas (`lanes`) y, en un Process, sus roles (`roles`);
-`pool(id)` da uno. El tránsito por los flujos es
+`pool(id)` da uno. `only(casos)` da la línea de tiempo de solo esos casos
+—una convocatoria (6.7)—, con los mismos pools. El tránsito por los flujos es
 cosmético y no está en la línea (6.3). Tampoco hay esperas por un tope de
 concurrencia: el motor no tiene topes, y lo que espera una ejecución
 multiinstancia es a una persona libre de su pool. El banco la comprueba con
@@ -532,6 +536,60 @@ Encajar el diagrama —`zoom('fit-viewport')`— no tiene en cuenta lo dibujado;
 `sceneView.fit()` encaja también las plantillas y los nombres de las tareas.
 El banco lo comprueba contra el XES y en un Chromium de verdad
 (`Backend/pruebas/plantilla.mjs`).
+
+### La reproducción
+
+**Reproducir**, activo en cuanto hay una simulación, la reproduce sobre el
+diagrama abierto (6.7) y abre una barra debajo del lienzo, a la derecha de la
+paleta; mientras está abierta, los botones de simular se ocultan, y **Salir**
+la cierra, borra lo dibujado y devuelve el foco a **Reproducir**. Una
+simulación es del diagrama que se simuló: abrir otro cierra la barra, y
+**Reproducir** no se vuelve a activar hasta simularlo —sus registros se siguen
+viendo en **Última simulación**—, tampoco si se abre mientras el Backend aún
+está simulando el anterior: entonces el estado lo dice. Mientras se simula,
+tampoco se puede reproducir. En la barra:
+
+- **Reproducir** y **Pausa**, con la **velocidad** en segundos simulados por
+  segundo real (× 1 a × 100; de entrada, la menor que reproduce la
+  convocatoria en unos 40 s); **⏮** vuelve al principio, y **◀** y **▶**
+  saltan al instante anterior o siguiente en que cambia algo.
+- La **barra de tiempo**, para arrastrar, y el **instante exacto**: se
+  escribe, con **Ir** o Intro se salta a él sin redondear, y fuera de la
+  ventana se queda en su borde. Mientras no se escribe en él, sigue al reloj,
+  redondeado a milésimas, y **Ir** no mueve nada.
+- La **convocatoria**, si hay varias, o **Todas**: es el **alcance** de la
+  reproducción. La barra va de su principio a su fin, y todo lo que se dibuja
+  y se cuenta —pelotas, sobres, insignias, buzones, plantillas y su cola,
+  resumen— es solo de sus casos: la escena se hace con la línea de tiempo de
+  la convocatoria (`timeline.only`). Las rondas van seguidas, así que en el
+  último instante de una la siguiente ya ha empezado; con la primera del `31`,
+  a los 88 s todos han terminado, nadie está ocupado y la cola está vacía,
+  aunque Ana ya trabaje para el orquestador 2.
+- Los **casos que se ven**, dentro de la convocatoria: por pool, sus números
+  —«1-3, 7»—; vacío, todos. Se ocultan las pelotas de los demás y los sobres
+  que no van entre dos casos que se ven, pero **ningún recuento cambia**: las
+  insignias, los buzones, las plantillas y el resumen siguen siendo los de la
+  convocatoria. Un filtro que no se entiende se marca, se explica y no
+  filtra.
+- Debajo, el **resumen** de cada pool en ese instante: cuántos casos están en
+  curso, cuántos por llegar y cuántos han terminado, de todos los de la
+  convocatoria, y, con un filtro, cuántos se ven.
+
+Cada instante se dibuja entero desde la línea de tiempo (`lib/player`,
+`lib/scene`), sin depender de lo que se dibujó antes. El reloj avanza desde su
+último punto de partida —al reproducir, al saltar o al cambiar de velocidad—,
+sin ir sumando pasos, así que en pausa el instante es exactamente aquel en el
+que se paró o al que se saltó (queda en `data-t` de la barra). Mientras se
+reproduce, las pelotas y los sobres recorren sus flujos —el tránsito, que es
+cosmético—; en pausa, cada uno está donde está en ese instante, así que pausar
+en t y saltar a t dan el mismo dibujo. Lo único que se ve distinto mientras se
+reproduce es eso: una pelota que acaba de llegar viene por su flujo, y un
+sobre que acaba de salir recorre el suyo aunque ya esté recogido o cuente ya en
+un buzón lleno. Al abrir
+la barra, el diagrama se encaja con las plantillas, en lo que dejan libre la
+paleta y la barra (`sceneView.fit(padding, margins)`). El banco lo comprueba
+con el Modeler compilado, en un Chromium de verdad, con el reloj de la página
+en la mano (`Backend/pruebas/reproduccion.mjs`).
 
 ### Las reglas que se mandan al simular
 

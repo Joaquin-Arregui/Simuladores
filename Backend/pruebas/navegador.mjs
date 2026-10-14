@@ -1,7 +1,7 @@
 // Lo que comparten las pruebas en navegador del banco (interfaz.mjs,
-// capa_de_dibujo.mjs, escena.mjs, zonas.mjs, colores.mjs, plantilla.mjs):
-// servir unos ficheros como los serviria cualquier servidor, y abrir el
-// Chromium de Playwright.
+// capa_de_dibujo.mjs, escena.mjs, zonas.mjs, colores.mjs, plantilla.mjs,
+// reproduccion.mjs): servir unos ficheros como los serviria cualquier
+// servidor, y abrir el Chromium de Playwright.
 import { createServer } from 'http';
 import { existsSync, readFileSync, statSync } from 'fs';
 import { extname, join, sep } from 'path';

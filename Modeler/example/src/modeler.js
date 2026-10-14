@@ -21,7 +21,9 @@ import participantWithoutLaneExtension from '../../descriptors/participantWithou
 import AddExporter from '@bpmn-io/add-exporter';
 
 import { exportToEsper } from './taskHandlers';
+import { setupReplay } from './replay.js';
 import { logsFromResponse, preview } from '../../lib/logs/logs.js';
+import sceneModule from '../../lib/scene/view.js';
 
 document.addEventListener('DOMContentLoaded', function() {
 
@@ -37,7 +39,8 @@ document.addEventListener('DOMContentLoaded', function() {
       propertiesProviderModule,
       resizeAllModule,
       legacyPeopleModule,
-      AddExporter
+      AddExporter,
+      sceneModule
     ],
     exporter: { name: 'my-bpmn-exporter', version: '1.0.0' },
     moddleExtensions: {
@@ -171,6 +174,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const backendUrl = 'http://localhost:3000';
   const simulateButton = document.getElementById('js-simulate');
   const lastSimulationButton = document.getElementById('js-continue');
+  const replayButton = document.getElementById('js-replay');
   const simulationStatus = document.getElementById('simulation-status');
   const modalOverlay = document.querySelector('.modal-overlay');
   const modal = document.querySelector('.modal');
@@ -186,6 +190,26 @@ document.addEventListener('DOMContentLoaded', function() {
   const previewNote = document.getElementById('simulation-preview-note');
   let simulationRunning = false;
   let lastSimulation = null;
+
+  // La reproduccion de la ultima simulacion sobre el diagrama abierto (6.7).
+  // Una simulacion es del diagrama que se simulo: al abrir otro, no se puede
+  // reproducir hasta simularlo. Sus registros se siguen viendo en «Última
+  // simulación».
+  let replayLogs = null;
+  const replay = setupReplay(bpmnModeler, {
+    onError: message => setSimulationStatus(message, 'error'),
+    onExit: () => replayButton.focus()
+  });
+
+  // Cada diagrama que se abre tiene su numero: una simulacion solo se puede
+  // reproducir sobre el diagrama que se simulo, aunque se abra otro mientras
+  // el Backend responde.
+  let openedDiagram = 0;
+  bpmnModeler.on('import.done', () => {
+    openedDiagram += 1;
+    replayLogs = null;
+    replayButton.disabled = true;
+  });
   let modalReturnFocus = null;
 
   function setSimulationStatus(message, state) {
@@ -351,6 +375,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     simulationRunning = true;
     simulateButton.disabled = true;
+    replayButton.disabled = true;
+    const simulatedDiagram = openedDiagram;
     simulateButton.textContent = 'Simulando…';
     simulateButton.setAttribute('aria-busy', 'true');
     setSimulationStatus('Preparando el modelo para simular…', 'running');
@@ -404,13 +430,18 @@ document.addEventListener('DOMContentLoaded', function() {
       lastSimulation = {
         logs, warnings, simulationId: data.simulationId, seed: data.seed, modelName: data.model?.name
       };
+      const sameDiagram = simulatedDiagram === openedDiagram;
+      replayLogs = sameDiagram ? logs : null;
+      if (replay.isOpen) replay.close();
       lastSimulationButton.disabled = false;
       const registros = logs.length === 1 ? '1 registro XES' : `${logs.length} registros XES, uno por pool`;
+      const otro = sameDiagram ? '' : ' Mientras se simulaba se abrió otro diagrama: esta simulación no se puede reproducir sobre él.';
       if (warnings.length) {
         const count = warnings.length === 1 ? '1 aviso' : `${warnings.length} avisos`;
-        setSimulationStatus(`Simulación completada con ${count}: ${registros}. Puedes revisarlos en «Última simulación».`, 'warning');
+        setSimulationStatus(`Simulación completada con ${count}: ${registros}. Puedes revisarlos en «Última simulación».${otro}`, 'warning');
       } else {
-        setSimulationStatus(`Simulación completada: ${registros}. Están disponibles en «Última simulación».`, 'success');
+        setSimulationStatus(`Simulación completada: ${registros}. Están disponibles en «Última simulación».${otro}`,
+          sameDiagram ? 'success' : 'warning');
       }
       showSimulationResults('Resultados de la simulación', lastSimulation);
     } catch (err) {
@@ -421,6 +452,7 @@ document.addEventListener('DOMContentLoaded', function() {
       window.clearTimeout(timer);
       simulationRunning = false;
       simulateButton.disabled = false;
+      replayButton.disabled = replayLogs === null;
       simulateButton.textContent = 'Simular';
       simulateButton.removeAttribute('aria-busy');
     }
@@ -430,6 +462,10 @@ document.addEventListener('DOMContentLoaded', function() {
     if (lastSimulation !== null) {
       showSimulationResults('Última simulación completada', lastSimulation);
     }
+  });
+
+  replayButton.addEventListener('click', () => {
+    if (replayLogs !== null && !simulationRunning) replay.open(replayLogs);
   });
 
   closeModalButton.addEventListener('click', closeSimulationMessage);
