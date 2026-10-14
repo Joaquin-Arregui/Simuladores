@@ -17,6 +17,10 @@
 //   ejecuciones bloqueadas a la salida (`blocked`), pelotas de las que ya
 //   terminaron en una activacion que aun no ha salido, y los recuentos de cada
 //   zona (`zones`).
+// - La plantilla de cada pool (6.6, lib/scene/staff.js), la de su registro: en
+//   cada instante, quien esta libre y quien ocupado, con que ejecucion y para
+//   que solicitud, y la cola del pool (`staff`). Cada pelota que trabaja lleva
+//   su persona y el numero de la solicitud que atiende.
 //
 // El transito es cosmetico (D15). Con `transit` > 0, una pelota que acaba de
 // llegar a un elemento se dibuja recorriendo el flujo por el que llego, y un
@@ -29,10 +33,11 @@
 // llegar a el reproduciendo.
 //
 // Sin dependencias del navegador: lo usa la vista (lib/scene/view.js) y, desde
-// Node, Backend/pruebas/escena.mjs y zonas.mjs.
+// Node, Backend/pruebas/escena.mjs, zonas.mjs y plantilla.mjs.
 
 import { parseXml } from '../timeline/xml.js';
 import { activationsOf, blockedAt, countZones, zoneOf } from './zones.js';
+import { createStaff } from './staff.js';
 
 // El grafo que necesita la escena, de un diagrama abierto en bpmn-js: sus
 // flujos de secuencia y de mensaje, con sus extremos.
@@ -175,7 +180,9 @@ export function createScene(timeline, graph = EMPTY_GRAPH) {
   const messages = messagesOf(timeline, graph);
   const arrival = arrivals(timeline, graph);
   const activations = activationsOf(timeline);
+  const staff = createStaff(timeline);
   const cases = new Map(timeline.cases.map(entry => [ entry.id, entry ]));
+  const numberOf = id => (cases.get(id) || {}).instance ?? null;
   const ballOf = (item, entry, state, since, transit) => ({
     id: item.id,
     case: entry.id,
@@ -186,6 +193,7 @@ export function createScene(timeline, graph = EMPTY_GRAPH) {
     zone: zoneOf(state),
     execution: item.execution,
     request: item.request,
+    requestNumber: item.request ? numberOf(item.request) : null,
     user: item.user,
     cancelled: item.cancelled,
     since,
@@ -195,6 +203,7 @@ export function createScene(timeline, graph = EMPTY_GRAPH) {
     timeline,
     messages,
     activations,
+    staff,
 
     // Lo que hay en el instante t. `transit` son los segundos simulados que
     // dura en pantalla el transito cosmetico; 0, sin transito.
@@ -234,6 +243,7 @@ export function createScene(timeline, graph = EMPTY_GRAPH) {
         blocked,
         envelopes,
         zones: countZones([ ...balls, ...blocked ], mailbox),
+        staff: staff.at(t),
         cases: Object.fromEntries([ ...active ].map(([ pool, ids ]) => [ pool, [ ...ids ] ]))
       };
     }

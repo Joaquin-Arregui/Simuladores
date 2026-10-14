@@ -165,7 +165,8 @@ descarga el Chromium de Playwright.
 - `lib/drawing`: la capa de dibujo del visualizador, marcas sobre el lienzo
   (ver abajo).
 - `lib/scene`: las pelotas de los casos, los sobres, las tres zonas de cada
-  tarea, el color de cada caso y el reloj del visualizador (ver abajo).
+  tarea, el color de cada caso, la plantilla de cada pool y el reloj del
+  visualizador (ver abajo).
 
 ### Parámetros de simulación en el panel
 
@@ -292,7 +293,12 @@ está la siguiente. `passedBetween(a, b)` da los instantes entre dos momentos
 (excluye `a`, incluye `b`), también las ejecuciones o esperas cuyo inicio y
 fin coinciden: conservan su identidad, estado y orden, sin añadir duración.
 `statusOf(caso, t)` indica si el caso aún no ha llegado, está vivo o ha terminado,
-y `changes()` enumera los instantes en que cambia algo. El tránsito por los flujos es
+y `changes()` enumera los instantes en que cambia algo. `pools` trae cada pool
+con lo que dice la cabecera de su registro: su nombre, su rol, si sus recursos
+son finitos o infinitos (`resources`), su plantilla entera (`staff`, también
+quien no llegó a trabajar; `null` si el registro no la trae), sus carriles con
+su carril padre y sus personas (`lanes`) y, en un Process, sus roles (`roles`);
+`pool(id)` da uno. El tránsito por los flujos es
 cosmético y no está en la línea (6.3). Tampoco hay esperas por un tope de
 concurrencia: el motor no tiene topes, y lo que espera una ejecución
 multiinstancia es a una persona libre de su pool. El banco la comprueba con
@@ -420,7 +426,8 @@ buzón.
 
 Las pelotas de cada zona se reparten en filas en su franja, y debajo va su
 nombre: «cola», «dentro», «salida». Si son más de las que caben —en una tarea
-de 100 × 80, ocho—, o del umbral que se le dé a `show(t, { threshold })` —un
+de 100 × 80, ocho; dentro de una tarea de un pool con recursos finitos, donde
+cada pelota lleva debajo a su persona (6.6), seis—, o del umbral que se le dé a `show(t, { threshold })` —un
 número, también escrito como texto; uno mayor de lo que cabe deja que se
 salgan de la franja—, una **insignia** las sustituye, también a las que llegan
 en tránsito: el número de ejecuciones, «ejec.», cuántos casos y,
@@ -475,6 +482,56 @@ color ayuda a seguirlo. En vez de colorear la resolución —aceptada,
 rechazada—, el color identifica al caso; la rama que toma se ve por dónde va
 su pelota. El banco lo comprueba en un Chromium de verdad
 (`Backend/pruebas/colores.mjs`).
+
+### El orquestador y sus recursos, por nombre
+
+Junto a cada pool, el visualizador dibuja su **plantilla** (6.6,
+`lib/scene/staff.js`): la que guarda la cabecera de su registro
+(`pool:staff`), con todas sus personas —también las que no llegan a trabajar,
+como Hugo en el modelo 39 o Diana, de reserva, en el 08— y el carril de cada
+una. **No sale de las reglas**: si después se cambia el diagrama —se quita a
+alguien de un pool, se borra un carril, se cambia quién hace una tarea o el
+nombre del pool—, la plantilla sigue siendo la de cuando se simuló.
+
+En cada instante, cada persona está **libre** u **ocupada**: con qué tarea,
+para qué solicitud —o, si no la hay, qué caso— y en qué ejecución, con un
+punto del color de esa solicitud, el de sus sobres. Una asignación es la
+ejecución que nombra a la persona (`bpmn:userTask`): la toma al empezar a
+trabajar y la suelta al acabar, en los instantes que escribió el motor, y
+lleva el ID de la ejecución, su solicitud y su intervalo. Al soltar una
+ejecución y tomar otra en el mismo instante, la persona aparece con la nueva.
+Debajo, la **cola del pool** (D4): lo que espera a una persona, de cualquier
+tarea, por orden de llegada; se nombran cinco, y de las demás se dice cuántas
+son. Una espera cancelada al cerrar un lote espera un mensaje, así que no está
+en la cola ni ocupa a nadie. Con recursos infinitos no hay cola, y cada persona
+dice cuánto atiende a la vez.
+
+La plantilla va a la derecha del pool, arriba, si cabe ahí **sin tapar nada del
+diagrama** —otro pool, un elemento o un rótulo— ni otra plantilla. Si no, se
+desliza por ese lado, y después prueba a la izquierda, debajo y encima, siempre
+pegada al pool: con dos pools uno al lado del otro, la del de la izquierda va a
+su izquierda. Si no queda sitio en ningún lado, va a la derecha, por debajo de
+lo que la taparía. Se coloca con el tamaño mayor que llega a tener en la
+simulación —con su cola más larga—, así que no cambia de sitio de un instante a
+otro; se vuelve a colocar si se mueve o cambia algo del diagrama. En un
+Process, que no tiene pool, va junto a todo el diagrama.
+
+En las tareas de un pool con recursos finitos, **cada pelota que trabaja lleva
+debajo a la persona que la atiende** y, en negrita, el número de la solicitud,
+con el color de esa solicitud: en el 39, a los 40 s, las cinco evaluaciones
+simultáneas dicen «Ana 5», «Bea 1», «Carlos 2», «Dani 3» y «Eva 4». Las filas
+se separan para que quepa y se quedan por encima del marcador de
+multiinstancia. Al terminar, la pelota pasa a la salida sin nombre: la
+persona ya está libre. En un pool con recursos infinitos la persona nunca deja
+de estar disponible —atiende a la vez todo lo que la nombra, y la plantilla
+dice cuánto—, así que sus pelotas no la llevan.
+
+`scene.at(t).staff` da, por pool, las personas con su estado y sus
+asignaciones y la cola; `scene.staff.assignments`, todas las asignaciones.
+Encajar el diagrama —`zoom('fit-viewport')`— no tiene en cuenta lo dibujado;
+`sceneView.fit()` encaja también las plantillas y los nombres de las tareas.
+El banco lo comprueba contra el XES y en un Chromium de verdad
+(`Backend/pruebas/plantilla.mjs`).
 
 ### Las reglas que se mandan al simular
 

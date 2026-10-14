@@ -1,0 +1,47 @@
+# Modelo de referencia 39 - evaluar N con cinco personas (6.6).
+# La comision convoca a siete solicitantes, recoge sus siete solicitudes y
+# evalua una por solicitud. Evaluan cinco personas -Ana, Bea, Carlos, Dani y
+# Eva-: no hay topes de concurrencia (revision del 4/10/2026), asi que el tope
+# de evaluaciones a la vez es el personal, y las dos que sobran esperan en la
+# cola del pool (D4). Gema convoca, recoge y responde, y Hugo esta en la
+# plantilla sin ninguna tarea: tiene que salir libre de principio a fin.
+# Al acabar de convocar, una rama aparte: Ana prepara el acta durante 30 s.
+# Cuando empieza la evaluacion sigue con ella, asi que empiezan cuatro y la
+# quinta persona llega al acabar el acta: entonces son cinco a la vez, y hasta
+# ahi Ana sale ocupada en otra tarea mientras su cola espera. Gema, libre, no
+# puede evaluar. La recogida deja una espera de mas, que se cancela al cerrar
+# el lote sin haber tenido nunca a nadie.
+# Es el modelo del visualizador que comprueba la plantilla: la saca del
+# registro, y no de las reglas, aunque despues cambien.
+Element: [type=bpmn:Collaboration, id_bpmn='Colaboracion', name='Evaluar con cinco personas', instances=1]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Comision', name='Comision', frequency=0, userWithoutRole=['Ana', 'Bea', 'Carlos', 'Dani', 'Eva', 'Gema', 'Hugo'], instances=1, participantMultiplicity='true', orchestrationRole='orchestrator', containedElements=['Ini_C', 'Convocar', 'Abre_Acta', 'Preparar_Acta', 'Fin_Acta', 'Recoger', 'Evaluar', 'Responder', 'Fin_C', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8']]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Solicitante', name='Solicitante', frequency=3, userWithoutRole=['Solicitante'], instances=7, participantMultiplicity='true', orchestrationRole='orchestrated', infiniteResources='true', containedElements=['Ini_S', 'Esperar_Convocatoria', 'Solicitar', 'Esperar_Resultado', 'Fin_S', 's1', 's2', 's3', 's4']]
+Element: [type=bpmn:StartEvent, id_bpmn='Ini_C', name='Abre la convocatoria', subTask='Convocar']
+Element: [type=bpmn:SendTask, id_bpmn='Convocar', name='Publicar la convocatoria', userTask='Gema', numberOfExecutions=1, multiInstanceType='false', minimumTime=1, maximumTime=1, subTask='Abre_Acta']
+Element: [type=bpmn:ParallelGateway, id_bpmn='Abre_Acta', name='Y el acta', subTask='Recoger,Preparar_Acta']
+Element: [type=bpmn:Task, id_bpmn='Preparar_Acta', name='Preparar el acta', userTask='Ana', numberOfExecutions=1, minimumTime=30, maximumTime=30, subTask='Fin_Acta']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_Acta', name='Acta lista', subTask='']
+Element: [type=bpmn:ReceiveTask, id_bpmn='Recoger', name='Recoger una solicitud', userTask='Gema', numberOfExecutions=1, multiInstanceType='false', minimumTime=1, maximumTime=1, subTask='Evaluar']
+Element: [type=bpmn:Task, id_bpmn='Evaluar', name='Evaluar una solicitud', userTask='Ana, Bea, Carlos, Dani, Eva', numberOfExecutions=1, multiInstanceType='false', minimumTime=20, maximumTime=40, subTask='Responder']
+Element: [type=bpmn:SendTask, id_bpmn='Responder', name='Responder a una solicitud', userTask='Gema', numberOfExecutions=1, multiInstanceType='false', minimumTime=1, maximumTime=1, subTask='Fin_C']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_C', name='Cierra la convocatoria', subTask='']
+Element: [type=bpmn:StartEvent, id_bpmn='Ini_S', name='Entra el solicitante', subTask='Esperar_Convocatoria']
+Element: [type=bpmn:ReceiveTask, id_bpmn='Esperar_Convocatoria', name='Esperar la convocatoria', userTask='Solicitante', numberOfExecutions=1, minimumTime=2, maximumTime=2, subTask='Solicitar']
+Element: [type=bpmn:SendTask, id_bpmn='Solicitar', name='Enviar la solicitud', userTask='Solicitante', numberOfExecutions=1, minimumTime=2, maximumTime=2, subTask='Esperar_Resultado']
+Element: [type=bpmn:ReceiveTask, id_bpmn='Esperar_Resultado', name='Esperar el resultado', userTask='Solicitante', numberOfExecutions=1, minimumTime=1, maximumTime=1, subTask='Fin_S']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_S', name='Fin del solicitante', subTask='']
+Element: [type=bpmn:SequenceFlow, id_bpmn='c1', name='', superElement='Ini_C', subElement='Convocar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='c2', name='', superElement='Convocar', subElement='Abre_Acta']
+Element: [type=bpmn:SequenceFlow, id_bpmn='c3', name='', superElement='Abre_Acta', subElement='Recoger']
+Element: [type=bpmn:SequenceFlow, id_bpmn='c4', name='', superElement='Abre_Acta', subElement='Preparar_Acta']
+Element: [type=bpmn:SequenceFlow, id_bpmn='c5', name='', superElement='Preparar_Acta', subElement='Fin_Acta']
+Element: [type=bpmn:SequenceFlow, id_bpmn='c6', name='', superElement='Recoger', subElement='Evaluar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='c7', name='', superElement='Evaluar', subElement='Responder']
+Element: [type=bpmn:SequenceFlow, id_bpmn='c8', name='', superElement='Responder', subElement='Fin_C']
+Element: [type=bpmn:SequenceFlow, id_bpmn='s1', name='', superElement='Ini_S', subElement='Esperar_Convocatoria']
+Element: [type=bpmn:SequenceFlow, id_bpmn='s2', name='', superElement='Esperar_Convocatoria', subElement='Solicitar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='s3', name='', superElement='Solicitar', subElement='Esperar_Resultado']
+Element: [type=bpmn:SequenceFlow, id_bpmn='s4', name='', superElement='Esperar_Resultado', subElement='Fin_S']
+Element: [type=bpmn:MessageFlow, id_bpmn='Convocatoria', name='Convocatoria', superElement='Convocar', subElement='Esperar_Convocatoria']
+Element: [type=bpmn:MessageFlow, id_bpmn='Solicitud', name='Solicitud', superElement='Solicitar', subElement='Recoger']
+Element: [type=bpmn:MessageFlow, id_bpmn='Resultado', name='Resultado', superElement='Responder', subElement='Esperar_Resultado']

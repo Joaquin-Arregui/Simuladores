@@ -49,6 +49,10 @@ mientras el comportamiento no deba cambiar, sus XES no deben cambiar.
 - `colores.mjs` — el color de cada caso, constante y distinto en su pool, en
   sus pelotas y en sus sobres, en un Chromium de verdad (ver
   [El color de cada caso](#el-color-de-cada-caso)).
+- `plantilla.mjs` — la plantilla de cada pool, la de su registro, con quién
+  está libre u ocupado, con qué ejecución y para qué solicitud, y la cola del
+  pool, contrastadas con el XES y en un Chromium de verdad (ver
+  [El orquestador y sus recursos](#el-orquestador-y-sus-recursos)).
 - `navegador.mjs` — lo que comparten las pruebas en navegador: servir los
   ficheros y abrir Chromium.
 - `interfaz.mjs` — la interfaz del Modeler en un Chromium de verdad: abrir,
@@ -102,6 +106,7 @@ mientras el comportamiento no deba cambiar, sus XES no deben cambiar.
 | `36-tareas-instantaneas` | Dos casos, en t=0 y t=30, con dos tareas de duracion cero seguidas de una que dura diez segundos | Que las tareas instantaneas desaparezcan de las consultas de la linea de tiempo, pierdan su identidad u orden, ocupen tiempo inventado o se repitan entre ventanas consecutivas |
 | `37-recogida-antes-de-la-otra-espera` | Dos ramas del orquestador llegan a la misma recepcion y el orquestado le manda dos solicitudes por el mismo flujo. La rama A recoge la primera a los 7 s y espera a Ana hasta los 20; la B espera la segunda de 8 a 10. Las dos activaciones tienen la ejecucion 1 y el mismo remitente | Que el visualizador tome la espera de mensaje de una activacion por la de otra: daba la primera solicitud por recogida a los 10 s y la mostraba en el buzon a los 8 (6.3) |
 | `38-lotes-simultaneos` | Dos ramas activan a la vez el mismo envío multiinstancia a dos destinatarios; los lotes salen en t=11 y t=16 | Que la escena mezcle sus ejecuciones por el orden de fin y vacíe una salida en t=10. Se comprueba contra los eventos de fin, sin reconstruir activaciones |
+| `39-evaluar-con-cinco-personas` | La comisión evalúa siete solicitudes con cinco personas. Ana prepara el acta en otra rama hasta los 37 s: de 23 a 37 evalúan cuatro y esperan tres en la cola del pool, y de 37 a 60, cinco a la vez: a los 49 Dani pasa a la 6 y a los 52 Carlos a la 7. Gema convoca, recoge y responde; Hugo no tiene ninguna tarea. La recogida cancela su espera de más a los 22 s | Que el visualizador saque la plantilla de las reglas y no del registro, pierda a quien no trabaja, no vea a Ana ocupada en otra tarea, cuente en la cola la espera cancelada o atribuya una evaluación a quien no la hace (6.6) |
 | `con-avisos/envio-a-pool-externo` | Un mensaje dirigido al pool y no a un receptor | Que un envio que sale de la simulacion acabe en un error interno en vez de en un aviso |
 | `con-avisos/mismo-usuario-en-dos-pools` | El mismo nombre declarado en dos pools | Que dos pools vuelvan a competir por el mismo recurso |
 | `con-avisos/multiinstancia-con-numero-escrito` | Una convocatoria multiinstancia con numberOfExecutions=4 a dos casos | Que un numero que ya no se usa se ignore en silencio; N son los dos casos vivos |
@@ -825,6 +830,64 @@ con lo dibujado estropeado a propósito —el color cambiando con la zona, ocho
 colores repartidos en ciclo y el sobre del color de su remitente— y cada una
 tiene que fallar. Necesita lo mismo que `capa_de_dibujo.mjs`.
 
+## El orquestador y sus recursos
+
+```
+node pruebas/plantilla.mjs
+```
+
+La plantilla de cada pool sale de la cabecera de su registro, no de las reglas
+(`Modeler/lib/scene/staff.js`, 6.6). Sin navegador, con todos los modelos de
+`esperado/` y contrastado con el XES leído con unas expresiones regulares, sin
+la línea de tiempo ni la escena, el script comprueba:
+
+- Que la plantilla de cada pool es la de `pool:staff`, en su orden y con el
+  carril de cada persona, también con quien no trabaja nunca: Carla en el `32`,
+  Diana —de Reserva— en el `08` y Hugo en el `39`, libres de principio a fin.
+- Que en cada instante en que empieza o acaba algo, y a mitad de cada dos, cada
+  persona está ocupada justo con los eventos en curso que la nombran
+  (`bpmn:userTask`), con su ID de ejecución, su tarea, su número de ejecución,
+  su solicitud y su intervalo; con recursos finitos, nunca con dos a la vez.
+- Que la cola de cada pool son sus esperas a una persona en curso, de cualquier
+  tarea, por orden de llegada; que con recursos infinitos no hay nunca nadie
+  en ella; y que una espera cancelada no está nunca en la cola ni en manos de
+  nadie.
+- Lo que pide la tarea, con el `39`: a los 30 s evalúan cuatro y Ana, que
+  también evalúa, sigue en otra tarea —prepara el acta— mientras su cola
+  espera las solicitudes 5, 6 y 7; a los 40 s, las cinco asignaciones, cada
+  una con su solicitud y el intervalo del XES; la espera de más de la recogida,
+  cancelada a los 22 s, no la tiene nadie, y Gema queda libre al recoger la
+  última; y a los 49 s Dani suelta la 3 y toma la 6 en el mismo instante.
+
+Para ver que las comprobaciones distinguen, se repiten con plantillas
+estropeadas a propósito —la de las reglas de ahora, sin Hugo; una sin quien no
+trabaja; una que alarga cada evaluación hasta su duración máxima; y una cola
+con la espera cancelada— y cada una tiene que fallar.
+
+También comprueba dónde va la plantilla (`placeRoster`), con un pool y
+obstáculos puestos a mano: a la derecha si cabe; si no, deslizándose por ese
+lado, a la izquierda, debajo o encima; y sin sitio, por debajo de lo que la
+taparía. En 2000 disposiciones al azar no tapa nunca nada.
+
+Después, en un Chromium de verdad, con el `39`: lo que dicen las dos
+plantillas dibujadas en todos sus instantes, igual que el XES; que cada una
+está a la derecha de su pool, sin solaparse, y que `fit()` las encaja en el
+lienzo; que con los solicitantes a 50 a la derecha de la comisión —donde su
+plantilla tapaba `Ini_S`— la de la comisión pasa a su izquierda, y con ellos a
+50 a su izquierda, la suya pasa a la izquierda de ellos, en todos los
+instantes, pegadas a su pool, siempre en el mismo sitio y sin tapar ninguna
+forma, nada de lo demás dibujado ni la otra plantilla; que a los 40 s las cinco pelotas de Evaluar dicen «Ana 5», «Bea 1»,
+«Carlos 2», «Dani 3» y «Eva 4», dentro de su franja, sin taparse ni tapar el
+marcador de multiinstancia; y que, cambiadas después las reglas en el
+diagrama —sin Hugo, Evaluar solo para Ana y otro nombre para la comisión—,
+también guardado, abierto otra vez y con los registros cargados después, y en
+el `08` borrado el carril de Diana, la plantilla sigue siendo la del registro,
+comprobado también que el XML guardado ya no los tiene; y que `fit()` no cuenta
+las marcas ocultas de un elemento borrado. Con el `01`, un Process, la
+plantilla va a la derecha de todo el diagrama. Lo dibujado
+estropeado —sin Hugo, o con Ana en la ejecución de Bea— tiene que fallar.
+Necesita lo mismo que `capa_de_dibujo.mjs`.
+
 ## El coste del proceso base
 
 ```
@@ -866,8 +929,9 @@ un mismo modelo son de la misma simulación, están todos los pools esperados y,
 reunidos, tienen todos los casos; y la plantilla de cada pool sale de su
 registro, así que se sabe quién está libre en cada instante sin consultar unas
 reglas que pueden haber cambiado. En el `32` Carla no trabaja en ninguna ronda,
-y en el `08` Diana está en un subcarril de reserva sin ninguna tarea: las dos
-tienen que salir libres de principio a fin. Los metadatos que tienen partes
+en el `08` Diana está en un subcarril de reserva sin ninguna tarea, y en el `39`
+Hugo está en la plantilla de la comisión sin ninguna: las tres tienen que salir
+libres de principio a fin. Los metadatos que tienen partes
 —la plantilla, los carriles, los roles— son listas XES anidadas y no
 contenedores, porque PM4Py lee las listas y se salta los contenedores.
 
@@ -885,9 +949,9 @@ congelados del `35` en `interfaz.mjs`, los registros de `esperado/` en
 `esperado/`, las reglas de cada uno y los diagramas del `01`, el `02`, el `10` y
 el `35` en `escena.mjs`, los registros de `esperado/` y los diagramas del
 `14` y el `35` en `zonas.mjs`, y los registros de `esperado/` y los diagramas
-del `02`, el `10`, el `27` y el `35` en `colores.mjs`. Sin esa
-comprobación, perder una
-carpeta entera —modelos y referencias a la vez, en un merge— daba verde con
+del `02`, el `10`, el `27` y el `35` en `colores.mjs`, y los registros de
+`esperado/` —con el `39`— y los diagramas del `39`, el `08` y el `01` en
+`plantilla.mjs`. Sin esa comprobación, perder una carpeta entera —modelos y referencias a la vez, en un merge— daba verde con
 menos casos, o con ninguno, sin decir nada.
 
 ## Reproducibilidad

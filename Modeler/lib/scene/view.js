@@ -1,6 +1,7 @@
-// La vista de la escena (6.3, 6.4): dibuja sobre el diagrama, con la capa de
+// La vista de la escena (6.3 a 6.6): dibuja sobre el diagrama, con la capa de
 // dibujo (lib/drawing), las pelotas y los sobres de un instante, las tres zonas
-// de cada tarea con sus insignias, y el reloj de la simulacion.
+// de cada tarea con sus insignias, la plantilla de cada pool y el reloj de la
+// simulacion.
 //
 // Es un modulo de diagram-js -el servicio `sceneView`-, sin mas dependencias
 // que la capa de dibujo. `load(timeline)` le da la linea de tiempo de una
@@ -46,9 +47,35 @@
 // pelotas, y los sobres de los que es la solicitud, el numero en negrita. Una
 // insignia de un solo caso lleva de fondo su color aclarado, y un buzon lleno
 // de una sola solicitud, que es un sobre, su color; de varios, son blancos. El
-// numero de la pelota va en la tinta que mejor se lee sobre su color. Las marcas no capturan el raton, como todas las de la capa de dibujo: su <title>
-// lo leen las pruebas y los lectores de pantalla, no aparece al pasar por
-// encima.
+// numero de la pelota va en la tinta que mejor se lee sobre su color.
+//
+// Los recursos, por nombre (6.6, lib/scene/staff.js):
+//
+// - Junto a cada pool, su plantilla: la de su registro, con
+//   quien no llego a trabajar, y no la de las reglas, que pueden haber
+//   cambiado. Cada persona, libre u ocupada: con que tarea, para que solicitud
+//   -o, si no la hay, que caso- y en que ejecucion, con un punto del color de
+//   esa solicitud. Debajo, la cola del pool (D4): lo que espera a una persona,
+//   de cualquier tarea, por orden de llegada. Con recursos infinitos no hay
+//   cola, y cada persona dice cuanto atiende a la vez. Va a la derecha del
+//   pool si cabe sin tapar nada del diagrama -otro pool, un elemento, un
+//   rotulo- ni otra plantilla; si no, deslizandose por ese lado, a su
+//   izquierda, debajo o encima, pegada al pool; y si no queda sitio, a la
+//   derecha, por debajo de lo que la tape. Se coloca con el tamano mayor que
+//   llega a tener en la simulacion, asi que no cambia de sitio de un instante
+//   a otro. En un Process, junto a todo el diagrama.
+// - En las tareas de un pool con recursos finitos, cada pelota que trabaja
+//   lleva debajo a la persona que la atiende y, en negrita, el numero de la
+//   solicitud, en el color de esa solicitud: el de sus sobres. Las filas de su
+//   franja se separan para que quepa, y caben menos. Al acabar, la ejecucion
+//   suelta a la persona y la pelota pierde su nombre.
+//
+// Encajar el diagrama -zoom('fit-viewport')- no tiene en cuenta las marcas;
+// fit() encaja tambien las plantillas y los nombres de las tareas.
+//
+// Las marcas no capturan el raton, como todas las de la capa de dibujo: su
+// <title> lo leen las pruebas y los lectores de pantalla, no aparece al pasar
+// por encima.
 
 import drawingModule from '../drawing/drawing.js';
 import { createScene, graphFromRegistry } from './scene.js';
@@ -61,6 +88,17 @@ const STEP = 15; // la distancia entre dos pelotas de la misma zona
 const CAPTION = 14; // lo que se reserva debajo de las pelotas, para el nombre de la zona
 const CENTER_THRESHOLD = 4; // las pelotas de una compuerta o un evento antes de la insignia
 const ENVELOPE_STEP = 24; // la distancia entre dos sobres del mismo buzon
+const TAGGED_STEP = 19; // la distancia entre dos filas de pelotas con su persona debajo
+const TAGGED_ROW = 19; // lo que ocupa una de esas filas, de arriba de la pelota a abajo de su etiqueta
+const MARKER = 20; // lo que ocupa abajo el marcador de multiinstancia o de bucle de una tarea
+const TAG_WIDTH = 14.5; // el ancho de la etiqueta de la persona
+const TAG_FONT = 4.6;
+const ROSTER_GAP = 12; // entre el pool y su plantilla
+const ROSTER_MARGIN = 4; // lo que se deja libre entre una plantilla y lo que tiene alrededor
+const ROSTER_SLIDE = 10; // de cuanto en cuanto se desliza una plantilla por su lado del pool
+const ROSTER_ROW = 10; // la altura de una fila de la plantilla
+const ROSTER_PAD = 6;
+const QUEUE_ROWS = 5; // las piezas de la cola que se nombran; de las demas, cuantas son
 const INK = '#22242a';
 const PALE = '#8a9099';
 
@@ -99,13 +137,55 @@ const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 // Una tarea tiene zonas; una compuerta o un evento, no.
 const hasZones = shape => !!shape && !shape.waypoints && /Task$/.test(shape.type || '');
 
-function drawBall(ball) {
+// El ancho aproximado de un texto en Arial: lo justo para repartir una
+// plantilla o encoger una etiqueta sin medir en el navegador, que tambien
+// tiene que dar lo mismo en las pruebas.
+const NARROW = new Set('iljtfrI.,:;!|\' ·()'.split(''));
+export function textWidth(content, size) {
+  let em = 0;
+  for (const c of String(content)) {
+    if (NARROW.has(c)) em += 0.3;
+    else if ('mwMW'.includes(c)) em += 0.84;
+    else if (/[0-9]/.test(c)) em += 0.556;
+    else if (c === '→' || c === '×') em += 0.75;
+    else if (c !== c.toLowerCase()) em += 0.68;
+    else em += 0.53;
+  }
+  return em * size;
+}
+
+// Lleva su persona debajo la pelota que trabaja en un pool con recursos
+// finitos: en uno con infinitos la persona atiende a la vez todo lo que la
+// nombra, nunca deja de estar disponible, y su nombre no dice nada.
+const tagged = (ball, finite) => ball.state === 'working' && !!ball.user && finite.has(ball.pool);
+
+// La persona que atiende una ejecucion, debajo de su pelota, con el numero de
+// la solicitud en negrita y el color de esa solicitud, el de sus sobres.
+function drawTag(group, ball) {
+  const color = ball.requestNumber === null ? null : caseColor(ball.requestNumber);
+  const tag = svg('g', { class: 'scene-ball-person' }, group);
+  setData(tag, { person: ball.user, request: ball.request, 'request-number': ball.requestNumber });
+  svg('rect', { x: -TAG_WIDTH / 2, y: RADIUS + 0.5, width: TAG_WIDTH, height: 6.5, rx: 1.5,
+    fill: color ? tint(color, 0.6) : NEUTRAL, stroke: color || PALE, 'stroke-width': 0.6 }, tag);
+  const label = text(tag, '', { y: RADIUS + 3.85, 'dominant-baseline': 'central', 'font-size': TAG_FONT });
+  svg('tspan', {}, label).textContent = ball.requestNumber === null ? ball.user : `${ball.user} `;
+  if (ball.requestNumber !== null) svg('tspan', { 'font-weight': 'bold' }, label).textContent = String(ball.requestNumber);
+  const room = TAG_WIDTH - 1.5;
+  if (textWidth(`${ball.user} ${ball.requestNumber ?? ''}`.trim(), TAG_FONT) > room) {
+    label.setAttribute('textLength', room);
+    label.setAttribute('lengthAdjust', 'spacingAndGlyphs');
+  }
+}
+
+function drawBall(ball, withTag = false) {
   return group => {
     group.setAttribute('class', 'drawing-mark scene-ball');
     setData(group, { kind: 'ball', case: ball.case, pool: ball.pool, number: ball.number, element: ball.element,
-      state: ball.state, zone: ball.zone, execution: ball.execution, cancelled: ball.cancelled });
+      state: ball.state, zone: ball.zone, execution: ball.execution, cancelled: ball.cancelled,
+      user: ball.state === 'working' ? ball.user : null, request: ball.request, 'request-number': ball.requestNumber });
     svg('title', {}, group).textContent = `${ball.case}${ball.execution ? `, ejecucion ${ball.execution}` : ''}: ` +
-      `${STATE_NAMES[ball.state] || ball.state}${ball.request ? `, para ${ball.request}` : ''}`;
+      `${STATE_NAMES[ball.state] || ball.state}${ball.request ? `, para ${ball.request}` : ''}` +
+      `${ball.state === 'working' && ball.user ? `, la atiende ${ball.user}` : ''}`;
     const color = caseColor(ball.number);
     group.setAttribute('data-color', color);
     svg('circle', {
@@ -115,6 +195,7 @@ function drawBall(ball) {
     const label = String(ball.number ?? '');
     text(group, label, { 'dominant-baseline': 'central', 'font-size': label.length > 2 ? 5.5 : 7, 'font-weight': 'bold',
       fill: inkOn(color) });
+    if (withTag) drawTag(group, ball);
   };
 }
 
@@ -207,6 +288,140 @@ function drawZones(element, width, height) {
   };
 }
 
+// -- La plantilla de cada pool (6.6) ---------------------------------------------
+
+const secondsText = t => `${Number.isInteger(t) ? t : Number(t.toFixed(3))} s`;
+
+// Lo que se dice de una asignacion: su tarea, su solicitud -o su caso, si no
+// la tiene- y su ejecucion.
+function workParts(work) {
+  const number = work.request ? work.requestNumber : work.number;
+  return [
+    { text: work.name || work.element },
+    { text: work.request ? ' · sol. ' : ' · caso ' },
+    { text: String(number ?? '?'), bold: true },
+    ...(work.execution === null ? [] : [ { text: ` · ejec. ${work.execution}`, pale: true } ])
+  ];
+}
+
+// Con recursos infinitos una persona atiende a la vez todo lo que la nombra:
+// cuantas ejecuciones, y de que tareas.
+function manyParts(work) {
+  const byTask = new Map();
+  for (const w of work) byTask.set(w.name || w.element, (byTask.get(w.name || w.element) || 0) + 1);
+  const tasks = [ ...byTask ].map(([ name, n ]) => `${name} ×${n}`);
+  return [
+    { text: `${work.length} a la vez: `, bold: true },
+    { text: tasks.slice(0, 2).join(', ') + (tasks.length > 2 ? ` y ${plural(tasks.length - 2, 'tarea', 'tareas')} mas` : '') }
+  ];
+}
+
+const widthOf = (parts, size) => parts.reduce((sum, part) => sum + textWidth(part.text, size), 0);
+
+// Donde va cada cosa de la plantilla de un pool en un instante, sin dibujarla:
+// { width, height, rows }. Cada fila, con su altura `y` desde arriba, sus
+// trozos de texto y lo que dice de ella.
+export function rosterLayout(pool) {
+  const finite = pool.resources !== 'infinite';
+  const rows = [];
+  let y = ROSTER_PAD + 6;
+  const line = (row, height) => {
+    rows.push({ ...row, y });
+    y += height;
+  };
+  line({ kind: 'title', x: ROSTER_PAD, size: 8, parts: [ { text: pool.name || pool.pool, bold: true } ] }, 9);
+  const people = plural(pool.people.length, 'persona', 'personas');
+  const counts = finite ? `${people}, ${plural(pool.busy, 'ocupada', 'ocupadas')} · recursos finitos`
+    : `${people} · recursos infinitos`;
+  line({ kind: 'subtitle', x: ROSTER_PAD, size: 5.5,
+    parts: [ { text: `Plantilla del registro · ${counts}${pool.complete ? '' : ' · incompleta'}`, pale: true } ] }, 6 + 4);
+
+  const nameParts = person => [ { text: person.name + (person.listed ? '' : ' *') },
+    ...(person.lanes.length ? [ { text: ` (${person.lanes.join(', ')})`, pale: true } ] : []) ];
+  const nameWidth = Math.max(0, ...pool.people.map(person => widthOf(nameParts(person), 6.5)));
+  const statusX = ROSTER_PAD + 7 + nameWidth + 5;
+  for (const person of pool.people) {
+    const work = person.work;
+    const one = work.length === 1 ? work[0] : null;
+    const status = !work.length ? [ { text: 'libre', pale: true } ] : one ? workParts(one) : manyParts(work);
+    const numbers = work.map(w => (w.request ? w.requestNumber : w.number));
+    const fill = !work.length ? NEUTRAL : (colorOfAll(numbers) || PALE);
+    const title = !work.length ? `${person.name}: libre`
+      : one ? `${person.name}: ${one.name || one.element}, ejecucion ${one.execution} (${one.id}) de ${one.case}` +
+        `${one.request ? `, para ${one.request}` : ''}, de ${secondsText(one.start)} a ${secondsText(one.end)}`
+        : `${person.name}: ${plural(work.length, 'ejecucion', 'ejecuciones')} a la vez`;
+    line({ kind: 'person', x: ROSTER_PAD + 7, statusX, size: 6.5, statusSize: 6, parts: nameParts(person), status, title,
+      dot: { fill, stroke: work.length ? INK : PALE },
+      data: { person: person.name, state: person.state, lanes: person.lanes.join('|'), listed: person.listed,
+        works: work.length, executions: work.map(w => w.id).join('|'),
+        ...(one ? { element: one.element, execution: one.id, 'execution-number': one.execution, activation: one.activation,
+          case: one.case, request: one.request, 'request-number': one.requestNumber, start: one.start, end: one.end } : {}) } },
+    ROSTER_ROW);
+  }
+
+  // La cola del pool, que es de todas sus tareas (D4).
+  y += 2;
+  const queue = pool.queue;
+  line({ kind: 'queue-title', x: ROSTER_PAD, size: 5.5, parts: [ { text: !finite ? 'Sin cola: recursos infinitos'
+    : queue.length ? `Cola del pool: ${queue.length}, por orden de llegada` : 'Cola del pool: vacia', pale: true } ] }, 8);
+  queue.slice(0, QUEUE_ROWS).forEach((entry, i) => line({ kind: 'queue', x: ROSTER_PAD + 3, size: 5.5,
+    parts: [ { text: `${i + 1}. `, pale: true }, ...workParts(entry), { text: ` · desde ${secondsText(entry.since)}`, pale: true } ],
+    title: `${entry.name || entry.element}, ejecucion ${entry.execution} (${entry.id}) de ${entry.case}` +
+      `${entry.request ? `, para ${entry.request}` : ''}: espera a una persona desde ${secondsText(entry.since)}`,
+    data: { id: entry.id, case: entry.case, element: entry.element, execution: entry.execution, activation: entry.activation,
+      request: entry.request, 'request-number': entry.requestNumber, since: entry.since, until: entry.until } }, 8));
+  if (queue.length > QUEUE_ROWS) {
+    line({ kind: 'queue-more', x: ROSTER_PAD + 3, size: 5.5, parts: [ { text: `y ${queue.length - QUEUE_ROWS} mas`, pale: true } ] }, 8);
+  }
+
+  const width = Math.max(110, ...rows.map(row => (row.kind === 'person'
+    ? row.statusX + widthOf(row.status, row.statusSize) : row.x + widthOf(row.parts, row.size)) + ROSTER_PAD));
+  return { width, height: y - 6 + ROSTER_PAD, rows };
+}
+
+function drawParts(parent, parts, attributes) {
+  const node = text(parent, '', { 'text-anchor': 'start', 'dominant-baseline': 'central', ...attributes });
+  for (const part of parts) {
+    svg('tspan', { ...(part.bold ? { 'font-weight': 'bold' } : {}), ...(part.pale ? { fill: PALE } : {}) }, node)
+      .textContent = part.text;
+  }
+  return node;
+}
+
+function drawRoster(pool, layout, side) {
+  return group => {
+    group.setAttribute('class', 'drawing-mark scene-roster');
+    setData(group, { kind: 'roster', pool: pool.pool, resources: pool.resources, people: pool.people.length, busy: pool.busy,
+      free: pool.free, queue: pool.queue.length, complete: pool.complete, side });
+    svg('title', {}, group).textContent = `Plantilla de ${pool.name || pool.pool}, la de su registro: ` +
+      `${plural(pool.people.length, 'persona', 'personas')}: ${plural(pool.busy, 'ocupada', 'ocupadas')} y ` +
+      `${plural(pool.free, 'libre', 'libres')}` +
+      (pool.resources === 'infinite' ? '; recursos infinitos' : `; ${pool.queue.length} en la cola del pool`);
+    svg('rect', { x: 0, y: 0, width: layout.width, height: layout.height, rx: 3, fill: NEUTRAL, stroke: INK,
+      'stroke-width': 0.8 }, group);
+    for (const row of layout.rows) {
+      if (row.kind === 'person') {
+        const person = svg('g', { class: 'scene-person' }, group);
+        setData(person, row.data);
+        svg('title', {}, person).textContent = row.title;
+        svg('circle', { cx: ROSTER_PAD + 2.5, cy: row.y, r: 2.6, fill: row.dot.fill, stroke: row.dot.stroke,
+          'stroke-width': 0.8 }, person);
+        drawParts(person, row.parts, { x: row.x, y: row.y, 'font-size': row.size });
+        drawParts(person, row.status, { x: row.statusX, y: row.y, 'font-size': row.statusSize });
+        continue;
+      }
+      if (row.kind === 'queue') {
+        const entry = svg('g', { class: 'scene-queue-entry' }, group);
+        setData(entry, row.data);
+        svg('title', {}, entry).textContent = row.title;
+        drawParts(entry, row.parts, { x: row.x, y: row.y, 'font-size': row.size });
+        continue;
+      }
+      drawParts(group, row.parts, { x: row.x, y: row.y, 'font-size': row.size, class: `scene-roster-${row.kind}` });
+    }
+  };
+}
+
 // El instante simulado como fecha y hora, con el desfase de la fecha de inicio.
 export function formatInstant(startDate, t) {
   const seconds = `t = ${Number.isInteger(t) ? t : t.toFixed(3).replace(/\.?0+$/, '')} s`;
@@ -222,23 +437,36 @@ export function formatInstant(startDate, t) {
   return `${seconds} · ${date} ${time}`;
 }
 
-// Las franjas de una tarea: donde empieza cada una, su ancho y cuantas pelotas
-// caben en ella, en columnas y filas.
-export function zoneGeometry(shape, zone) {
+// Las franjas de una tarea: donde empieza cada una, su ancho, cuantas pelotas
+// caben en ella, en columnas y filas, la distancia entre dos filas y el centro
+// de la rejilla, `cy`. Con `tagged`, las pelotas llevan debajo a su persona:
+// las filas se separan y se quedan por encima del marcador de multiinstancia
+// o de bucle, si la tarea lo tiene, para no taparlo.
+export function zoneGeometry(shape, zone, tagged = false) {
   const width = shape.width / 3;
   const cols = Math.max(1, Math.floor((width - 3) / STEP));
-  const rows = Math.max(1, Math.floor((shape.height - CAPTION) / STEP));
-  return { x: ZONES.indexOf(zone) * width, width, cols, rows, capacity: cols * rows };
+  const base = { x: ZONES.indexOf(zone) * width, width, cols };
+  if (!tagged) {
+    const rows = Math.max(1, Math.floor((shape.height - CAPTION) / STEP));
+    return { ...base, rows, rowStep: STEP, cy: (shape.height - CAPTION) / 2 + 2, capacity: cols * rows };
+  }
+  const marker = !!(shape.businessObject && shape.businessObject.loopCharacteristics);
+  const bottom = shape.height - (marker ? MARKER : CAPTION);
+  const rows = Math.max(1, Math.floor((bottom - 2 - TAGGED_ROW) / TAGGED_STEP) + 1);
+
+  // Una fila va de 6 por encima del centro de su pelota a 13 por debajo: el
+  // conjunto, centrado entre el borde y lo de abajo.
+  return { ...base, rows, rowStep: TAGGED_STEP, cy: (2 + bottom) / 2 - 3.5, capacity: cols * rows };
 }
 
 // Donde va cada una de `count` pelotas en una rejilla de `cols` columnas
-// alrededor de (cx, cy), en filas centradas.
-function grid(count, cols, cx, cy) {
+// alrededor de (cx, cy), en filas centradas a `rowStep` una de otra.
+function grid(count, cols, cx, cy, rowStep = STEP) {
   const rows = Math.ceil(count / cols);
   return Array.from({ length: count }, (_, i) => {
     const row = Math.floor(i / cols);
     const inRow = row === rows - 1 ? count - row * cols : cols;
-    return { dx: cx + (i % cols - (inRow - 1) / 2) * STEP, dy: cy + (row - (rows - 1) / 2) * STEP };
+    return { dx: cx + (i % cols - (inRow - 1) / 2) * STEP, dy: cy + (row - (rows - 1) / 2) * rowStep };
   });
 }
 
@@ -269,6 +497,7 @@ SceneView.$inject = [ 'canvas', 'drawingLayer', 'elementRegistry', 'eventBus' ];
 SceneView.prototype.load = function(timeline) {
   this.clear();
   this._scene = createScene(timeline, graphFromRegistry(this._elementRegistry));
+  this._reserve = null;
   return this._scene;
 };
 
@@ -308,7 +537,7 @@ SceneView.prototype._mark = function(key, draw, element, options, signature, see
   return handle;
 };
 
-const ballSignature = ball => `${ball.state} ${ball.zone}`;
+const ballSignature = (ball, withTag) => `${ball.state} ${ball.zone} ${withTag}`;
 
 // El nombre conserva la tipografia y los saltos de linea de BPMN. Solo cambia
 // su presentacion mientras hay marcas: encima de la tarea, con fondo legible.
@@ -368,8 +597,12 @@ SceneView.prototype.show = function(t, options = {}) {
     if (hasZones(shape)) labelHeights.set(element, this._taskLabel(element, shape, seen));
   }
   const limit = capacity => (threshold === null ? capacity : threshold);
-  const travel = ball => this._mark(`ball ${ball.id}`, drawBall(ball), ball.transit.flow,
-    { fraction: ball.transit.fraction }, ballSignature(ball), seen);
+  const finite = new Set(Object.values(state.staff).filter(pool => pool.resources !== 'infinite').map(pool => pool.pool));
+  const travel = ball => {
+    const withTag = tagged(ball, finite);
+    this._mark(`ball ${ball.id}`, drawBall(ball, withTag), ball.transit.flow, { fraction: ball.transit.fraction },
+      ballSignature(ball, withTag), seen);
+  };
 
   // Las pelotas de cada elemento. Las que van en transito se dibujan en su
   // flujo, pero cuentan en su zona: si la zona es una insignia, van en ella.
@@ -386,19 +619,25 @@ SceneView.prototype.show = function(t, options = {}) {
         { anchor: 'top-left' }, `${shape.width}x${shape.height}`, seen);
       for (const zone of ZONES) {
         const inZone = balls.filter(ball => ball.zone === zone).sort(byCase);
-        const geometry = zoneGeometry(shape, zone);
+        const withTags = inZone.some(ball => tagged(ball, finite));
+        const geometry = zoneGeometry(shape, zone, withTags);
         const cx = geometry.x + geometry.width / 2;
-        const cy = (shape.height - CAPTION) / 2 + 2;
         if (counts[zone].executions > limit(geometry.capacity)) {
+
+          // La insignia, donde siempre: sin pelotas no hay etiquetas.
           const color = colorOfAll(inZone.map(ball => ball.number));
           this._mark(`badge ${element} ${zone}`, drawBadge(element, zone, counts[zone], geometry.width, color), element,
-            { anchor: 'top-left', dx: cx, dy: cy }, JSON.stringify([ counts[zone], geometry.width, color ]), seen);
+            { anchor: 'top-left', dx: cx, dy: zoneGeometry(shape, zone).cy }, JSON.stringify([ counts[zone], geometry.width, color ]),
+            seen);
           continue;
         }
         inZone.filter(ball => ball.transit).forEach(travel);
         const still = inZone.filter(ball => !ball.transit);
-        grid(still.length, geometry.cols, cx, cy).forEach((place, i) => this._mark(`ball ${still[i].id}`,
-          drawBall(still[i]), element, { anchor: 'top-left', ...place }, ballSignature(still[i]), seen));
+        grid(still.length, geometry.cols, cx, geometry.cy, geometry.rowStep).forEach((place, i) => {
+          const withTag = tagged(still[i], finite);
+          this._mark(`ball ${still[i].id}`, drawBall(still[i], withTag), element, { anchor: 'top-left', ...place },
+            ballSignature(still[i], withTag), seen);
+        });
       }
       continue;
     }
@@ -415,7 +654,7 @@ SceneView.prototype.show = function(t, options = {}) {
     const still = balls.filter(ball => !ball.transit).sort(byCase);
     const cols = Math.max(1, Math.floor(((shape ? shape.width : STEP) - 4) / STEP));
     grid(still.length, cols, 0, 0).forEach((place, i) => this._mark(`ball ${still[i].id}`, drawBall(still[i]), element,
-      place, ballSignature(still[i]), seen));
+      place, ballSignature(still[i], false), seen));
   }
 
   // Los sobres: en transito, siempre por su flujo de mensaje, que es lo que
@@ -453,6 +692,8 @@ SceneView.prototype.show = function(t, options = {}) {
       { anchor: 'top-left', dx: 12 + index * ENVELOPE_STEP, dy: -22 - labelHeight }, 'envelope', seen));
   }
 
+  this._rosters(state.staff, seen);
+
   for (const [ key, mark ] of this._marks) {
     if (!seen.has(key)) {
       mark.handle.remove();
@@ -469,6 +710,136 @@ SceneView.prototype.show = function(t, options = {}) {
   return state;
 };
 
+// -- Donde va cada plantilla -----------------------------------------------------
+
+const intersects = (a, b, margin = 0) => a.x - margin < b.x + b.width && b.x < a.x + a.width + margin &&
+  a.y - margin < b.y + b.height && b.y < a.y + a.height + margin;
+
+// Los sitios en los que se prueba a poner una plantilla de tamano `size` junto
+// a una caja, en orden: a su derecha, a su izquierda, debajo y encima; en cada
+// lado, primero alineada con la esquina de arriba -o la de la izquierda- y
+// despues deslizandose por ese lado, sin salirse de el.
+export function rosterCandidates(box, size) {
+  const steps = (from, to) => {
+    const list = [ from ];
+    for (let v = from + ROSTER_SLIDE; v < to; v += ROSTER_SLIDE) list.push(v);
+    if (to > from) list.push(to);
+    return list;
+  };
+  const ys = steps(box.y, box.y + box.height - size.height);
+  const xs = steps(box.x, box.x + box.width - size.width);
+  return [
+    ...ys.map(y => ({ side: 'right', x: box.x + box.width + ROSTER_GAP, y })),
+    ...ys.map(y => ({ side: 'left', x: box.x - ROSTER_GAP - size.width, y })),
+    ...xs.map(x => ({ side: 'below', x, y: box.y + box.height + ROSTER_GAP })),
+    ...xs.map(x => ({ side: 'above', x, y: box.y - ROSTER_GAP - size.height }))
+  ];
+}
+
+// Donde va una plantilla junto a `box` sin tapar nada de `obstacles`, con un
+// margen: el primero de sus sitios que este libre. Si no queda ninguno, a la
+// derecha, bajando hasta debajo de lo que tape.
+export function placeRoster(box, size, obstacles) {
+  const hit = place => obstacles.find(other => intersects({ ...place, ...size }, other, ROSTER_MARGIN));
+  const found = rosterCandidates(box, size).find(place => !hit(place));
+  if (found) return found;
+  const place = { side: 'right', x: box.x + box.width + ROSTER_GAP, y: box.y };
+  for (let other = hit(place); other; other = hit(place)) place.y = other.y + other.height + ROSTER_MARGIN + 1;
+  return place;
+}
+
+// Lo que una plantilla no puede tapar: las formas del diagrama -pools,
+// carriles, elementos y rotulos-. Los grupos no: son un marco, y pueden
+// abarcarlo todo.
+SceneView.prototype._shapes = function() {
+  const root = this._canvas.getRootElement();
+  return this._elementRegistry.filter(element => element !== root && !element.waypoints && !element.hidden &&
+    element.type !== 'bpmn:Group' && Number.isFinite(element.width) && Number.isFinite(element.height));
+};
+
+// Junto a que va la plantilla de un pool, y a que elemento se ancla para
+// seguirlo si se mueve: la caja del pool o, en un Process, que no tiene forma,
+// la de todo el diagrama, anclada a su elemento mas a la derecha. null si el
+// pool ya no esta.
+SceneView.prototype._rosterBox = function(poolId, shapes) {
+  const pool = this._elementRegistry.get(poolId);
+  if (pool && pool.type === 'bpmn:Participant' && pool.width) {
+    return { element: poolId, own: pool, box: { x: pool.x, y: pool.y, width: pool.width, height: pool.height } };
+  }
+  if (!pool || pool !== this._canvas.getRootElement()) return null;
+  const solid = shapes.filter(shape => shape.type !== 'label');
+  if (!solid.length) return null;
+  const right = solid.reduce((a, b) => (b.x + b.width > a.x + a.width ? b : a));
+  const x = Math.min(...shapes.map(shape => shape.x));
+  const y = Math.min(...shapes.map(shape => shape.y));
+  return { element: right.id, own: null, box: { x, y, width: Math.max(...shapes.map(shape => shape.x + shape.width)) - x,
+    height: Math.max(...shapes.map(shape => shape.y + shape.height)) - y } };
+};
+
+// Lo que llega a ocupar la plantilla de cada pool en toda la simulacion -con
+// su cola mas larga y sus textos mas anchos-: se coloca con ese tamano, para
+// que no cambie de sitio de un instante a otro. Entre dos cambios de la linea
+// de tiempo la plantilla es la misma, asi que basta con mirar los cambios.
+SceneView.prototype._rosterReserve = function() {
+  if (!this._reserve) {
+    const reserve = new Map();
+    for (const t of this._scene.timeline.changes()) {
+      for (const pool of Object.values(this._scene.staff.at(t))) {
+        const { width, height } = rosterLayout(pool);
+        const kept = reserve.get(pool.pool) || { width: 0, height: 0 };
+        reserve.set(pool.pool, { width: Math.max(kept.width, width), height: Math.max(kept.height, height) });
+      }
+    }
+    this._reserve = reserve;
+  }
+  return this._reserve;
+};
+
+// Las plantillas de todos los pools, de arriba abajo, cada una junto a su pool
+// sin tapar ninguna forma del diagrama -tampoco los demas pools- ni otra
+// plantilla ya colocada. A la izquierda o encima, pegada a su pool.
+SceneView.prototype._rosters = function(staff, seen) {
+  const shapes = this._shapes();
+  const reserve = this._rosterReserve();
+  const placed = [];
+  const entries = Object.values(staff).map(pool => ({ pool, at: this._rosterBox(pool.pool, shapes) }))
+    .filter(entry => entry.at).sort((a, b) => a.at.box.y - b.at.box.y || a.at.box.x - b.at.box.x);
+  for (const { pool, at } of entries) {
+    const layout = rosterLayout(pool);
+    const kept = reserve.get(pool.pool) || { width: 0, height: 0 };
+    const size = { width: Math.max(layout.width, kept.width), height: Math.max(layout.height, kept.height) };
+    const place = placeRoster(at.box, size, [ ...shapes.filter(shape => shape !== at.own), ...placed ]);
+    placed.push({ x: place.x, y: place.y, ...size });
+    const x = place.side === 'left' ? place.x + size.width - layout.width : place.x;
+    const y = place.side === 'above' ? place.y + size.height - layout.height : place.y;
+    const anchor = this._elementRegistry.get(at.element);
+    this._mark(`roster ${pool.pool}`, drawRoster(pool, layout, place.side), at.element,
+      { anchor: 'top-left', dx: x - anchor.x, dy: y - anchor.y }, JSON.stringify([ layout, place.side ]), seen);
+  }
+};
+
+// Encaja en el lienzo el diagrama y todo lo dibujado -las plantillas, junto a
+// sus pools, y los nombres de las tareas, encima-, como
+// zoom('fit-viewport'), que solo mira el diagrama: sin ampliar y con un
+// margen de `padding`. Solo cuentan las marcas que se ven: una cuyo elemento
+// ya no esta se oculta, y no se sabe donde estaria.
+SceneView.prototype.fit = function(padding = 10) {
+  const marks = this._drawingLayer.marks().filter(mark => mark.point).map(mark => {
+    const box = mark.node.getBBox();
+    return { x: box.x + mark.point.x, y: box.y + mark.point.y, width: box.width, height: box.height };
+  });
+  const boxes = [ this._canvas.getActiveLayer().getBBox(), ...marks ].filter(box => box.width || box.height);
+  if (!boxes.length) return this._canvas.zoom('fit-viewport');
+  const left = Math.min(...boxes.map(box => box.x)) - padding;
+  const top = Math.min(...boxes.map(box => box.y)) - padding;
+  const width = Math.max(...boxes.map(box => box.x + box.width)) + padding - left;
+  const height = Math.max(...boxes.map(box => box.y + box.height)) + padding - top;
+  const outer = this._canvas.getSize();
+  const scale = Math.min(1, outer.width / width, outer.height / height);
+  this._canvas.viewbox({ x: left, y: top, width: outer.width / scale, height: outer.height / scale });
+  return scale;
+};
+
 // Quita las marcas y el reloj, y descarga la simulacion: hasta otro load, show
 // no dibuja nada. Al abrir otro diagrama se limpia sola, porque una simulacion
 // es de su diagrama y sus registros no dicen nada del nuevo.
@@ -480,6 +851,7 @@ SceneView.prototype.clear = function() {
   if (this._clock) this._clock.remove();
   this._clock = null;
   this._scene = null;
+  this._reserve = null;
   this._shown = null;
 };
 

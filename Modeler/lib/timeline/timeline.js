@@ -26,6 +26,9 @@
 // 4/10/2026 el motor no tiene topes, y lo que espera una ejecucion
 // multiinstancia es a una persona libre del pool (D4), que es `waiting-user`.
 //
+// De la cabecera de cada registro, `pools` trae tambien su plantilla (6.6):
+// todas las personas del pool, sus carriles y sus roles, como eran al simular.
+//
 // Sin dependencias, como lib/numbers y lib/logs: lo usa el visualizador y,
 // desde Node, Backend/pruebas/linea_de_tiempo.mjs.
 
@@ -76,6 +79,43 @@ function attributesOf(element) {
 
 const childrenNamed = (element, name) => element.children.filter(child => child.name === name);
 
+// Lo que lleva una lista XES: cada elemento, { key, value } o, si es otra
+// lista, { key, items }. Van dentro de <values>; un XES que los ponga
+// directamente en la lista se lee igual.
+function itemsOf(list) {
+  const holder = childrenNamed(list, 'values')[0] || list;
+  return holder.children.filter(child => child.attrs.key !== undefined).map(child => (child.name === 'list'
+    ? { key: child.attrs.key, items: itemsOf(child) }
+    : { key: child.attrs.key, value: child.attrs.value }));
+}
+
+const peopleIn = items => items.filter(item => item.key === 'person' && !item.items).map(item => item.value);
+const valueIn = (items, key) => (items.find(item => item.key === key && !item.items) || {}).value ?? null;
+
+// La plantilla del pool, tal como la guarda su registro (D10, 6.6): todas sus
+// personas, tambien las que no llegaron a trabajar, sus carriles, con su
+// carril padre y sus personas, y, en un Process, sus roles. Es la de cuando se
+// simulo: las reglas pueden haber cambiado despues. Sin pool:staff, null: el
+// registro no dice quien habia.
+function staffOf(root) {
+  const lists = new Map(childrenNamed(root, 'list').map(list => [ list.attrs.key, itemsOf(list) ]));
+  const nested = key => (lists.get(key) || []).filter(item => item.items);
+  return {
+    staff: lists.has('pool:staff') ? peopleIn(lists.get('pool:staff')) : null,
+    lanes: nested('pool:lanes').map(lane => ({ id: lane.key, name: valueIn(lane.items, 'name'),
+      parent: valueIn(lane.items, 'parent'), people: peopleIn(lane.items) })),
+    roles: nested('pool:roles').map(role => ({ id: role.key, people: peopleIn(role.items) }))
+  };
+}
+
+function deepFreeze(value) {
+  if (value && typeof value === 'object' && !Object.isFrozen(value)) {
+    Object.values(value).forEach(deepFreeze);
+    Object.freeze(value);
+  }
+  return value;
+}
+
 function seconds(iso, origin) {
   const ms = Date.parse(iso);
   if (Number.isNaN(ms)) throw new Error(`Una fecha del registro no se entiende: ${JSON.stringify(iso)}.`);
@@ -108,6 +148,7 @@ function readLog(log, index) {
     pool: given.pool || header['pool:id'] || null,
     name: given.name ?? header['pool:name'] ?? null,
     header,
+    ...staffOf(root),
     traces: childrenNamed(root, 'trace').map(trace => ({
       attributes: attributesOf(trace),
       events: childrenNamed(trace, 'event').map(attributesOf)
@@ -211,7 +252,19 @@ class Timeline {
     this.simulationId = header['simulation:id'] ?? null;
     this.seed = header['simulation:seed'] ?? null;
     this.startDate = startDate;
-    this.pools = read.map(log => ({ id: log.pool, name: log.name }));
+
+    // Cada pool con lo que dice su registro: su rol, si sus recursos son
+    // finitos o infinitos, y su plantilla, carriles y roles (6.6).
+    this.pools = read.map(log => deepFreeze({
+      id: log.pool,
+      name: log.name,
+      role: log.header['pool:role'] ?? null,
+      resources: log.header['pool:resources'] ?? null,
+      staff: log.staff,
+      lanes: log.lanes,
+      roles: log.roles
+    }));
+    this._byPool = new Map(this.pools.map(pool => [ pool.id, pool ]));
     this.cases = cases;
     this.items = items;
     this.start = items.length ? Math.min(...items.map(item => item.start)) : 0;
@@ -222,6 +275,10 @@ class Timeline {
 
   case(id) {
     return this._byCase.get(id) || null;
+  }
+
+  pool(id) {
+    return this._byPool.get(id) || null;
   }
 
   // Lo que cada caso tiene activo en el instante t: los intervalos con
