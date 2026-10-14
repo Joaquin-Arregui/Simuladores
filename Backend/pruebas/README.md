@@ -46,6 +46,9 @@ mientras el comportamiento no deba cambiar, sus XES no deben cambiar.
 - `zonas.mjs` — las tres zonas de cada tarea del visualizador, con sus
   recuentos contados también sobre el XES, y sus insignias en un Chromium de
   verdad (ver [Las tres zonas de cada tarea](#las-tres-zonas-de-cada-tarea)).
+- `colores.mjs` — el color de cada caso, constante y distinto en su pool, en
+  sus pelotas y en sus sobres, en un Chromium de verdad (ver
+  [El color de cada caso](#el-color-de-cada-caso)).
 - `navegador.mjs` — lo que comparten las pruebas en navegador: servir los
   ficheros y abrir Chromium.
 - `interfaz.mjs` — la interfaz del Modeler en un Chromium de verdad: abrir,
@@ -785,6 +788,43 @@ El `14` no tenía diagrama: se generó para esto con `bpmn_desde_reglas.py`, y c
 él entra también en el banco de integración y en `exportadas/`. Necesita lo
 mismo que `capa_de_dibujo.mjs`.
 
+## El color de cada caso
+
+```
+node pruebas/colores.mjs
+```
+
+Cada caso tiene su color, constante de principio a fin y distinto del de los
+demás casos de su pool, y sus sobres —los de los que es la solicitud— llevan el
+mismo (`Modeler/lib/scene/colors.js`, 6.5). Sin navegador, el script comprueba
+la paleta:
+
+- Que los ocho primeros son la paleta categórica de referencia de la guía de
+  visualización, en su orden, y que hasta el caso 1000 no se repite ninguno;
+  sin número, el neutro.
+- Que no depende del orden en que se pidan: otra copia del módulo, pidiendo
+  primero el 700, da los mismos.
+- Que dos casos seguidos se distinguen: al menos 15 de distancia con visión
+  normal y 8 con daltonismo rojo o verde (OKLab × 100), y que el número de cada
+  pelota se lee sobre su color, a 3,9:1 o más.
+- Que en cada pool de cada modelo de `esperado/` los números de los casos no se
+  repiten: con eso, dos casos del mismo pool nunca comparten color.
+
+Después, en el bpmn-js de las dependencias del Modeler con `lib/scene`, recorre
+todos los instantes del `02`, el `35` y el `10`, y a mitad de cada dos, sin
+tránsito y con él, y mira lo que de verdad pinta: que cada caso lleva siempre
+el mismo color, el de su número, en todas sus pelotas y en cualquier zona; que
+dos casos del mismo pool nunca lo comparten; que cada sobre lleva el color del
+caso de su solicitud; y que el número va en la tinta que mejor se lee. Con el
+umbral en 1, que las insignias de un solo caso —el lote del SACU 1— se tiñen
+con su color aclarado y las de varios —los diez residentes que esperan el
+resultado— quedan blancas, y que el buzón lleno de la convocatoria del `10`, de
+un solo orquestador, lleva su color, y el del `27` a los 2 s, con avisos de dos
+servicios, es blanco. Para ver que las comprobaciones distinguen, se repiten
+con lo dibujado estropeado a propósito —el color cambiando con la zona, ocho
+colores repartidos en ciclo y el sobre del color de su remitente— y cada una
+tiene que fallar. Necesita lo mismo que `capa_de_dibujo.mjs`.
+
 ## El coste del proceso base
 
 ```
@@ -843,8 +883,9 @@ en `valida_esquema.py`, y el ejemplo, sus reglas exportadas y los registros
 congelados del `35` en `interfaz.mjs`, los registros de `esperado/` en
 `linea_de_tiempo.mjs`, el ejemplo en `capa_de_dibujo.mjs`, y los registros de
 `esperado/`, las reglas de cada uno y los diagramas del `01`, el `02`, el `10` y
-el `35` en `escena.mjs`, y los registros de `esperado/` y los diagramas del
-`14` y el `35` en `zonas.mjs`. Sin esa
+el `35` en `escena.mjs`, los registros de `esperado/` y los diagramas del
+`14` y el `35` en `zonas.mjs`, y los registros de `esperado/` y los diagramas
+del `02`, el `10`, el `27` y el `35` en `colores.mjs`. Sin esa
 comprobación, perder una
 carpeta entera —modelos y referencias a la vez, en un merge— daba verde con
 menos casos, o con ninguno, sin decir nada.

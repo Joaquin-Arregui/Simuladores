@@ -39,15 +39,21 @@
 // sobre en transito cuenta en su buzon, pero se sigue dibujando en su flujo de
 // mensaje, que es lo que viaja. El umbral es un numero, tambien escrito como
 // texto; uno mayor que lo que cabe deja que las pelotas se salgan de la
-// franja. Los colores de la resolucion
-// -aceptada, rechazada- son de la 6.5: aqui todas las pelotas son blancas. Las
-// marcas no capturan el raton, como todas las de la capa de dibujo: su <title>
+// franja.
+//
+// Cada caso tiene su color (6.5, lib/scene/colors.js), constante de principio a
+// fin y distinto del de los demas casos de su pool: lo llevan todas sus
+// pelotas, y los sobres de los que es la solicitud, el numero en negrita. Una
+// insignia de un solo caso lleva de fondo su color aclarado, y un buzon lleno
+// de una sola solicitud, que es un sobre, su color; de varios, son blancos. El
+// numero de la pelota va en la tinta que mejor se lee sobre su color. Las marcas no capturan el raton, como todas las de la capa de dibujo: su <title>
 // lo leen las pruebas y los lectores de pantalla, no aparece al pasar por
 // encima.
 
 import drawingModule from '../drawing/drawing.js';
 import { createScene, graphFromRegistry } from './scene.js';
 import { ZONES, countBalls } from './zones.js';
+import { NEUTRAL, caseColor, inkOn, tint } from './colors.js';
 
 const SVG = 'http://www.w3.org/2000/svg';
 const RADIUS = 6; // el de una pelota
@@ -100,12 +106,15 @@ function drawBall(ball) {
       state: ball.state, zone: ball.zone, execution: ball.execution, cancelled: ball.cancelled });
     svg('title', {}, group).textContent = `${ball.case}${ball.execution ? `, ejecucion ${ball.execution}` : ''}: ` +
       `${STATE_NAMES[ball.state] || ball.state}${ball.request ? `, para ${ball.request}` : ''}`;
+    const color = caseColor(ball.number);
+    group.setAttribute('data-color', color);
     svg('circle', {
-      r: RADIUS, fill: '#ffffff', stroke: INK, 'stroke-width': 1.3,
+      r: RADIUS, fill: color, stroke: INK, 'stroke-width': 1.3,
       'stroke-dasharray': ball.state === 'working' ? 'none' : '2.2 1.4'
     }, group);
     const label = String(ball.number ?? '');
-    text(group, label, { 'dominant-baseline': 'central', 'font-size': label.length > 2 ? 5.5 : 7 });
+    text(group, label, { 'dominant-baseline': 'central', 'font-size': label.length > 2 ? 5.5 : 7, 'font-weight': 'bold',
+      fill: inkOn(color) });
   };
 }
 
@@ -116,8 +125,13 @@ function drawEnvelope(envelope) {
       request: envelope.request, flow: envelope.flow, message: envelope.message });
     svg('title', {}, group).textContent = `${envelope.message || 'Mensaje'} de ${envelope.sender} a ${envelope.target}, ` +
       `solicitud de ${envelope.request}`;
-    svg('rect', { x: -7, y: -5, width: 14, height: 10, rx: 1, fill: '#fffbea', stroke: INK, 'stroke-width': 1.2 }, group);
-    svg('path', { d: 'M -7 -5 L 0 1 L 7 -5', fill: 'none', stroke: INK, 'stroke-width': 1 }, group);
+
+    // El color del caso de la solicitud: una conversacion, ida y vuelta, va
+    // en el mismo color.
+    const color = caseColor(envelope.numbers.request);
+    group.setAttribute('data-color', color);
+    svg('rect', { x: -7, y: -5, width: 14, height: 10, rx: 1, fill: color, stroke: INK, 'stroke-width': 1.2 }, group);
+    svg('path', { d: 'M -7 -5 L 0 1 L 7 -5', fill: 'none', stroke: inkOn(color), 'stroke-width': 1 }, group);
     const label = text(group, '', { x: 0, y: 11, 'dominant-baseline': 'hanging', 'font-size': 7 });
     const { sender, target } = envelope.numbers;
     const part = (content, bold) => {
@@ -129,14 +143,22 @@ function drawEnvelope(envelope) {
   };
 }
 
+// El color de un grupo de pelotas o de sobres: el de su caso si son todos del
+// mismo; si no, ninguno.
+function colorOfAll(numbers) {
+  const distinct = new Set(numbers);
+  return distinct.size === 1 ? caseColor([ ...distinct ][0]) : null;
+}
+
 // La insignia de una zona: cuantas ejecuciones, de cuantos casos y de cuantos
 // casos son sus solicitudes. `width` es la de su franja, o null en el centro de
-// una compuerta o un evento.
-function drawBadge(element, zone, counts, width) {
+// una compuerta o un evento. `color` es el de su caso, si todas son del mismo:
+// el fondo, aclarado.
+function drawBadge(element, zone, counts, width, color) {
   return group => {
     group.setAttribute('class', 'drawing-mark scene-badge');
     setData(group, { kind: 'badge', element, zone, executions: counts.executions, cases: counts.cases,
-      requests: counts.requests });
+      requests: counts.requests, color: color || NEUTRAL });
     const lines = [ plural(counts.cases, 'caso', 'casos') ];
     if (counts.requests) lines.push(`${counts.requests} sol.`);
     svg('title', {}, group).textContent = `${element}${width ? `, ${ZONE_NAMES[zone]}` : ''}: ` +
@@ -144,8 +166,8 @@ function drawBadge(element, zone, counts, width) {
       `${counts.requests ? `, con solicitudes de ${plural(counts.requests, 'caso', 'casos')}` : ''}`;
     const w = width ? Math.max(20, width - 4) : 30;
     const h = 24 + 8 * lines.length;
-    svg('rect', { x: -w / 2, y: -h / 2, width: w, height: h, rx: 3, fill: '#ffffff', stroke: INK, 'stroke-width': 1,
-      'stroke-dasharray': zone === 'inside' ? 'none' : '2.2 1.4' }, group);
+    svg('rect', { x: -w / 2, y: -h / 2, width: w, height: h, rx: 3, fill: color ? tint(color) : NEUTRAL, stroke: INK,
+      'stroke-width': 1, 'stroke-dasharray': zone === 'inside' ? 'none' : '2.2 1.4' }, group);
     let y = -h / 2 + 9;
     text(group, String(counts.executions), { y, 'font-size': 11, 'font-weight': 'bold', 'dominant-baseline': 'central' });
     y += 9;
@@ -157,14 +179,16 @@ function drawBadge(element, zone, counts, width) {
   };
 }
 
-// El buzon lleno: un sobre con cuantos hay.
-function drawMailbox(element, count) {
+// El buzon lleno: un sobre con cuantos hay, del color de su solicitud si son
+// todos de la misma.
+function drawMailbox(element, count, color) {
   return group => {
+    const fill = color || NEUTRAL;
     group.setAttribute('class', 'drawing-mark scene-mailbox');
-    setData(group, { kind: 'mailbox', element, messages: count });
+    setData(group, { kind: 'mailbox', element, messages: count, color: fill });
     svg('title', {}, group).textContent = `${element}: ${plural(count, 'sobre', 'sobres')} en el buzon`;
-    svg('rect', { x: -7, y: -5, width: 14, height: 10, rx: 1, fill: '#fffbea', stroke: INK, 'stroke-width': 1.2 }, group);
-    svg('path', { d: 'M -7 -5 L 0 1 L 7 -5', fill: 'none', stroke: INK, 'stroke-width': 1 }, group);
+    svg('rect', { x: -7, y: -5, width: 14, height: 10, rx: 1, fill, stroke: INK, 'stroke-width': 1.2 }, group);
+    svg('path', { d: 'M -7 -5 L 0 1 L 7 -5', fill: 'none', stroke: inkOn(fill), 'stroke-width': 1 }, group);
     text(group, `× ${count}`, { x: 10, y: 0, 'text-anchor': 'start', 'dominant-baseline': 'central', 'font-size': 8,
       'font-weight': 'bold' });
   };
@@ -366,8 +390,9 @@ SceneView.prototype.show = function(t, options = {}) {
         const cx = geometry.x + geometry.width / 2;
         const cy = (shape.height - CAPTION) / 2 + 2;
         if (counts[zone].executions > limit(geometry.capacity)) {
-          this._mark(`badge ${element} ${zone}`, drawBadge(element, zone, counts[zone], geometry.width), element,
-            { anchor: 'top-left', dx: cx, dy: cy }, JSON.stringify([ counts[zone], geometry.width ]), seen);
+          const color = colorOfAll(inZone.map(ball => ball.number));
+          this._mark(`badge ${element} ${zone}`, drawBadge(element, zone, counts[zone], geometry.width, color), element,
+            { anchor: 'top-left', dx: cx, dy: cy }, JSON.stringify([ counts[zone], geometry.width, color ]), seen);
           continue;
         }
         inZone.filter(ball => ball.transit).forEach(travel);
@@ -381,8 +406,9 @@ SceneView.prototype.show = function(t, options = {}) {
     // Una compuerta, un evento o un elemento que ya no esta en el diagrama.
     const all = countBalls(balls);
     if (all.executions > limit(CENTER_THRESHOLD)) {
-      this._mark(`badge ${element} center`, drawBadge(element, 'center', all, null), element, {},
-        JSON.stringify(all), seen);
+      const color = colorOfAll(balls.map(ball => ball.number));
+      this._mark(`badge ${element} center`, drawBadge(element, 'center', all, null, color), element, {},
+        JSON.stringify([ all, color ]), seen);
       continue;
     }
     balls.filter(ball => ball.transit).forEach(travel);
@@ -415,8 +441,12 @@ SceneView.prototype.show = function(t, options = {}) {
     const count = state.zones[element] ? state.zones[element].entry.messages : envelopes.length;
     const labelHeight = labelHeights.get(element) || 0;
     if (count > limit(perRow)) {
-      this._mark(`mailbox ${element}`, drawMailbox(element, count), element,
-        { anchor: 'top-left', dx: 12, dy: -14 - labelHeight }, String(count), seen);
+
+      // Los que estan en el buzon, tambien los que aun van de camino.
+      const inBox = state.envelopes.filter(envelope => envelope.to === element && t < envelope.pickup);
+      const color = colorOfAll(inBox.map(envelope => envelope.numbers.request));
+      this._mark(`mailbox ${element}`, drawMailbox(element, count, color), element,
+        { anchor: 'top-left', dx: 12, dy: -14 - labelHeight }, `${count} ${color}`, seen);
       continue;
     }
     envelopes.forEach((envelope, index) => this._mark(`envelope ${envelope.id}`, drawEnvelope(envelope), element,

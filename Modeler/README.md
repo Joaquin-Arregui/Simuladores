@@ -133,9 +133,9 @@ Las pruebas del Modeler están en el banco del Backend: el código de `lib/` lo
 prueban sin navegador `valida_bpmn.mjs`, `exporta_reglas.mjs` y
 `linea_de_tiempo.mjs`, y en un Chromium de verdad, la interfaz `interfaz.mjs`
 (ver [el banco](../Backend/pruebas/README.md#la-interfaz)) y lo que dibuja el
-visualizador `capa_de_dibujo.mjs`, `escena.mjs` y `zonas.mjs`. Para estas
-hace falta, una vez, `npx playwright install chromium`, que descarga el
-Chromium de Playwright.
+visualizador `capa_de_dibujo.mjs`, `escena.mjs`, `zonas.mjs` y `colores.mjs`.
+Para estas hace falta, una vez, `npx playwright install chromium`, que
+descarga el Chromium de Playwright.
 
 ## Estructura
 
@@ -165,7 +165,7 @@ Chromium de Playwright.
 - `lib/drawing`: la capa de dibujo del visualizador, marcas sobre el lienzo
   (ver abajo).
 - `lib/scene`: las pelotas de los casos, los sobres, las tres zonas de cada
-  tarea y el reloj del visualizador (ver abajo).
+  tarea, el color de cada caso y el reloj del visualizador (ver abajo).
 
 ### Parámetros de simulación en el panel
 
@@ -378,10 +378,10 @@ de dibujar sobre él la del anterior.
 Cada pelota y cada sobre es una marca que se reutiliza de un instante a otro:
 solo se mueve lo que cambia. Las marcas no capturan el ratón, así que su
 título, con el caso, la ejecución, el estado y la solicitud, no aparece al
-pasar por encima; está para las pruebas y los lectores de pantalla. Los
-colores de la resolución son de la 6.5 y la página que lo usa, de la 6.7. El
-banco lo comprueba con todos los registros de referencia y en un Chromium de
-verdad (`Backend/pruebas/escena.mjs`).
+pasar por encima; está para las pruebas y los lectores de pantalla. El color
+de cada caso es de la 6.5 (abajo) y la página que lo usa, de la 6.7. El banco
+lo comprueba con todos los registros de referencia y en un Chromium de verdad
+(`Backend/pruebas/escena.mjs`).
 
 ### Las tres zonas de cada tarea
 
@@ -444,6 +444,37 @@ detectan varias cadenas o activaciones candidatas, se pide volver a simular
 para obtener `bpmn:activation`, en vez de escoger una arbitrariamente.
 El banco comprueba los recuentos contra el XES, en todos los modelos de
 referencia, y el dibujo en un Chromium de verdad (`Backend/pruebas/zonas.mjs`).
+
+### El color de cada caso
+
+Cada caso tiene su color (6.5, `lib/scene/colors.js`), **constante de
+principio a fin**: no cambia con lo que haga, ni con la zona en la que esté, ni
+al terminar. Va por el número del caso dentro de su pool, así que dos casos del
+mismo pool nunca lo comparten, y el caso 1 de cada pool tiene el mismo: se
+distinguen por el pool en el que están. Lo llevan:
+
+- **todas sus pelotas**, también las de sus ramas paralelas y las de las
+  ejecuciones de un lote: el número va encima en negrita, en la tinta —oscura o
+  blanca— que mejor se lee sobre el color;
+- **los sobres de los que es la solicitud**, el número en negrita debajo del
+  sobre: una conversación va en un solo color, ida y vuelta —la petición del
+  cliente 1 y la respuesta que le manda el servicio 1, las dos del color del
+  cliente 1—, y los avisos de una convocatoria, en el del orquestador;
+- **una insignia de un solo caso**, con su color aclarado de fondo —las del
+  lote del SACU 1, en el del SACU 1—, y **un buzón lleno de una sola
+  solicitud**, que es un sobre, en el suyo. Si son de varios, blancos.
+
+Los ocho primeros colores son la paleta categórica de referencia de la guía de
+visualización, en su orden, validada contra el fondo blanco del lienzo. A
+partir del noveno se generan en OKLCH, en la misma banda de luminosidad y
+croma, de modo que cada uno se distinga del anterior —al menos 15 de
+distancia con visión normal y 8 con daltonismo rojo o verde, en OKLab × 100— y
+ninguno se repita. Con muchos casos los colores se parecen cada vez más: lo que
+identifica al caso sigue siendo su número, en la pelota y en el sobre, y el
+color ayuda a seguirlo. En vez de colorear la resolución —aceptada,
+rechazada—, el color identifica al caso; la rama que toma se ve por dónde va
+su pelota. El banco lo comprueba en un Chromium de verdad
+(`Backend/pruebas/colores.mjs`).
 
 ### Las reglas que se mandan al simular
 
