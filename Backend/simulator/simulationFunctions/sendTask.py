@@ -16,6 +16,7 @@ f'''
         <event>
             <string key="bpmn:type" value="StandBy"/>
             <string key="bpmn:id" value="{{xml_value(TaskName)}}"/>
+            <int key="bpmn:activation" value="{{xml_value(contexto)}}"/>
             <string key="bpmn:execution" value="{{xml_value(execution)}}"/>{{atributo_de_solicitud(solicitud)}}
             <date key="time:timestamp" value="{{xml_value(start_standBy)}}"/>
             <date key="time:endTime" value="{{xml_value(env.now)}}"/>
@@ -35,6 +36,7 @@ f'''
             <string key="bpmn:type" value="{xml_template(element.bpmn_type)}"/>
             <string key="bpmn:name" value="{xml_template(element.name)}"/>
             <string key="bpmn:id" value="{{xml_value(TaskName)}}"/>
+            <int key="bpmn:activation" value="{{xml_value(contexto)}}"/>
             <string key="bpmn:messageDestiny" value="{xml_template(element.messageDestiny)}"/>
             <string key="bpmn:messageTarget" value="{{xml_value(etiqueta_de_caso(destino))}}"/>
             <string key="bpmn:userTask" value="{{xml_value(userTask)}}"/>
@@ -59,6 +61,7 @@ f'''
         <event>
             <string key="bpmn:type" value="StandByData"/>
             <string key="bpmn:id" value="{{xml_value(TaskName)}}"/>
+            <int key="bpmn:activation" value="{{xml_value(contexto)}}"/>
             <date key="time:timestamp" value="{{xml_value(start_standBy_data)}}"/>
             <date key="time:endTime" value="{{xml_value(env.now)}}"/>
             <date key="time:duration" value="{{xml_value(env.now-start_standBy_data)}}"/>

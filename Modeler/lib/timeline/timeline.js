@@ -160,6 +160,7 @@ export function timelineFromLogs(logs) {
           state: stateOf(event['bpmn:type'], interval),
           interval,
           execution: integerOrNull(event['bpmn:execution']),
+          activation: event['bpmn:activation'] === undefined ? null : String(event['bpmn:activation']),
           occurrence,
           request: event['bpmn:request'] ?? null,
           sender: event['bpmn:messageSender'] ?? null,

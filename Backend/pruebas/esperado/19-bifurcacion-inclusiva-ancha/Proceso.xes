@@ -4,8 +4,8 @@
   <extension name="Time" prefix="time" uri="http://www.xes-standard.org/time.xesext"/>
   <classifier name="Activity (by BPMN ID)" keys="bpmn:id" scope="event"/>
   <classifier name="Case (by participant and instance)" keys="bpmn:participant bpmn:instance" scope="event"/>
-  <string key="simulation:id" value="d8c967171cf37675" />
-  <string key="simulation:formatVersion" value="1" />
+  <string key="simulation:id" value="9c7a0221226bd6db" />
+  <string key="simulation:formatVersion" value="2" />
   <int key="simulation:seed" value="20260101" />
   <string key="simulation:startDate" value="2026-01-01T00:00:00+00:00" />
   <string key="simulation:participants" value="Proceso" />
@@ -58,6 +58,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Comprobacion 1" />
       <string key="bpmn:id" value="Comprobar_01" />
+      <int key="bpmn:activation" value="4" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="2" />
@@ -75,6 +76,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Comprobacion 2" />
       <string key="bpmn:id" value="Comprobar_02" />
+      <int key="bpmn:activation" value="5" />
       <string key="bpmn:userTask" value="Beto" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="2" />
@@ -91,6 +93,7 @@
       <string key="concept:name" value="StandBy · Comprobar_03" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Comprobar_03" />
+      <int key="bpmn:activation" value="6" />
       <string key="bpmn:execution" value="1" />
       <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:00:02.000+00:00" />
@@ -104,6 +107,7 @@
       <string key="concept:name" value="StandBy · Comprobar_06" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Comprobar_06" />
+      <int key="bpmn:activation" value="7" />
       <string key="bpmn:execution" value="1" />
       <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:00:02.000+00:00" />
@@ -117,6 +121,7 @@
       <string key="concept:name" value="StandBy · Comprobar_08" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Comprobar_08" />
+      <int key="bpmn:activation" value="8" />
       <string key="bpmn:execution" value="1" />
       <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:00:04.000+00:00" />
@@ -130,6 +135,7 @@
       <string key="concept:name" value="StandBy · Comprobar_10" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Comprobar_10" />
+      <int key="bpmn:activation" value="9" />
       <string key="bpmn:execution" value="1" />
       <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:00:04.000+00:00" />
@@ -143,6 +149,7 @@
       <string key="concept:name" value="StandBy · Comprobar_11" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Comprobar_11" />
+      <int key="bpmn:activation" value="10" />
       <string key="bpmn:execution" value="1" />
       <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:00:06.000+00:00" />
@@ -156,6 +163,7 @@
       <string key="concept:name" value="StandBy · Comprobar_12" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Comprobar_12" />
+      <int key="bpmn:activation" value="11" />
       <string key="bpmn:execution" value="1" />
       <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:00:07.000+00:00" />
@@ -169,6 +177,7 @@
       <string key="concept:name" value="StandBy · Comprobar_13" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Comprobar_13" />
+      <int key="bpmn:activation" value="12" />
       <string key="bpmn:execution" value="1" />
       <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:00:09.000+00:00" />
@@ -182,6 +191,7 @@
       <string key="concept:name" value="StandBy · Comprobar_16" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Comprobar_16" />
+      <int key="bpmn:activation" value="13" />
       <string key="bpmn:execution" value="1" />
       <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:00:09.000+00:00" />
@@ -195,6 +205,7 @@
       <string key="concept:name" value="StandBy · Comprobar_17" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Comprobar_17" />
+      <int key="bpmn:activation" value="14" />
       <string key="bpmn:execution" value="1" />
       <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:00:11.000+00:00" />
@@ -209,6 +220,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Comprobacion 3" />
       <string key="bpmn:id" value="Comprobar_03" />
+      <int key="bpmn:activation" value="6" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="2" />
@@ -226,6 +238,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Comprobacion 6" />
       <string key="bpmn:id" value="Comprobar_06" />
+      <int key="bpmn:activation" value="7" />
       <string key="bpmn:userTask" value="Beto" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="2" />
@@ -269,6 +282,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Comprobacion 8" />
       <string key="bpmn:id" value="Comprobar_08" />
+      <int key="bpmn:activation" value="8" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="2" />
@@ -286,6 +300,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Comprobacion 10" />
       <string key="bpmn:id" value="Comprobar_10" />
+      <int key="bpmn:activation" value="9" />
       <string key="bpmn:userTask" value="Beto" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="3" />
@@ -329,6 +344,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Comprobacion 11" />
       <string key="bpmn:id" value="Comprobar_11" />
+      <int key="bpmn:activation" value="10" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="3" />
@@ -359,6 +375,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Comprobacion 12" />
       <string key="bpmn:id" value="Comprobar_12" />
+      <int key="bpmn:activation" value="11" />
       <string key="bpmn:userTask" value="Beto" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="2" />
@@ -389,6 +406,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Comprobacion 13" />
       <string key="bpmn:id" value="Comprobar_13" />
+      <int key="bpmn:activation" value="12" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="2" />
@@ -406,6 +424,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Comprobacion 16" />
       <string key="bpmn:id" value="Comprobar_16" />
+      <int key="bpmn:activation" value="13" />
       <string key="bpmn:userTask" value="Beto" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="4" />
@@ -449,6 +468,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Comprobacion 17" />
       <string key="bpmn:id" value="Comprobar_17" />
+      <int key="bpmn:activation" value="14" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="3" />
@@ -547,6 +567,7 @@
       <string key="concept:name" value="StandBy · Comprobar_02" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Comprobar_02" />
+      <int key="bpmn:activation" value="16" />
       <string key="bpmn:execution" value="1" />
       <date key="time:timestamp" value="2026-01-01T00:00:10.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:00:13.000+00:00" />
@@ -560,6 +581,7 @@
       <string key="concept:name" value="StandBy · Comprobar_03" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Comprobar_03" />
+      <int key="bpmn:activation" value="17" />
       <string key="bpmn:execution" value="1" />
       <date key="time:timestamp" value="2026-01-01T00:00:10.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:00:14.000+00:00" />
@@ -573,6 +595,7 @@
       <string key="concept:name" value="StandBy · Comprobar_08" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Comprobar_08" />
+      <int key="bpmn:activation" value="18" />
       <string key="bpmn:execution" value="1" />
       <date key="time:timestamp" value="2026-01-01T00:00:10.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:00:16.000+00:00" />
@@ -586,6 +609,7 @@
       <string key="concept:name" value="StandBy · Comprobar_13" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Comprobar_13" />
+      <int key="bpmn:activation" value="19" />
       <string key="bpmn:execution" value="1" />
       <date key="time:timestamp" value="2026-01-01T00:00:10.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:00:16.000+00:00" />
@@ -599,6 +623,7 @@
       <string key="concept:name" value="StandBy · Comprobar_18" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Comprobar_18" />
+      <int key="bpmn:activation" value="20" />
       <string key="bpmn:execution" value="1" />
       <date key="time:timestamp" value="2026-01-01T00:00:10.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:00:18.000+00:00" />
@@ -612,6 +637,7 @@
       <string key="concept:name" value="StandBy · Comprobar_19" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Comprobar_19" />
+      <int key="bpmn:activation" value="21" />
       <string key="bpmn:execution" value="1" />
       <date key="time:timestamp" value="2026-01-01T00:00:10.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:00:19.000+00:00" />
@@ -625,6 +651,7 @@
       <string key="concept:name" value="StandBy · Comprobar_20" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Comprobar_20" />
+      <int key="bpmn:activation" value="22" />
       <string key="bpmn:execution" value="1" />
       <date key="time:timestamp" value="2026-01-01T00:00:10.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:00:20.000+00:00" />
@@ -639,6 +666,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Comprobacion 2" />
       <string key="bpmn:id" value="Comprobar_02" />
+      <int key="bpmn:activation" value="16" />
       <string key="bpmn:userTask" value="Beto" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="3" />
@@ -656,6 +684,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Comprobacion 3" />
       <string key="bpmn:id" value="Comprobar_03" />
+      <int key="bpmn:activation" value="17" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="2" />
@@ -673,6 +702,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Comprobacion 13" />
       <string key="bpmn:id" value="Comprobar_13" />
+      <int key="bpmn:activation" value="19" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="2" />
@@ -690,6 +720,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Comprobacion 8" />
       <string key="bpmn:id" value="Comprobar_08" />
+      <int key="bpmn:activation" value="18" />
       <string key="bpmn:userTask" value="Beto" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="3" />
@@ -733,6 +764,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Comprobacion 18" />
       <string key="bpmn:id" value="Comprobar_18" />
+      <int key="bpmn:activation" value="20" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="2" />
@@ -763,6 +795,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Comprobacion 19" />
       <string key="bpmn:id" value="Comprobar_19" />
+      <int key="bpmn:activation" value="21" />
       <string key="bpmn:userTask" value="Beto" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="2" />
@@ -793,6 +826,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Comprobacion 20" />
       <string key="bpmn:id" value="Comprobar_20" />
+      <int key="bpmn:activation" value="22" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="3" />

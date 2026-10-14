@@ -4,8 +4,8 @@
   <extension name="Time" prefix="time" uri="http://www.xes-standard.org/time.xesext"/>
   <classifier name="Activity (by BPMN ID)" keys="bpmn:id" scope="event"/>
   <classifier name="Case (by participant and instance)" keys="bpmn:participant bpmn:instance" scope="event"/>
-  <string key="simulation:id" value="90b477de6733072b" />
-  <string key="simulation:formatVersion" value="1" />
+  <string key="simulation:id" value="5cdb6c38f3991668" />
+  <string key="simulation:formatVersion" value="2" />
   <int key="simulation:seed" value="20260101" />
   <string key="simulation:startDate" value="2026-01-01T00:00:00+00:00" />
   <string key="simulation:participants" value="Proceso_instantes" />
@@ -45,6 +45,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Preparar la solicitud" />
       <string key="bpmn:id" value="Preparar" />
+      <int key="bpmn:activation" value="3" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="0" />
@@ -62,6 +63,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Sellar la solicitud" />
       <string key="bpmn:id" value="Sellar" />
+      <int key="bpmn:activation" value="4" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="0" />
@@ -79,6 +81,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Revisar la solicitud" />
       <string key="bpmn:id" value="Revisar" />
+      <int key="bpmn:activation" value="5" />
       <string key="bpmn:userTask" value="Luis" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="10" />
@@ -126,6 +129,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Preparar la solicitud" />
       <string key="bpmn:id" value="Preparar" />
+      <int key="bpmn:activation" value="7" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="0" />
@@ -143,6 +147,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Sellar la solicitud" />
       <string key="bpmn:id" value="Sellar" />
+      <int key="bpmn:activation" value="8" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="0" />
@@ -160,6 +165,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Revisar la solicitud" />
       <string key="bpmn:id" value="Revisar" />
+      <int key="bpmn:activation" value="9" />
       <string key="bpmn:userTask" value="Luis" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="10" />

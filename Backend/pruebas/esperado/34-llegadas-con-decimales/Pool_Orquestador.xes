@@ -4,8 +4,8 @@
   <extension name="Time" prefix="time" uri="http://www.xes-standard.org/time.xesext"/>
   <classifier name="Activity (by BPMN ID)" keys="bpmn:id" scope="event"/>
   <classifier name="Case (by participant and instance)" keys="bpmn:participant bpmn:instance" scope="event"/>
-  <string key="simulation:id" value="b7d4dc017228e74c" />
-  <string key="simulation:formatVersion" value="1" />
+  <string key="simulation:id" value="6e459908e03b34f9" />
+  <string key="simulation:formatVersion" value="2" />
   <int key="simulation:seed" value="20260101" />
   <string key="simulation:startDate" value="2026-01-01T00:00:00+00:00" />
   <string key="simulation:participants" value="Pool_Orquestador, Pool_Escalonado, Pool_Uniforme" />
@@ -45,6 +45,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Abrir el plazo" />
       <string key="bpmn:id" value="Abrir" />
+      <int key="bpmn:activation" value="8" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="1" />
@@ -92,6 +93,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Abrir el plazo" />
       <string key="bpmn:id" value="Abrir" />
+      <int key="bpmn:activation" value="29" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="1" />

@@ -4,8 +4,8 @@
   <extension name="Time" prefix="time" uri="http://www.xes-standard.org/time.xesext"/>
   <classifier name="Activity (by BPMN ID)" keys="bpmn:id" scope="event"/>
   <classifier name="Case (by participant and instance)" keys="bpmn:participant bpmn:instance" scope="event"/>
-  <string key="simulation:id" value="b46df9ac4752d80d" />
-  <string key="simulation:formatVersion" value="1" />
+  <string key="simulation:id" value="f2c996b3bf75fc42" />
+  <string key="simulation:formatVersion" value="2" />
   <int key="simulation:seed" value="20260101" />
   <string key="simulation:startDate" value="2026-01-01T00:00:00+00:00" />
   <string key="simulation:participants" value="Pool_Orquestador, Pool_Orquestado" />
@@ -45,6 +45,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Publicar la convocatoria" />
       <string key="bpmn:id" value="Convocar" />
+      <int key="bpmn:activation" value="12" />
       <string key="bpmn:messageDestiny" value="Esperar_Convocatoria" />
       <string key="bpmn:messageTarget" value="Pool_Orquestado - 1" />
       <string key="bpmn:userTask" value="Ana" />
@@ -63,6 +64,7 @@
       <string key="concept:name" value="StandBy · Convocar" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Convocar" />
+      <int key="bpmn:activation" value="12" />
       <string key="bpmn:execution" value="2" />
       <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:00:01.000+00:00" />
@@ -76,6 +78,7 @@
       <string key="concept:name" value="StandBy · Convocar" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Convocar" />
+      <int key="bpmn:activation" value="12" />
       <string key="bpmn:execution" value="3" />
       <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:00:02.000+00:00" />
@@ -89,6 +92,7 @@
       <string key="concept:name" value="StandBy · Convocar" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Convocar" />
+      <int key="bpmn:activation" value="12" />
       <string key="bpmn:execution" value="4" />
       <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:00:03.000+00:00" />
@@ -102,6 +106,7 @@
       <string key="concept:name" value="StandBy · Convocar" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Convocar" />
+      <int key="bpmn:activation" value="12" />
       <string key="bpmn:execution" value="5" />
       <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:00:04.000+00:00" />
@@ -115,6 +120,7 @@
       <string key="concept:name" value="StandBy · Convocar" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Convocar" />
+      <int key="bpmn:activation" value="12" />
       <string key="bpmn:execution" value="6" />
       <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:00:05.000+00:00" />
@@ -128,6 +134,7 @@
       <string key="concept:name" value="StandBy · Convocar" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Convocar" />
+      <int key="bpmn:activation" value="12" />
       <string key="bpmn:execution" value="7" />
       <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:00:06.000+00:00" />
@@ -141,6 +148,7 @@
       <string key="concept:name" value="StandBy · Convocar" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Convocar" />
+      <int key="bpmn:activation" value="12" />
       <string key="bpmn:execution" value="8" />
       <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:00:07.000+00:00" />
@@ -154,6 +162,7 @@
       <string key="concept:name" value="StandBy · Convocar" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Convocar" />
+      <int key="bpmn:activation" value="12" />
       <string key="bpmn:execution" value="9" />
       <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:00:08.000+00:00" />
@@ -167,6 +176,7 @@
       <string key="concept:name" value="StandBy · Convocar" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Convocar" />
+      <int key="bpmn:activation" value="12" />
       <string key="bpmn:execution" value="10" />
       <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:00:09.000+00:00" />
@@ -181,6 +191,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Publicar la convocatoria" />
       <string key="bpmn:id" value="Convocar" />
+      <int key="bpmn:activation" value="12" />
       <string key="bpmn:messageDestiny" value="Esperar_Convocatoria" />
       <string key="bpmn:messageTarget" value="Pool_Orquestado - 2" />
       <string key="bpmn:userTask" value="Ana" />
@@ -200,6 +211,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Publicar la convocatoria" />
       <string key="bpmn:id" value="Convocar" />
+      <int key="bpmn:activation" value="12" />
       <string key="bpmn:messageDestiny" value="Esperar_Convocatoria" />
       <string key="bpmn:messageTarget" value="Pool_Orquestado - 3" />
       <string key="bpmn:userTask" value="Ana" />
@@ -219,6 +231,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Publicar la convocatoria" />
       <string key="bpmn:id" value="Convocar" />
+      <int key="bpmn:activation" value="12" />
       <string key="bpmn:messageDestiny" value="Esperar_Convocatoria" />
       <string key="bpmn:messageTarget" value="Pool_Orquestado - 4" />
       <string key="bpmn:userTask" value="Ana" />
@@ -238,6 +251,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Publicar la convocatoria" />
       <string key="bpmn:id" value="Convocar" />
+      <int key="bpmn:activation" value="12" />
       <string key="bpmn:messageDestiny" value="Esperar_Convocatoria" />
       <string key="bpmn:messageTarget" value="Pool_Orquestado - 5" />
       <string key="bpmn:userTask" value="Ana" />
@@ -257,6 +271,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Publicar la convocatoria" />
       <string key="bpmn:id" value="Convocar" />
+      <int key="bpmn:activation" value="12" />
       <string key="bpmn:messageDestiny" value="Esperar_Convocatoria" />
       <string key="bpmn:messageTarget" value="Pool_Orquestado - 6" />
       <string key="bpmn:userTask" value="Ana" />
@@ -276,6 +291,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Publicar la convocatoria" />
       <string key="bpmn:id" value="Convocar" />
+      <int key="bpmn:activation" value="12" />
       <string key="bpmn:messageDestiny" value="Esperar_Convocatoria" />
       <string key="bpmn:messageTarget" value="Pool_Orquestado - 7" />
       <string key="bpmn:userTask" value="Ana" />
@@ -295,6 +311,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Publicar la convocatoria" />
       <string key="bpmn:id" value="Convocar" />
+      <int key="bpmn:activation" value="12" />
       <string key="bpmn:messageDestiny" value="Esperar_Convocatoria" />
       <string key="bpmn:messageTarget" value="Pool_Orquestado - 8" />
       <string key="bpmn:userTask" value="Ana" />
@@ -314,6 +331,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Publicar la convocatoria" />
       <string key="bpmn:id" value="Convocar" />
+      <int key="bpmn:activation" value="12" />
       <string key="bpmn:messageDestiny" value="Esperar_Convocatoria" />
       <string key="bpmn:messageTarget" value="Pool_Orquestado - 9" />
       <string key="bpmn:userTask" value="Ana" />
@@ -333,6 +351,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Publicar la convocatoria" />
       <string key="bpmn:id" value="Convocar" />
+      <int key="bpmn:activation" value="12" />
       <string key="bpmn:messageDestiny" value="Esperar_Convocatoria" />
       <string key="bpmn:messageTarget" value="Pool_Orquestado - 10" />
       <string key="bpmn:userTask" value="Ana" />
@@ -352,6 +371,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Recoger una solicitud" />
       <string key="bpmn:id" value="Recoger_Solicitudes" />
+      <int key="bpmn:activation" value="27" />
       <string key="bpmn:messageOrigin" value="Solicitar" />
       <string key="bpmn:messageSender" value="Pool_Orquestado - 1" />
       <string key="bpmn:request" value="Pool_Orquestado - 1" />
@@ -371,6 +391,7 @@
       <string key="concept:name" value="StandBy · Recoger_Solicitudes" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Recoger_Solicitudes" />
+      <int key="bpmn:activation" value="27" />
       <string key="bpmn:execution" value="2" />
       <string key="bpmn:request" value="Pool_Orquestado - 2" />
       <date key="time:timestamp" value="2026-01-01T00:00:10.000+00:00" />
@@ -385,6 +406,7 @@
       <string key="concept:name" value="StandByMessage · Recoger_Solicitudes" />
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Recoger_Solicitudes" />
+      <int key="bpmn:activation" value="27" />
       <string key="bpmn:execution" value="4" />
       <string key="bpmn:request" value="Pool_Orquestado - 4" />
       <date key="time:timestamp" value="2026-01-01T00:00:10.000+00:00" />
@@ -399,6 +421,7 @@
       <string key="concept:name" value="StandBy · Recoger_Solicitudes" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Recoger_Solicitudes" />
+      <int key="bpmn:activation" value="27" />
       <string key="bpmn:execution" value="3" />
       <string key="bpmn:request" value="Pool_Orquestado - 3" />
       <date key="time:timestamp" value="2026-01-01T00:00:10.000+00:00" />
@@ -413,6 +436,7 @@
       <string key="concept:name" value="StandByMessage · Recoger_Solicitudes" />
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Recoger_Solicitudes" />
+      <int key="bpmn:activation" value="27" />
       <string key="bpmn:execution" value="5" />
       <string key="bpmn:request" value="Pool_Orquestado - 5" />
       <date key="time:timestamp" value="2026-01-01T00:00:10.000+00:00" />
@@ -427,6 +451,7 @@
       <string key="concept:name" value="StandByMessage · Recoger_Solicitudes" />
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Recoger_Solicitudes" />
+      <int key="bpmn:activation" value="27" />
       <string key="bpmn:execution" value="6" />
       <string key="bpmn:request" value="Pool_Orquestado - 6" />
       <date key="time:timestamp" value="2026-01-01T00:00:10.000+00:00" />
@@ -441,6 +466,7 @@
       <string key="concept:name" value="StandByMessage · Recoger_Solicitudes" />
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Recoger_Solicitudes" />
+      <int key="bpmn:activation" value="27" />
       <string key="bpmn:execution" value="7" />
       <string key="bpmn:request" value="Pool_Orquestado - 7" />
       <date key="time:timestamp" value="2026-01-01T00:00:10.000+00:00" />
@@ -455,6 +481,7 @@
       <string key="concept:name" value="StandByMessage · Recoger_Solicitudes" />
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Recoger_Solicitudes" />
+      <int key="bpmn:activation" value="27" />
       <string key="bpmn:execution" value="8" />
       <string key="bpmn:request" value="Pool_Orquestado - 8" />
       <date key="time:timestamp" value="2026-01-01T00:00:10.000+00:00" />
@@ -469,6 +496,7 @@
       <string key="concept:name" value="StandByMessage · Recoger_Solicitudes" />
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Recoger_Solicitudes" />
+      <int key="bpmn:activation" value="27" />
       <string key="bpmn:execution" value="9" />
       <string key="bpmn:request" value="Pool_Orquestado - 9" />
       <date key="time:timestamp" value="2026-01-01T00:00:10.000+00:00" />
@@ -483,6 +511,7 @@
       <string key="concept:name" value="StandByMessage · Recoger_Solicitudes" />
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Recoger_Solicitudes" />
+      <int key="bpmn:activation" value="27" />
       <string key="bpmn:execution" value="10" />
       <string key="bpmn:request" value="Pool_Orquestado - 10" />
       <date key="time:timestamp" value="2026-01-01T00:00:10.000+00:00" />
@@ -498,6 +527,7 @@
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Recoger_Solicitudes" />
       <string key="bpmn:execution" value="11" />
+      <int key="bpmn:activation" value="27" />
       <date key="time:timestamp" value="2026-01-01T00:00:10.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:00:22.000+00:00" />
       <float key="time:duration" value="12.0" />
@@ -512,6 +542,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Recoger una solicitud" />
       <string key="bpmn:id" value="Recoger_Solicitudes" />
+      <int key="bpmn:activation" value="27" />
       <string key="bpmn:messageOrigin" value="Solicitar" />
       <string key="bpmn:messageSender" value="Pool_Orquestado - 2" />
       <string key="bpmn:request" value="Pool_Orquestado - 2" />
@@ -531,6 +562,7 @@
       <string key="concept:name" value="StandBy · Recoger_Solicitudes" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Recoger_Solicitudes" />
+      <int key="bpmn:activation" value="27" />
       <string key="bpmn:execution" value="4" />
       <string key="bpmn:request" value="Pool_Orquestado - 4" />
       <date key="time:timestamp" value="2026-01-01T00:00:11.000+00:00" />
@@ -546,6 +578,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Recoger una solicitud" />
       <string key="bpmn:id" value="Recoger_Solicitudes" />
+      <int key="bpmn:activation" value="27" />
       <string key="bpmn:messageOrigin" value="Solicitar" />
       <string key="bpmn:messageSender" value="Pool_Orquestado - 3" />
       <string key="bpmn:request" value="Pool_Orquestado - 3" />
@@ -565,6 +598,7 @@
       <string key="concept:name" value="StandBy · Recoger_Solicitudes" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Recoger_Solicitudes" />
+      <int key="bpmn:activation" value="27" />
       <string key="bpmn:execution" value="5" />
       <string key="bpmn:request" value="Pool_Orquestado - 5" />
       <date key="time:timestamp" value="2026-01-01T00:00:12.000+00:00" />
@@ -580,6 +614,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Recoger una solicitud" />
       <string key="bpmn:id" value="Recoger_Solicitudes" />
+      <int key="bpmn:activation" value="27" />
       <string key="bpmn:messageOrigin" value="Solicitar" />
       <string key="bpmn:messageSender" value="Pool_Orquestado - 4" />
       <string key="bpmn:request" value="Pool_Orquestado - 4" />
@@ -600,6 +635,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Recoger una solicitud" />
       <string key="bpmn:id" value="Recoger_Solicitudes" />
+      <int key="bpmn:activation" value="27" />
       <string key="bpmn:messageOrigin" value="Solicitar" />
       <string key="bpmn:messageSender" value="Pool_Orquestado - 5" />
       <string key="bpmn:request" value="Pool_Orquestado - 5" />
@@ -619,6 +655,7 @@
       <string key="concept:name" value="StandBy · Recoger_Solicitudes" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Recoger_Solicitudes" />
+      <int key="bpmn:activation" value="27" />
       <string key="bpmn:execution" value="6" />
       <string key="bpmn:request" value="Pool_Orquestado - 6" />
       <date key="time:timestamp" value="2026-01-01T00:00:14.000+00:00" />
@@ -634,6 +671,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Recoger una solicitud" />
       <string key="bpmn:id" value="Recoger_Solicitudes" />
+      <int key="bpmn:activation" value="27" />
       <string key="bpmn:messageOrigin" value="Solicitar" />
       <string key="bpmn:messageSender" value="Pool_Orquestado - 6" />
       <string key="bpmn:request" value="Pool_Orquestado - 6" />
@@ -654,6 +692,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Recoger una solicitud" />
       <string key="bpmn:id" value="Recoger_Solicitudes" />
+      <int key="bpmn:activation" value="27" />
       <string key="bpmn:messageOrigin" value="Solicitar" />
       <string key="bpmn:messageSender" value="Pool_Orquestado - 7" />
       <string key="bpmn:request" value="Pool_Orquestado - 7" />
@@ -674,6 +713,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Recoger una solicitud" />
       <string key="bpmn:id" value="Recoger_Solicitudes" />
+      <int key="bpmn:activation" value="27" />
       <string key="bpmn:messageOrigin" value="Solicitar" />
       <string key="bpmn:messageSender" value="Pool_Orquestado - 8" />
       <string key="bpmn:request" value="Pool_Orquestado - 8" />
@@ -694,6 +734,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Recoger una solicitud" />
       <string key="bpmn:id" value="Recoger_Solicitudes" />
+      <int key="bpmn:activation" value="27" />
       <string key="bpmn:messageOrigin" value="Solicitar" />
       <string key="bpmn:messageSender" value="Pool_Orquestado - 9" />
       <string key="bpmn:request" value="Pool_Orquestado - 9" />
@@ -714,6 +755,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Recoger una solicitud" />
       <string key="bpmn:id" value="Recoger_Solicitudes" />
+      <int key="bpmn:activation" value="27" />
       <string key="bpmn:messageOrigin" value="Solicitar" />
       <string key="bpmn:messageSender" value="Pool_Orquestado - 10" />
       <string key="bpmn:request" value="Pool_Orquestado - 10" />
@@ -734,6 +776,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Evaluar una solicitud" />
       <string key="bpmn:id" value="Evaluar" />
+      <int key="bpmn:activation" value="44" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="1" />
       <string key="bpmn:request" value="Pool_Orquestado - 1" />
@@ -751,6 +794,7 @@
       <string key="concept:name" value="StandBy · Evaluar" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Evaluar" />
+      <int key="bpmn:activation" value="44" />
       <string key="bpmn:execution" value="2" />
       <string key="bpmn:request" value="Pool_Orquestado - 2" />
       <date key="time:timestamp" value="2026-01-01T00:00:23.000+00:00" />
@@ -765,6 +809,7 @@
       <string key="concept:name" value="StandBy · Evaluar" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Evaluar" />
+      <int key="bpmn:activation" value="44" />
       <string key="bpmn:execution" value="3" />
       <string key="bpmn:request" value="Pool_Orquestado - 3" />
       <date key="time:timestamp" value="2026-01-01T00:00:23.000+00:00" />
@@ -779,6 +824,7 @@
       <string key="concept:name" value="StandBy · Evaluar" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Evaluar" />
+      <int key="bpmn:activation" value="44" />
       <string key="bpmn:execution" value="4" />
       <string key="bpmn:request" value="Pool_Orquestado - 4" />
       <date key="time:timestamp" value="2026-01-01T00:00:23.000+00:00" />
@@ -793,6 +839,7 @@
       <string key="concept:name" value="StandBy · Evaluar" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Evaluar" />
+      <int key="bpmn:activation" value="44" />
       <string key="bpmn:execution" value="5" />
       <string key="bpmn:request" value="Pool_Orquestado - 5" />
       <date key="time:timestamp" value="2026-01-01T00:00:23.000+00:00" />
@@ -807,6 +854,7 @@
       <string key="concept:name" value="StandBy · Evaluar" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Evaluar" />
+      <int key="bpmn:activation" value="44" />
       <string key="bpmn:execution" value="6" />
       <string key="bpmn:request" value="Pool_Orquestado - 6" />
       <date key="time:timestamp" value="2026-01-01T00:00:23.000+00:00" />
@@ -821,6 +869,7 @@
       <string key="concept:name" value="StandBy · Evaluar" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Evaluar" />
+      <int key="bpmn:activation" value="44" />
       <string key="bpmn:execution" value="7" />
       <string key="bpmn:request" value="Pool_Orquestado - 7" />
       <date key="time:timestamp" value="2026-01-01T00:00:23.000+00:00" />
@@ -835,6 +884,7 @@
       <string key="concept:name" value="StandBy · Evaluar" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Evaluar" />
+      <int key="bpmn:activation" value="44" />
       <string key="bpmn:execution" value="8" />
       <string key="bpmn:request" value="Pool_Orquestado - 8" />
       <date key="time:timestamp" value="2026-01-01T00:00:23.000+00:00" />
@@ -849,6 +899,7 @@
       <string key="concept:name" value="StandBy · Evaluar" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Evaluar" />
+      <int key="bpmn:activation" value="44" />
       <string key="bpmn:execution" value="9" />
       <string key="bpmn:request" value="Pool_Orquestado - 9" />
       <date key="time:timestamp" value="2026-01-01T00:00:23.000+00:00" />
@@ -863,6 +914,7 @@
       <string key="concept:name" value="StandBy · Evaluar" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Evaluar" />
+      <int key="bpmn:activation" value="44" />
       <string key="bpmn:execution" value="10" />
       <string key="bpmn:request" value="Pool_Orquestado - 10" />
       <date key="time:timestamp" value="2026-01-01T00:00:23.000+00:00" />
@@ -878,6 +930,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Evaluar una solicitud" />
       <string key="bpmn:id" value="Evaluar" />
+      <int key="bpmn:activation" value="44" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="2" />
       <string key="bpmn:request" value="Pool_Orquestado - 2" />
@@ -896,6 +949,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Evaluar una solicitud" />
       <string key="bpmn:id" value="Evaluar" />
+      <int key="bpmn:activation" value="44" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="3" />
       <string key="bpmn:request" value="Pool_Orquestado - 3" />
@@ -914,6 +968,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Evaluar una solicitud" />
       <string key="bpmn:id" value="Evaluar" />
+      <int key="bpmn:activation" value="44" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="4" />
       <string key="bpmn:request" value="Pool_Orquestado - 4" />
@@ -932,6 +987,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Evaluar una solicitud" />
       <string key="bpmn:id" value="Evaluar" />
+      <int key="bpmn:activation" value="44" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="5" />
       <string key="bpmn:request" value="Pool_Orquestado - 5" />
@@ -950,6 +1006,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Evaluar una solicitud" />
       <string key="bpmn:id" value="Evaluar" />
+      <int key="bpmn:activation" value="44" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="6" />
       <string key="bpmn:request" value="Pool_Orquestado - 6" />
@@ -968,6 +1025,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Evaluar una solicitud" />
       <string key="bpmn:id" value="Evaluar" />
+      <int key="bpmn:activation" value="44" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="7" />
       <string key="bpmn:request" value="Pool_Orquestado - 7" />
@@ -986,6 +1044,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Evaluar una solicitud" />
       <string key="bpmn:id" value="Evaluar" />
+      <int key="bpmn:activation" value="44" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="8" />
       <string key="bpmn:request" value="Pool_Orquestado - 8" />
@@ -1004,6 +1063,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Evaluar una solicitud" />
       <string key="bpmn:id" value="Evaluar" />
+      <int key="bpmn:activation" value="44" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="9" />
       <string key="bpmn:request" value="Pool_Orquestado - 9" />
@@ -1022,6 +1082,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Evaluar una solicitud" />
       <string key="bpmn:id" value="Evaluar" />
+      <int key="bpmn:activation" value="44" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="10" />
       <string key="bpmn:request" value="Pool_Orquestado - 10" />
@@ -1040,6 +1101,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Comunicar la resolucion" />
       <string key="bpmn:id" value="Resolver" />
+      <int key="bpmn:activation" value="45" />
       <string key="bpmn:messageDestiny" value="Esperar_Resolucion" />
       <string key="bpmn:messageTarget" value="Pool_Orquestado - 1" />
       <string key="bpmn:userTask" value="Ana" />
@@ -1059,6 +1121,7 @@
       <string key="concept:name" value="StandBy · Resolver" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Resolver" />
+      <int key="bpmn:activation" value="45" />
       <string key="bpmn:execution" value="2" />
       <string key="bpmn:request" value="Pool_Orquestado - 2" />
       <date key="time:timestamp" value="2026-01-01T00:02:03.000+00:00" />
@@ -1073,6 +1136,7 @@
       <string key="concept:name" value="StandBy · Resolver" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Resolver" />
+      <int key="bpmn:activation" value="45" />
       <string key="bpmn:execution" value="3" />
       <string key="bpmn:request" value="Pool_Orquestado - 3" />
       <date key="time:timestamp" value="2026-01-01T00:02:03.000+00:00" />
@@ -1087,6 +1151,7 @@
       <string key="concept:name" value="StandBy · Resolver" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Resolver" />
+      <int key="bpmn:activation" value="45" />
       <string key="bpmn:execution" value="4" />
       <string key="bpmn:request" value="Pool_Orquestado - 4" />
       <date key="time:timestamp" value="2026-01-01T00:02:03.000+00:00" />
@@ -1101,6 +1166,7 @@
       <string key="concept:name" value="StandBy · Resolver" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Resolver" />
+      <int key="bpmn:activation" value="45" />
       <string key="bpmn:execution" value="5" />
       <string key="bpmn:request" value="Pool_Orquestado - 5" />
       <date key="time:timestamp" value="2026-01-01T00:02:03.000+00:00" />
@@ -1115,6 +1181,7 @@
       <string key="concept:name" value="StandBy · Resolver" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Resolver" />
+      <int key="bpmn:activation" value="45" />
       <string key="bpmn:execution" value="6" />
       <string key="bpmn:request" value="Pool_Orquestado - 6" />
       <date key="time:timestamp" value="2026-01-01T00:02:03.000+00:00" />
@@ -1129,6 +1196,7 @@
       <string key="concept:name" value="StandBy · Resolver" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Resolver" />
+      <int key="bpmn:activation" value="45" />
       <string key="bpmn:execution" value="7" />
       <string key="bpmn:request" value="Pool_Orquestado - 7" />
       <date key="time:timestamp" value="2026-01-01T00:02:03.000+00:00" />
@@ -1143,6 +1211,7 @@
       <string key="concept:name" value="StandBy · Resolver" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Resolver" />
+      <int key="bpmn:activation" value="45" />
       <string key="bpmn:execution" value="8" />
       <string key="bpmn:request" value="Pool_Orquestado - 8" />
       <date key="time:timestamp" value="2026-01-01T00:02:03.000+00:00" />
@@ -1157,6 +1226,7 @@
       <string key="concept:name" value="StandBy · Resolver" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Resolver" />
+      <int key="bpmn:activation" value="45" />
       <string key="bpmn:execution" value="9" />
       <string key="bpmn:request" value="Pool_Orquestado - 9" />
       <date key="time:timestamp" value="2026-01-01T00:02:03.000+00:00" />
@@ -1171,6 +1241,7 @@
       <string key="concept:name" value="StandBy · Resolver" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Resolver" />
+      <int key="bpmn:activation" value="45" />
       <string key="bpmn:execution" value="10" />
       <string key="bpmn:request" value="Pool_Orquestado - 10" />
       <date key="time:timestamp" value="2026-01-01T00:02:03.000+00:00" />
@@ -1186,6 +1257,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Comunicar la resolucion" />
       <string key="bpmn:id" value="Resolver" />
+      <int key="bpmn:activation" value="45" />
       <string key="bpmn:messageDestiny" value="Esperar_Resolucion" />
       <string key="bpmn:messageTarget" value="Pool_Orquestado - 2" />
       <string key="bpmn:userTask" value="Ana" />
@@ -1206,6 +1278,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Comunicar la resolucion" />
       <string key="bpmn:id" value="Resolver" />
+      <int key="bpmn:activation" value="45" />
       <string key="bpmn:messageDestiny" value="Esperar_Resolucion" />
       <string key="bpmn:messageTarget" value="Pool_Orquestado - 3" />
       <string key="bpmn:userTask" value="Ana" />
@@ -1226,6 +1299,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Comunicar la resolucion" />
       <string key="bpmn:id" value="Resolver" />
+      <int key="bpmn:activation" value="45" />
       <string key="bpmn:messageDestiny" value="Esperar_Resolucion" />
       <string key="bpmn:messageTarget" value="Pool_Orquestado - 4" />
       <string key="bpmn:userTask" value="Ana" />
@@ -1246,6 +1320,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Comunicar la resolucion" />
       <string key="bpmn:id" value="Resolver" />
+      <int key="bpmn:activation" value="45" />
       <string key="bpmn:messageDestiny" value="Esperar_Resolucion" />
       <string key="bpmn:messageTarget" value="Pool_Orquestado - 5" />
       <string key="bpmn:userTask" value="Ana" />
@@ -1266,6 +1341,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Comunicar la resolucion" />
       <string key="bpmn:id" value="Resolver" />
+      <int key="bpmn:activation" value="45" />
       <string key="bpmn:messageDestiny" value="Esperar_Resolucion" />
       <string key="bpmn:messageTarget" value="Pool_Orquestado - 6" />
       <string key="bpmn:userTask" value="Ana" />
@@ -1286,6 +1362,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Comunicar la resolucion" />
       <string key="bpmn:id" value="Resolver" />
+      <int key="bpmn:activation" value="45" />
       <string key="bpmn:messageDestiny" value="Esperar_Resolucion" />
       <string key="bpmn:messageTarget" value="Pool_Orquestado - 7" />
       <string key="bpmn:userTask" value="Ana" />
@@ -1306,6 +1383,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Comunicar la resolucion" />
       <string key="bpmn:id" value="Resolver" />
+      <int key="bpmn:activation" value="45" />
       <string key="bpmn:messageDestiny" value="Esperar_Resolucion" />
       <string key="bpmn:messageTarget" value="Pool_Orquestado - 8" />
       <string key="bpmn:userTask" value="Ana" />
@@ -1326,6 +1404,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Comunicar la resolucion" />
       <string key="bpmn:id" value="Resolver" />
+      <int key="bpmn:activation" value="45" />
       <string key="bpmn:messageDestiny" value="Esperar_Resolucion" />
       <string key="bpmn:messageTarget" value="Pool_Orquestado - 9" />
       <string key="bpmn:userTask" value="Ana" />
@@ -1346,6 +1425,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Comunicar la resolucion" />
       <string key="bpmn:id" value="Resolver" />
+      <int key="bpmn:activation" value="45" />
       <string key="bpmn:messageDestiny" value="Esperar_Resolucion" />
       <string key="bpmn:messageTarget" value="Pool_Orquestado - 10" />
       <string key="bpmn:userTask" value="Ana" />
@@ -1366,6 +1446,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Recoger una reclamacion" />
       <string key="bpmn:id" value="Recoger_Reclamaciones" />
+      <int key="bpmn:activation" value="66" />
       <string key="bpmn:messageOrigin" value="Reclamar" />
       <string key="bpmn:messageSender" value="Pool_Orquestado - 2" />
       <string key="bpmn:request" value="Pool_Orquestado - 2" />
@@ -1385,6 +1466,7 @@
       <string key="concept:name" value="StandBy · Recoger_Reclamaciones" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Recoger_Reclamaciones" />
+      <int key="bpmn:activation" value="66" />
       <string key="bpmn:execution" value="2" />
       <string key="bpmn:request" value="Pool_Orquestado - 4" />
       <date key="time:timestamp" value="2026-01-01T00:02:13.000+00:00" />
@@ -1399,6 +1481,7 @@
       <string key="concept:name" value="StandByMessage · Recoger_Reclamaciones" />
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Recoger_Reclamaciones" />
+      <int key="bpmn:activation" value="66" />
       <string key="bpmn:execution" value="4" />
       <string key="bpmn:request" value="Pool_Orquestado - 7" />
       <date key="time:timestamp" value="2026-01-01T00:02:13.000+00:00" />
@@ -1413,6 +1496,7 @@
       <string key="concept:name" value="StandBy · Recoger_Reclamaciones" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Recoger_Reclamaciones" />
+      <int key="bpmn:activation" value="66" />
       <string key="bpmn:execution" value="3" />
       <string key="bpmn:request" value="Pool_Orquestado - 6" />
       <date key="time:timestamp" value="2026-01-01T00:02:13.000+00:00" />
@@ -1427,6 +1511,7 @@
       <string key="concept:name" value="StandByMessage · Recoger_Reclamaciones" />
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Recoger_Reclamaciones" />
+      <int key="bpmn:activation" value="66" />
       <string key="bpmn:execution" value="5" />
       <string key="bpmn:request" value="Pool_Orquestado - 10" />
       <date key="time:timestamp" value="2026-01-01T00:02:13.000+00:00" />
@@ -1442,6 +1527,7 @@
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Recoger_Reclamaciones" />
       <string key="bpmn:execution" value="6" />
+      <int key="bpmn:activation" value="66" />
       <date key="time:timestamp" value="2026-01-01T00:02:13.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:02:16.000+00:00" />
       <float key="time:duration" value="3.0" />
@@ -1456,6 +1542,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Recoger una reclamacion" />
       <string key="bpmn:id" value="Recoger_Reclamaciones" />
+      <int key="bpmn:activation" value="66" />
       <string key="bpmn:messageOrigin" value="Reclamar" />
       <string key="bpmn:messageSender" value="Pool_Orquestado - 4" />
       <string key="bpmn:request" value="Pool_Orquestado - 4" />
@@ -1475,6 +1562,7 @@
       <string key="concept:name" value="StandBy · Recoger_Reclamaciones" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Recoger_Reclamaciones" />
+      <int key="bpmn:activation" value="66" />
       <string key="bpmn:execution" value="4" />
       <string key="bpmn:request" value="Pool_Orquestado - 7" />
       <date key="time:timestamp" value="2026-01-01T00:02:14.000+00:00" />
@@ -1490,6 +1578,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Recoger una reclamacion" />
       <string key="bpmn:id" value="Recoger_Reclamaciones" />
+      <int key="bpmn:activation" value="66" />
       <string key="bpmn:messageOrigin" value="Reclamar" />
       <string key="bpmn:messageSender" value="Pool_Orquestado - 6" />
       <string key="bpmn:request" value="Pool_Orquestado - 6" />
@@ -1510,6 +1599,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Recoger una reclamacion" />
       <string key="bpmn:id" value="Recoger_Reclamaciones" />
+      <int key="bpmn:activation" value="66" />
       <string key="bpmn:messageOrigin" value="Reclamar" />
       <string key="bpmn:messageSender" value="Pool_Orquestado - 7" />
       <string key="bpmn:request" value="Pool_Orquestado - 7" />
@@ -1529,6 +1619,7 @@
       <string key="concept:name" value="StandBy · Recoger_Reclamaciones" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Recoger_Reclamaciones" />
+      <int key="bpmn:activation" value="66" />
       <string key="bpmn:execution" value="5" />
       <string key="bpmn:request" value="Pool_Orquestado - 10" />
       <date key="time:timestamp" value="2026-01-01T00:02:16.000+00:00" />
@@ -1544,6 +1635,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Recoger una reclamacion" />
       <string key="bpmn:id" value="Recoger_Reclamaciones" />
+      <int key="bpmn:activation" value="66" />
       <string key="bpmn:messageOrigin" value="Reclamar" />
       <string key="bpmn:messageSender" value="Pool_Orquestado - 10" />
       <string key="bpmn:request" value="Pool_Orquestado - 10" />
@@ -1564,6 +1656,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Reevaluar una solicitud" />
       <string key="bpmn:id" value="Reevaluar" />
+      <int key="bpmn:activation" value="72" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="1" />
       <string key="bpmn:request" value="Pool_Orquestado - 2" />
@@ -1581,6 +1674,7 @@
       <string key="concept:name" value="StandBy · Reevaluar" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Reevaluar" />
+      <int key="bpmn:activation" value="72" />
       <string key="bpmn:execution" value="2" />
       <string key="bpmn:request" value="Pool_Orquestado - 4" />
       <date key="time:timestamp" value="2026-01-01T00:02:18.000+00:00" />
@@ -1595,6 +1689,7 @@
       <string key="concept:name" value="StandBy · Reevaluar" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Reevaluar" />
+      <int key="bpmn:activation" value="72" />
       <string key="bpmn:execution" value="3" />
       <string key="bpmn:request" value="Pool_Orquestado - 6" />
       <date key="time:timestamp" value="2026-01-01T00:02:18.000+00:00" />
@@ -1609,6 +1704,7 @@
       <string key="concept:name" value="StandBy · Reevaluar" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Reevaluar" />
+      <int key="bpmn:activation" value="72" />
       <string key="bpmn:execution" value="4" />
       <string key="bpmn:request" value="Pool_Orquestado - 7" />
       <date key="time:timestamp" value="2026-01-01T00:02:18.000+00:00" />
@@ -1623,6 +1719,7 @@
       <string key="concept:name" value="StandBy · Reevaluar" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Reevaluar" />
+      <int key="bpmn:activation" value="72" />
       <string key="bpmn:execution" value="5" />
       <string key="bpmn:request" value="Pool_Orquestado - 10" />
       <date key="time:timestamp" value="2026-01-01T00:02:18.000+00:00" />
@@ -1638,6 +1735,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Reevaluar una solicitud" />
       <string key="bpmn:id" value="Reevaluar" />
+      <int key="bpmn:activation" value="72" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="2" />
       <string key="bpmn:request" value="Pool_Orquestado - 4" />
@@ -1656,6 +1754,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Reevaluar una solicitud" />
       <string key="bpmn:id" value="Reevaluar" />
+      <int key="bpmn:activation" value="72" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="3" />
       <string key="bpmn:request" value="Pool_Orquestado - 6" />
@@ -1674,6 +1773,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Reevaluar una solicitud" />
       <string key="bpmn:id" value="Reevaluar" />
+      <int key="bpmn:activation" value="72" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="4" />
       <string key="bpmn:request" value="Pool_Orquestado - 7" />
@@ -1692,6 +1792,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Reevaluar una solicitud" />
       <string key="bpmn:id" value="Reevaluar" />
+      <int key="bpmn:activation" value="72" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="5" />
       <string key="bpmn:request" value="Pool_Orquestado - 10" />
@@ -1710,6 +1811,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Responder a una reclamacion" />
       <string key="bpmn:id" value="Responder" />
+      <int key="bpmn:activation" value="73" />
       <string key="bpmn:messageDestiny" value="Esperar_Respuesta" />
       <string key="bpmn:messageTarget" value="Pool_Orquestado - 2" />
       <string key="bpmn:userTask" value="Ana" />
@@ -1729,6 +1831,7 @@
       <string key="concept:name" value="StandBy · Responder" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Responder" />
+      <int key="bpmn:activation" value="73" />
       <string key="bpmn:execution" value="2" />
       <string key="bpmn:request" value="Pool_Orquestado - 4" />
       <date key="time:timestamp" value="2026-01-01T00:03:29.000+00:00" />
@@ -1743,6 +1846,7 @@
       <string key="concept:name" value="StandBy · Responder" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Responder" />
+      <int key="bpmn:activation" value="73" />
       <string key="bpmn:execution" value="3" />
       <string key="bpmn:request" value="Pool_Orquestado - 6" />
       <date key="time:timestamp" value="2026-01-01T00:03:29.000+00:00" />
@@ -1757,6 +1861,7 @@
       <string key="concept:name" value="StandBy · Responder" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Responder" />
+      <int key="bpmn:activation" value="73" />
       <string key="bpmn:execution" value="4" />
       <string key="bpmn:request" value="Pool_Orquestado - 7" />
       <date key="time:timestamp" value="2026-01-01T00:03:29.000+00:00" />
@@ -1771,6 +1876,7 @@
       <string key="concept:name" value="StandBy · Responder" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Responder" />
+      <int key="bpmn:activation" value="73" />
       <string key="bpmn:execution" value="5" />
       <string key="bpmn:request" value="Pool_Orquestado - 10" />
       <date key="time:timestamp" value="2026-01-01T00:03:29.000+00:00" />
@@ -1786,6 +1892,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Responder a una reclamacion" />
       <string key="bpmn:id" value="Responder" />
+      <int key="bpmn:activation" value="73" />
       <string key="bpmn:messageDestiny" value="Esperar_Respuesta" />
       <string key="bpmn:messageTarget" value="Pool_Orquestado - 4" />
       <string key="bpmn:userTask" value="Ana" />
@@ -1806,6 +1913,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Responder a una reclamacion" />
       <string key="bpmn:id" value="Responder" />
+      <int key="bpmn:activation" value="73" />
       <string key="bpmn:messageDestiny" value="Esperar_Respuesta" />
       <string key="bpmn:messageTarget" value="Pool_Orquestado - 6" />
       <string key="bpmn:userTask" value="Ana" />
@@ -1826,6 +1934,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Responder a una reclamacion" />
       <string key="bpmn:id" value="Responder" />
+      <int key="bpmn:activation" value="73" />
       <string key="bpmn:messageDestiny" value="Esperar_Respuesta" />
       <string key="bpmn:messageTarget" value="Pool_Orquestado - 7" />
       <string key="bpmn:userTask" value="Ana" />
@@ -1846,6 +1955,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Responder a una reclamacion" />
       <string key="bpmn:id" value="Responder" />
+      <int key="bpmn:activation" value="73" />
       <string key="bpmn:messageDestiny" value="Esperar_Respuesta" />
       <string key="bpmn:messageTarget" value="Pool_Orquestado - 10" />
       <string key="bpmn:userTask" value="Ana" />

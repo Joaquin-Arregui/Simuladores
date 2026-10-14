@@ -4,8 +4,8 @@
   <extension name="Time" prefix="time" uri="http://www.xes-standard.org/time.xesext"/>
   <classifier name="Activity (by BPMN ID)" keys="bpmn:id" scope="event"/>
   <classifier name="Case (by participant and instance)" keys="bpmn:participant bpmn:instance" scope="event"/>
-  <string key="simulation:id" value="68473397aa1e50ef" />
-  <string key="simulation:formatVersion" value="1" />
+  <string key="simulation:id" value="d2b49a73297b2f6d" />
+  <string key="simulation:formatVersion" value="2" />
   <int key="simulation:seed" value="20260101" />
   <string key="simulation:startDate" value="2026-01-01T00:00:00+00:00" />
   <string key="simulation:participants" value="Pool_Cliente, Pool_Banco" />
@@ -77,6 +77,7 @@
       <string key="concept:name" value="StandByMessage · Recibir_Solicitud" />
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Recibir_Solicitud" />
+      <int key="bpmn:activation" value="6" />
       <string key="bpmn:execution" value="1" />
       <string key="bpmn:request" value="Pool_Cliente - 1" />
       <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
@@ -92,6 +93,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Recibir la solicitud" />
       <string key="bpmn:id" value="Recibir_Solicitud" />
+      <int key="bpmn:activation" value="6" />
       <string key="bpmn:messageOrigin" value="Pedir_Prestamo" />
       <string key="bpmn:messageSender" value="Pool_Cliente - 1" />
       <string key="bpmn:request" value="Pool_Cliente - 1" />
@@ -112,6 +114,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Valorar el riesgo" />
       <string key="bpmn:id" value="Valorar_Riesgo" />
+      <int key="bpmn:activation" value="9" />
       <string key="bpmn:userTask" value="Clara" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="40" />
@@ -129,6 +132,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Cobrar la comision" />
       <string key="bpmn:id" value="Cobrar_Comision" />
+      <int key="bpmn:activation" value="11" />
       <string key="bpmn:userTask" value="Bruno" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="17" />
@@ -146,6 +150,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Enviar el resultado" />
       <string key="bpmn:id" value="Enviar_Resultado" />
+      <int key="bpmn:activation" value="14" />
       <string key="bpmn:messageDestiny" value="Esperar_Resultado" />
       <string key="bpmn:messageTarget" value="Pool_Cliente - 1" />
       <string key="bpmn:userTask" value="Ana" />
@@ -195,6 +200,7 @@
       <string key="concept:name" value="StandByMessage · Recibir_Solicitud" />
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Recibir_Solicitud" />
+      <int key="bpmn:activation" value="7" />
       <string key="bpmn:execution" value="1" />
       <string key="bpmn:request" value="Pool_Cliente - 2" />
       <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
@@ -210,6 +216,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Recibir la solicitud" />
       <string key="bpmn:id" value="Recibir_Solicitud" />
+      <int key="bpmn:activation" value="7" />
       <string key="bpmn:messageOrigin" value="Pedir_Prestamo" />
       <string key="bpmn:messageSender" value="Pool_Cliente - 2" />
       <string key="bpmn:request" value="Pool_Cliente - 2" />
@@ -230,6 +237,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Valorar el riesgo" />
       <string key="bpmn:id" value="Valorar_Riesgo" />
+      <int key="bpmn:activation" value="13" />
       <string key="bpmn:userTask" value="Clara" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="40" />
@@ -247,6 +255,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Cobrar la comision" />
       <string key="bpmn:id" value="Cobrar_Comision" />
+      <int key="bpmn:activation" value="17" />
       <string key="bpmn:userTask" value="Bruno" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="15" />
@@ -264,6 +273,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Enviar el resultado" />
       <string key="bpmn:id" value="Enviar_Resultado" />
+      <int key="bpmn:activation" value="18" />
       <string key="bpmn:messageDestiny" value="Esperar_Resultado" />
       <string key="bpmn:messageTarget" value="Pool_Cliente - 2" />
       <string key="bpmn:userTask" value="Ana" />

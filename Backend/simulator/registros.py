@@ -24,7 +24,7 @@ from xml.parsers import expat
 from xml.sax.saxutils import quoteattr
 
 # Sube cuando cambia lo que un registro contiene o como se escribe.
-FORMATO_DEL_REGISTRO = "1"
+FORMATO_DEL_REGISTRO = "2"
 XES = "http://www.xes-standard.org/"
 ET.register_namespace("", XES)
 

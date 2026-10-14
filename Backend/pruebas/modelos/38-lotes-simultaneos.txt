@@ -1,0 +1,28 @@
+# Modelo 38: dos ramas activan simultaneamente el mismo envio multiinstancia.
+# Cada lote tiene dos destinatarios y termina al acabar sus dos ejecuciones.
+# Preparar consume diez duraciones nulas: con la semilla del banco quedan
+# cruzados los finales: un lote termina en 11 y el otro en 16. Agrupar por
+# orden de fin emparejaba las ejecuciones de 8 y 10 y adelantaba la salida a 10.
+Element: [type=bpmn:Collaboration, id_bpmn='Colaboracion', name='Dos lotes simultaneos', instances=1]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Orquestador', name='Orquestador', frequency=0, userWithoutRole=['Ana'], instances=1, participantMultiplicity='true', orchestrationRole='orchestrator', infiniteResources='true', containedElements=['Ini_O', 'Preparar', 'Bifurca', 'Ruta_A', 'Ruta_B', 'Convocar', 'Fin_O', 'o1', 'o2', 'o3', 'o4', 'o5', 'o6', 'o0']]
+Element: [type=bpmn:Participant, id_bpmn='Pool_Orquestado', name='Orquestado', frequency=0, userWithoutRole=['Carla'], instances=2, participantMultiplicity='true', orchestrationRole='orchestrated', infiniteResources='true', containedElements=['Ini_R', 'Recoger', 'Fin_R', 'r1', 'r2']]
+Element: [type=bpmn:StartEvent, id_bpmn='Ini_O', name='Inicio', subTask='Preparar']
+Element: [type=bpmn:ParallelGateway, id_bpmn='Bifurca', name='Dos ramas', subTask='Ruta_A,Ruta_B']
+Element: [type=bpmn:Task, id_bpmn='Ruta_A', name='Ruta_A', userTask='Ana', numberOfExecutions=1, minimumTime=0, maximumTime=0, subTask='Convocar']
+Element: [type=bpmn:Task, id_bpmn='Ruta_B', name='Ruta_B', userTask='Ana', numberOfExecutions=1, minimumTime=0, maximumTime=0, subTask='Convocar']
+Element: [type=bpmn:SendTask, id_bpmn='Convocar', name='Convocar dos veces', userTask='Ana', numberOfExecutions=1, multiInstanceType='false', minimumTime=1, maximumTime=20, subTask='Fin_O']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_O', name='Sale un lote', subTask='']
+Element: [type=bpmn:StartEvent, id_bpmn='Ini_R', name='Inicio', subTask='Recoger']
+Element: [type=bpmn:ReceiveTask, id_bpmn='Recoger', name='Recoger convocatorias', userTask='Carla', numberOfExecutions=1, multiInstanceType='false', minimumTime=1, maximumTime=1, subTask='Fin_R']
+Element: [type=bpmn:EndEvent, id_bpmn='Fin_R', name='Fin', subTask='']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o1', name='', superElement='Preparar', subElement='Bifurca']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o2', name='', superElement='Bifurca', subElement='Ruta_A']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o3', name='', superElement='Bifurca', subElement='Ruta_B']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o4', name='', superElement='Ruta_A', subElement='Convocar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o5', name='', superElement='Ruta_B', subElement='Convocar']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o6', name='', superElement='Convocar', subElement='Fin_O']
+Element: [type=bpmn:SequenceFlow, id_bpmn='r1', name='', superElement='Ini_R', subElement='Recoger']
+Element: [type=bpmn:SequenceFlow, id_bpmn='r2', name='', superElement='Recoger', subElement='Fin_R']
+Element: [type=bpmn:MessageFlow, id_bpmn='Convocatoria', name='Convocatoria', superElement='Convocar', subElement='Recoger']
+Element: [type=bpmn:Task, id_bpmn='Preparar', name='Preparar', userTask='Ana', numberOfExecutions=10, minimumTime=0, maximumTime=0, subTask='Bifurca']
+Element: [type=bpmn:SequenceFlow, id_bpmn='o0', name='', superElement='Ini_O', subElement='Preparar']

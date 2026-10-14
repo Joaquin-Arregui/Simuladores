@@ -4,8 +4,8 @@
   <extension name="Time" prefix="time" uri="http://www.xes-standard.org/time.xesext"/>
   <classifier name="Activity (by BPMN ID)" keys="bpmn:id" scope="event"/>
   <classifier name="Case (by participant and instance)" keys="bpmn:participant bpmn:instance" scope="event"/>
-  <string key="simulation:id" value="c91fbd15fee5929f" />
-  <string key="simulation:formatVersion" value="1" />
+  <string key="simulation:id" value="b68dc5335670058c" />
+  <string key="simulation:formatVersion" value="2" />
   <int key="simulation:seed" value="20260101" />
   <string key="simulation:startDate" value="2026-01-01T00:00:00+00:00" />
   <string key="simulation:participants" value="Pool_SACU, Pool_Residente" />
@@ -45,6 +45,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Rellenar el formulario" />
       <string key="bpmn:id" value="Rellenar_Formulario" />
+      <int key="bpmn:activation" value="15" />
       <string key="bpmn:userTask" value="Residente" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="20" />
@@ -62,6 +63,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Enviar la solicitud" />
       <string key="bpmn:id" value="Enviar_Solicitud" />
+      <int key="bpmn:activation" value="23" />
       <string key="bpmn:messageDestiny" value="Recibir_Solicitudes" />
       <string key="bpmn:messageTarget" value="Pool_SACU - 1" />
       <string key="bpmn:userTask" value="Residente" />
@@ -80,6 +82,7 @@
       <string key="concept:name" value="StandByMessage · Esperar_Resultado" />
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Esperar_Resultado" />
+      <int key="bpmn:activation" value="25" />
       <string key="bpmn:execution" value="1" />
       <string key="bpmn:request" value="Pool_SACU - 1" />
       <date key="time:timestamp" value="2026-01-01T00:00:26.000+00:00" />
@@ -95,6 +98,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Esperar el resultado" />
       <string key="bpmn:id" value="Esperar_Resultado" />
+      <int key="bpmn:activation" value="25" />
       <string key="bpmn:messageOrigin" value="Enviar_Resultados" />
       <string key="bpmn:messageSender" value="Pool_SACU - 1" />
       <string key="bpmn:request" value="Pool_SACU - 1" />
@@ -158,6 +162,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Rellenar el formulario" />
       <string key="bpmn:id" value="Rellenar_Formulario" />
+      <int key="bpmn:activation" value="14" />
       <string key="bpmn:userTask" value="Residente" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="19" />
@@ -175,6 +180,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Enviar la solicitud" />
       <string key="bpmn:id" value="Enviar_Solicitud" />
+      <int key="bpmn:activation" value="20" />
       <string key="bpmn:messageDestiny" value="Recibir_Solicitudes" />
       <string key="bpmn:messageTarget" value="Pool_SACU - 1" />
       <string key="bpmn:userTask" value="Residente" />
@@ -193,6 +199,7 @@
       <string key="concept:name" value="StandByMessage · Esperar_Resultado" />
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Esperar_Resultado" />
+      <int key="bpmn:activation" value="22" />
       <string key="bpmn:execution" value="1" />
       <string key="bpmn:request" value="Pool_SACU - 1" />
       <date key="time:timestamp" value="2026-01-01T00:00:21.000+00:00" />
@@ -208,6 +215,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Esperar el resultado" />
       <string key="bpmn:id" value="Esperar_Resultado" />
+      <int key="bpmn:activation" value="22" />
       <string key="bpmn:messageOrigin" value="Enviar_Resultados" />
       <string key="bpmn:messageSender" value="Pool_SACU - 1" />
       <string key="bpmn:request" value="Pool_SACU - 1" />
@@ -254,6 +262,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Presentar una reclamacion" />
       <string key="bpmn:id" value="Reclamar" />
+      <int key="bpmn:activation" value="53" />
       <string key="bpmn:messageDestiny" value="Recibir_Reclamaciones" />
       <string key="bpmn:messageTarget" value="Pool_SACU - 1" />
       <string key="bpmn:userTask" value="Residente" />
@@ -273,6 +282,7 @@
       <string key="concept:name" value="StandByMessage · Esperar_Reevaluacion" />
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Esperar_Reevaluacion" />
+      <int key="bpmn:activation" value="70" />
       <string key="bpmn:execution" value="1" />
       <string key="bpmn:request" value="Pool_SACU - 1" />
       <date key="time:timestamp" value="2026-01-01T00:05:25.000+00:00" />
@@ -288,6 +298,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Esperar la reevaluacion" />
       <string key="bpmn:id" value="Esperar_Reevaluacion" />
+      <int key="bpmn:activation" value="70" />
       <string key="bpmn:messageOrigin" value="Enviar_Reevaluaciones" />
       <string key="bpmn:messageSender" value="Pool_SACU - 1" />
       <string key="bpmn:request" value="Pool_SACU - 1" />
@@ -338,6 +349,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Rellenar el formulario" />
       <string key="bpmn:id" value="Rellenar_Formulario" />
+      <int key="bpmn:activation" value="29" />
       <string key="bpmn:userTask" value="Residente" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="18" />
@@ -355,6 +367,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Enviar la solicitud" />
       <string key="bpmn:id" value="Enviar_Solicitud" />
+      <int key="bpmn:activation" value="31" />
       <string key="bpmn:messageDestiny" value="Recibir_Solicitudes" />
       <string key="bpmn:messageTarget" value="Pool_SACU - 1" />
       <string key="bpmn:userTask" value="Residente" />
@@ -373,6 +386,7 @@
       <string key="concept:name" value="StandByMessage · Esperar_Resultado" />
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Esperar_Resultado" />
+      <int key="bpmn:activation" value="32" />
       <string key="bpmn:execution" value="1" />
       <string key="bpmn:request" value="Pool_SACU - 1" />
       <date key="time:timestamp" value="2026-01-01T00:00:57.000+00:00" />
@@ -388,6 +402,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Esperar el resultado" />
       <string key="bpmn:id" value="Esperar_Resultado" />
+      <int key="bpmn:activation" value="32" />
       <string key="bpmn:messageOrigin" value="Enviar_Resultados" />
       <string key="bpmn:messageSender" value="Pool_SACU - 1" />
       <string key="bpmn:request" value="Pool_SACU - 1" />
@@ -451,6 +466,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Rellenar el formulario" />
       <string key="bpmn:id" value="Rellenar_Formulario" />
+      <int key="bpmn:activation" value="13" />
       <string key="bpmn:userTask" value="Residente" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="19" />
@@ -468,6 +484,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Enviar la solicitud" />
       <string key="bpmn:id" value="Enviar_Solicitud" />
+      <int key="bpmn:activation" value="19" />
       <string key="bpmn:messageDestiny" value="Recibir_Solicitudes" />
       <string key="bpmn:messageTarget" value="Pool_SACU - 1" />
       <string key="bpmn:userTask" value="Residente" />
@@ -486,6 +503,7 @@
       <string key="concept:name" value="StandByMessage · Esperar_Resultado" />
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Esperar_Resultado" />
+      <int key="bpmn:activation" value="21" />
       <string key="bpmn:execution" value="1" />
       <string key="bpmn:request" value="Pool_SACU - 1" />
       <date key="time:timestamp" value="2026-01-01T00:00:20.000+00:00" />
@@ -501,6 +519,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Esperar el resultado" />
       <string key="bpmn:id" value="Esperar_Resultado" />
+      <int key="bpmn:activation" value="21" />
       <string key="bpmn:messageOrigin" value="Enviar_Resultados" />
       <string key="bpmn:messageSender" value="Pool_SACU - 1" />
       <string key="bpmn:request" value="Pool_SACU - 1" />
@@ -564,6 +583,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Rellenar el formulario" />
       <string key="bpmn:id" value="Rellenar_Formulario" />
+      <int key="bpmn:activation" value="18" />
       <string key="bpmn:userTask" value="Residente" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="22" />
@@ -581,6 +601,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Enviar la solicitud" />
       <string key="bpmn:id" value="Enviar_Solicitud" />
+      <int key="bpmn:activation" value="27" />
       <string key="bpmn:messageDestiny" value="Recibir_Solicitudes" />
       <string key="bpmn:messageTarget" value="Pool_SACU - 1" />
       <string key="bpmn:userTask" value="Residente" />
@@ -599,6 +620,7 @@
       <string key="concept:name" value="StandByMessage · Esperar_Resultado" />
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Esperar_Resultado" />
+      <int key="bpmn:activation" value="28" />
       <string key="bpmn:execution" value="1" />
       <string key="bpmn:request" value="Pool_SACU - 1" />
       <date key="time:timestamp" value="2026-01-01T00:00:36.000+00:00" />
@@ -614,6 +636,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Esperar el resultado" />
       <string key="bpmn:id" value="Esperar_Resultado" />
+      <int key="bpmn:activation" value="28" />
       <string key="bpmn:messageOrigin" value="Enviar_Resultados" />
       <string key="bpmn:messageSender" value="Pool_SACU - 1" />
       <string key="bpmn:request" value="Pool_SACU - 1" />
@@ -677,6 +700,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Rellenar el formulario" />
       <string key="bpmn:id" value="Rellenar_Formulario" />
+      <int key="bpmn:activation" value="38" />
       <string key="bpmn:userTask" value="Residente" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="16" />
@@ -694,6 +718,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Enviar la solicitud" />
       <string key="bpmn:id" value="Enviar_Solicitud" />
+      <int key="bpmn:activation" value="40" />
       <string key="bpmn:messageDestiny" value="Recibir_Solicitudes" />
       <string key="bpmn:messageTarget" value="Pool_SACU - 1" />
       <string key="bpmn:userTask" value="Residente" />
@@ -712,6 +737,7 @@
       <string key="concept:name" value="StandByMessage · Esperar_Resultado" />
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Esperar_Resultado" />
+      <int key="bpmn:activation" value="41" />
       <string key="bpmn:execution" value="1" />
       <string key="bpmn:request" value="Pool_SACU - 1" />
       <date key="time:timestamp" value="2026-01-01T00:02:09.000+00:00" />
@@ -727,6 +753,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Esperar el resultado" />
       <string key="bpmn:id" value="Esperar_Resultado" />
+      <int key="bpmn:activation" value="41" />
       <string key="bpmn:messageOrigin" value="Enviar_Resultados" />
       <string key="bpmn:messageSender" value="Pool_SACU - 1" />
       <string key="bpmn:request" value="Pool_SACU - 1" />
@@ -790,6 +817,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Rellenar el formulario" />
       <string key="bpmn:id" value="Rellenar_Formulario" />
+      <int key="bpmn:activation" value="39" />
       <string key="bpmn:userTask" value="Residente" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="27" />
@@ -807,6 +835,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Enviar la solicitud" />
       <string key="bpmn:id" value="Enviar_Solicitud" />
+      <int key="bpmn:activation" value="42" />
       <string key="bpmn:messageDestiny" value="Recibir_Solicitudes" />
       <string key="bpmn:messageTarget" value="Pool_SACU - 1" />
       <string key="bpmn:userTask" value="Residente" />
@@ -825,6 +854,7 @@
       <string key="concept:name" value="StandByMessage · Esperar_Resultado" />
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Esperar_Resultado" />
+      <int key="bpmn:activation" value="43" />
       <string key="bpmn:execution" value="1" />
       <string key="bpmn:request" value="Pool_SACU - 1" />
       <date key="time:timestamp" value="2026-01-01T00:02:28.000+00:00" />
@@ -840,6 +870,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Esperar el resultado" />
       <string key="bpmn:id" value="Esperar_Resultado" />
+      <int key="bpmn:activation" value="43" />
       <string key="bpmn:messageOrigin" value="Enviar_Resultados" />
       <string key="bpmn:messageSender" value="Pool_SACU - 1" />
       <string key="bpmn:request" value="Pool_SACU - 1" />
@@ -916,6 +947,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Rellenar el formulario" />
       <string key="bpmn:id" value="Rellenar_Formulario" />
+      <int key="bpmn:activation" value="16" />
       <string key="bpmn:userTask" value="Residente" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="20" />
@@ -933,6 +965,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Enviar la solicitud" />
       <string key="bpmn:id" value="Enviar_Solicitud" />
+      <int key="bpmn:activation" value="24" />
       <string key="bpmn:messageDestiny" value="Recibir_Solicitudes" />
       <string key="bpmn:messageTarget" value="Pool_SACU - 1" />
       <string key="bpmn:userTask" value="Residente" />
@@ -951,6 +984,7 @@
       <string key="concept:name" value="StandByMessage · Esperar_Resultado" />
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Esperar_Resultado" />
+      <int key="bpmn:activation" value="26" />
       <string key="bpmn:execution" value="1" />
       <string key="bpmn:request" value="Pool_SACU - 1" />
       <date key="time:timestamp" value="2026-01-01T00:00:27.000+00:00" />
@@ -966,6 +1000,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Esperar el resultado" />
       <string key="bpmn:id" value="Esperar_Resultado" />
+      <int key="bpmn:activation" value="26" />
       <string key="bpmn:messageOrigin" value="Enviar_Resultados" />
       <string key="bpmn:messageSender" value="Pool_SACU - 1" />
       <string key="bpmn:request" value="Pool_SACU - 1" />
@@ -1029,6 +1064,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Rellenar el formulario" />
       <string key="bpmn:id" value="Rellenar_Formulario" />
+      <int key="bpmn:activation" value="30" />
       <string key="bpmn:userTask" value="Residente" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="16" />
@@ -1046,6 +1082,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Enviar la solicitud" />
       <string key="bpmn:id" value="Enviar_Solicitud" />
+      <int key="bpmn:activation" value="33" />
       <string key="bpmn:messageDestiny" value="Recibir_Solicitudes" />
       <string key="bpmn:messageTarget" value="Pool_SACU - 1" />
       <string key="bpmn:userTask" value="Residente" />
@@ -1064,6 +1101,7 @@
       <string key="concept:name" value="StandByMessage · Esperar_Resultado" />
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Esperar_Resultado" />
+      <int key="bpmn:activation" value="34" />
       <string key="bpmn:execution" value="1" />
       <string key="bpmn:request" value="Pool_SACU - 1" />
       <date key="time:timestamp" value="2026-01-01T00:01:06.000+00:00" />
@@ -1079,6 +1117,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Esperar el resultado" />
       <string key="bpmn:id" value="Esperar_Resultado" />
+      <int key="bpmn:activation" value="34" />
       <string key="bpmn:messageOrigin" value="Enviar_Resultados" />
       <string key="bpmn:messageSender" value="Pool_SACU - 1" />
       <string key="bpmn:request" value="Pool_SACU - 1" />
@@ -1142,6 +1181,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Rellenar el formulario" />
       <string key="bpmn:id" value="Rellenar_Formulario" />
+      <int key="bpmn:activation" value="35" />
       <string key="bpmn:userTask" value="Residente" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="16" />
@@ -1159,6 +1199,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Enviar la solicitud" />
       <string key="bpmn:id" value="Enviar_Solicitud" />
+      <int key="bpmn:activation" value="36" />
       <string key="bpmn:messageDestiny" value="Recibir_Solicitudes" />
       <string key="bpmn:messageTarget" value="Pool_SACU - 1" />
       <string key="bpmn:userTask" value="Residente" />
@@ -1177,6 +1218,7 @@
       <string key="concept:name" value="StandByMessage · Esperar_Resultado" />
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Esperar_Resultado" />
+      <int key="bpmn:activation" value="37" />
       <string key="bpmn:execution" value="1" />
       <string key="bpmn:request" value="Pool_SACU - 1" />
       <date key="time:timestamp" value="2026-01-01T00:01:48.000+00:00" />
@@ -1192,6 +1234,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Esperar el resultado" />
       <string key="bpmn:id" value="Esperar_Resultado" />
+      <int key="bpmn:activation" value="37" />
       <string key="bpmn:messageOrigin" value="Enviar_Resultados" />
       <string key="bpmn:messageSender" value="Pool_SACU - 1" />
       <string key="bpmn:request" value="Pool_SACU - 1" />

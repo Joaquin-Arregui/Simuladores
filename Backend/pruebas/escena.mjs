@@ -550,7 +550,9 @@ try {
       return minimo;
     };
     const capa = window.modeler.get('drawingLayer');
-    const marcas = [ ...document.querySelectorAll('.layer-simulation-drawing > g') ].map(nodo => {
+    // Las pelotas y los sobres; las zonas y las insignias de la 6.4 las mira zonas.mjs.
+    const marcas = [ ...document.querySelectorAll('.layer-simulation-drawing > g.scene-ball, ' +
+      '.layer-simulation-drawing > g.scene-envelope') ].map(nodo => {
       const datos = { ...nodo.dataset };
       const visible = nodo.getAttribute('visibility') !== 'hidden';
       // El centro del dibujo -circulo o rectangulo-, sin su numero de debajo.

@@ -43,6 +43,9 @@ mientras el comportamiento no deba cambiar, sus XES no deben cambiar.
 - `escena.mjs` — las pelotas de los casos y los sobres del visualizador
   (`Modeler/lib/scene`), con todos los registros congelados y en un Chromium
   de verdad (ver [La pelota del caso y el sobre](#la-pelota-del-caso-y-el-sobre)).
+- `zonas.mjs` — las tres zonas de cada tarea del visualizador, con sus
+  recuentos contados también sobre el XES, y sus insignias en un Chromium de
+  verdad (ver [Las tres zonas de cada tarea](#las-tres-zonas-de-cada-tarea)).
 - `navegador.mjs` — lo que comparten las pruebas en navegador: servir los
   ficheros y abrir Chromium.
 - `interfaz.mjs` — la interfaz del Modeler en un Chromium de verdad: abrir,
@@ -95,6 +98,7 @@ mientras el comportamiento no deba cambiar, sus XES no deben cambiar.
 | `35-proceso-base` | La convocatoria entera del plan con 10 residentes: la SACU publica, recibe hasta que no puede llegar nada, evalua una por solicitud, publica los aceptados y responde a cada uno; los residentes llegan al azar en 120 s, deciden con dos gateways de porcentajes (60 % aceptados, la mitad del resto reclama) y la SACU recibe, evalua y responde las reclamaciones | Cualquier pieza del proceso que el plan llama base: el lote de las dos recepciones, las evaluaciones y los envios multiinstancia, la cola de tres personas y los gateways |
 | `36-tareas-instantaneas` | Dos casos, en t=0 y t=30, con dos tareas de duracion cero seguidas de una que dura diez segundos | Que las tareas instantaneas desaparezcan de las consultas de la linea de tiempo, pierdan su identidad u orden, ocupen tiempo inventado o se repitan entre ventanas consecutivas |
 | `37-recogida-antes-de-la-otra-espera` | Dos ramas del orquestador llegan a la misma recepcion y el orquestado le manda dos solicitudes por el mismo flujo. La rama A recoge la primera a los 7 s y espera a Ana hasta los 20; la B espera la segunda de 8 a 10. Las dos activaciones tienen la ejecucion 1 y el mismo remitente | Que el visualizador tome la espera de mensaje de una activacion por la de otra: daba la primera solicitud por recogida a los 10 s y la mostraba en el buzon a los 8 (6.3) |
+| `38-lotes-simultaneos` | Dos ramas activan a la vez el mismo envío multiinstancia a dos destinatarios; los lotes salen en t=11 y t=16 | Que la escena mezcle sus ejecuciones por el orden de fin y vacíe una salida en t=10. Se comprueba contra los eventos de fin, sin reconstruir activaciones |
 | `con-avisos/envio-a-pool-externo` | Un mensaje dirigido al pool y no a un receptor | Que un envio que sale de la simulacion acabe en un error interno en vez de en un aviso |
 | `con-avisos/mismo-usuario-en-dos-pools` | El mismo nombre declarado en dos pools | Que dos pools vuelvan a competir por el mismo recurso |
 | `con-avisos/multiinstancia-con-numero-escrito` | Una convocatoria multiinstancia con numberOfExecutions=4 a dos casos | Que un numero que ya no se usa se ignore en silencio; N son los dos casos vivos |
@@ -702,6 +706,85 @@ quedaba con la simulación, y `show(60)` volvía a dibujar las marcas y el reloj
 de la anterior sobre el diagrama nuevo. Necesita lo mismo que
 `capa_de_dibujo.mjs`.
 
+## Las tres zonas de cada tarea
+
+```
+node pruebas/zonas.mjs
+```
+
+Cada tarea del visualizador tiene tres zonas (`Modeler/lib/scene/zones.js`,
+6.4): la cola a la entrada, lo que está dentro y lo bloqueado a la salida —las
+ejecuciones ya terminadas de una activación que aún no ha salido: las de un
+lote que esperan a las demás, o las vueltas ya hechas de un bucle—, y cada una
+cuenta sus ejecuciones, de cuántos casos son, de cuántos casos son las
+solicitudes que tienen en la mano y, en la cola de una recepción, los sobres de
+su buzón. Sin navegador, el script comprueba con cada modelo de `esperado/`,
+con los flujos de sus reglas:
+
+- Que esos recuentos **cuadran con el XES**, en cada instante en que empieza o
+  acaba algo y a mitad de cada dos. Aquí se cuentan sobre los eventos del XES,
+  leídos con expresiones regulares, sin la línea de tiempo ni la escena: a la
+  entrada, las esperas (`StandBy…`) en curso; dentro, el resto de eventos con
+  fin en curso; a la salida, las ejecuciones terminadas cuya activación
+  (`bpmn:activation`) aún tiene alguna pieza sin terminar; y en el buzón, los
+  sobres enviados menos los recogidos. Todas las tareas deben llevar identidad
+  de activación, también sus esperas. No se excluyen los lotes repetidos.
+- Que dos lotes simultáneos en la misma tarea (`38`) conservan sus propias
+  salidas: se cuentan los envíos terminados menos dos por cada evento de fin,
+  sin usar el identificador ni reconstruir los tiempos del lote. Al quitar
+  la identidad de un registro ambiguo, la escena pide volver a simular.
+- Que el tránsito no cambia ni los recuentos ni lo bloqueado, y que lo hay: sin
+  los flujos no habría ninguna pelota ni ningún sobre en tránsito, y la
+  comprobación pasaría sin mirar nada.
+- Que **con N = 50** (`14`) se ve acumularse el lote: Recoger se activa a los
+  100 s, cuando el orquestador acaba de convocar a los 50; su salida crece sin
+  bajar nunca hasta 49 a los 745 s, con la última solicitud dentro, y a los
+  746 se vacía, cuando Responder empieza con 49 en la cola y una dentro; su
+  cola baja y su salida crece igual. Siempre un solo caso, el orquestador, con
+  una solicitud de cada orquestado.
+- **Con paralelismo**: dos ramas del mismo caso en la cola de Recoger cuentan
+  un caso (`37`, a los 8 s), y la que ya salió no se queda a la salida aunque la
+  otra siga dentro (`37`, a los 21,5 s); dos ramas en dos tareas (`03`) y una
+  recepción y una tarea a la vez (`12`); y las vueltas de un bucle a la salida
+  (`03`).
+
+Para ver que las comprobaciones distinguen, se repiten con tres escenas
+estropeadas a propósito, que tienen que fallar: una que cuenta cada ejecución
+como un caso (`14`), una sin salida (`35`) y una que agrupa la salida por caso y
+elemento, sin activaciones, que en el `37` dejaría a la salida la recepción de
+la rama A cuando ya ha salido.
+
+Después, en el bpmn-js de las dependencias del Modeler con `lib/scene`,
+comprueba en la pantalla: las tres franjas de Evaluar_Propuestas del `35` a los
+200 s, con sus dos líneas y sus nombres, y cada pelota en la suya —cuatro en la
+cola, tres dentro y tres a la salida—; que una evaluación que termina pasa a la
+salida en la misma marca; que con el umbral en 2 las tres zonas son insignias
+rotuladas con sus recuentos —también con el umbral escrito como texto, «2»— y
+sin él vuelven las pelotas; que con N = 50 la
+salida de Recoger crece en la pantalla —10, 20, 30, 40 y 49— y a los 745 s es
+una insignia de 49 ejecuciones de un caso, con la última pelota dentro, y la
+cola de Esperar_Resultado, una de 50 casos; que con tránsito, a los 746,5 s,
+las 49 respuestas que acaban de llegar a la cola de Responder van en su
+insignia sin dibujarse en el flujo, y a los 18 s el buzón lleno cuenta también
+los sobres que aún van de camino; que a los 200 s el buzón de
+Esperar_Convocatoria, con 36 sobres para orquestados que aún no han llegado, es
+un sobre «× 36»; y que al ampliar todo sigue en su franja.
+
+También comprueba que pelotas, insignias y buzones no tapan el nombre de la
+tarea, que este no se recorta al encajar el diagrama, que sigue legible con
+zoom y al editar, y que se restaura al salir o ejecutar `clear()`. Dibujar y
+limpiar no cambian el XML. `SCENE_SCREENSHOT` permite guardar una captura del
+modelo 35 con las tres insignias.
+
+Los registros se han actualizado al formato 2, que añade `bpmn:activation`
+y cambia la versión y el ID de simulación. Antes de congelarlos se compararon
+los 45 modelos anteriores excluyendo solo esos tres atributos: no cambió
+ningún evento, tiempo, persona, mensaje ni otro metadato.
+
+El `14` no tenía diagrama: se generó para esto con `bpmn_desde_reglas.py`, y con
+él entra también en el banco de integración y en `exportadas/`. Necesita lo
+mismo que `capa_de_dibujo.mjs`.
+
 ## El coste del proceso base
 
 ```
@@ -760,7 +843,8 @@ en `valida_esquema.py`, y el ejemplo, sus reglas exportadas y los registros
 congelados del `35` en `interfaz.mjs`, los registros de `esperado/` en
 `linea_de_tiempo.mjs`, el ejemplo en `capa_de_dibujo.mjs`, y los registros de
 `esperado/`, las reglas de cada uno y los diagramas del `01`, el `02`, el `10` y
-el `35` en `escena.mjs`. Sin esa
+el `35` en `escena.mjs`, y los registros de `esperado/` y los diagramas del
+`14` y el `35` en `zonas.mjs`. Sin esa
 comprobación, perder una
 carpeta entera —modelos y referencias a la vez, en un merge— daba verde con
 menos casos, o con ninguno, sin decir nada.

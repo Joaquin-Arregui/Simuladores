@@ -4,8 +4,8 @@
   <extension name="Time" prefix="time" uri="http://www.xes-standard.org/time.xesext"/>
   <classifier name="Activity (by BPMN ID)" keys="bpmn:id" scope="event"/>
   <classifier name="Case (by participant and instance)" keys="bpmn:participant bpmn:instance" scope="event"/>
-  <string key="simulation:id" value="c4e9493f01150c9c" />
-  <string key="simulation:formatVersion" value="1" />
+  <string key="simulation:id" value="cb6b7cadcd89e504" />
+  <string key="simulation:formatVersion" value="2" />
   <int key="simulation:seed" value="20260101" />
   <string key="simulation:startDate" value="2026-01-01T00:00:00+00:00" />
   <string key="simulation:participants" value="Pool_Emisor, Pool_Receptor" />
@@ -44,6 +44,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Avisar al receptor" />
       <string key="bpmn:id" value="Avisar" />
+      <int key="bpmn:activation" value="5" />
       <string key="bpmn:messageDestiny" value="Ini_R" />
       <string key="bpmn:messageTarget" value="Pool_Receptor - 1" />
       <string key="bpmn:userTask" value="Ana" />
@@ -93,6 +94,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Avisar al receptor" />
       <string key="bpmn:id" value="Avisar" />
+      <int key="bpmn:activation" value="10" />
       <string key="bpmn:messageDestiny" value="Ini_R" />
       <string key="bpmn:messageTarget" value="Pool_Receptor - 2" />
       <string key="bpmn:userTask" value="Ana" />

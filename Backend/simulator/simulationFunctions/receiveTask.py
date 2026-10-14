@@ -17,6 +17,7 @@ f'''
         <event>
             <string key="bpmn:type" value="StandByMessage"/>
             <string key="bpmn:id" value="{{xml_value(TaskName)}}"/>
+            <int key="bpmn:activation" value="{{xml_value(contexto)}}"/>
             <string key="bpmn:execution" value="{{xml_value(execution)}}"/>
             <string key="bpmn:request" value="{{xml_value(remitente)}}"/>
             <date key="time:timestamp" value="{{xml_value(start_standby_message)}}"/>
@@ -36,6 +37,7 @@ f'''
         <event>
             <string key="bpmn:type" value="StandBy"/>
             <string key="bpmn:id" value="{{xml_value(TaskName)}}"/>
+            <int key="bpmn:activation" value="{{xml_value(contexto)}}"/>
             <string key="bpmn:execution" value="{{xml_value(execution)}}"/>
             <string key="bpmn:request" value="{{xml_value(remitente)}}"/>
             <date key="time:timestamp" value="{{xml_value(start_standBy)}}"/>
@@ -53,6 +55,7 @@ f'''
             <string key="bpmn:type" value="{xml_template(element.bpmn_type)}"/>
             <string key="bpmn:name" value="{xml_template(element.name)}"/>
             <string key="bpmn:id" value="{{xml_value(TaskName)}}"/>
+            <int key="bpmn:activation" value="{{xml_value(contexto)}}"/>
             <string key="bpmn:messageOrigin" value="{xml_template(element.messageOrigin)}"/>
             <string key="bpmn:messageSender" value="{{xml_value(remitente)}}"/>
             <string key="bpmn:request" value="{{xml_value(remitente)}}"/>
@@ -78,6 +81,7 @@ f'''
         <event>
             <string key="bpmn:type" value="StandByData"/>
             <string key="bpmn:id" value="{{xml_value(TaskName)}}"/>
+            <int key="bpmn:activation" value="{{xml_value(contexto)}}"/>
             <date key="time:timestamp" value="{{xml_value(start_standBy_data)}}"/>
             <date key="time:endTime" value="{{xml_value(env.now)}}"/>
             <date key="time:duration" value="{{xml_value(env.now-start_standBy_data)}}"/>

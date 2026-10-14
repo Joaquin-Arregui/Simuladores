@@ -4,8 +4,8 @@
   <extension name="Time" prefix="time" uri="http://www.xes-standard.org/time.xesext"/>
   <classifier name="Activity (by BPMN ID)" keys="bpmn:id" scope="event"/>
   <classifier name="Case (by participant and instance)" keys="bpmn:participant bpmn:instance" scope="event"/>
-  <string key="simulation:id" value="cc1dabd88d9f0c97" />
-  <string key="simulation:formatVersion" value="1" />
+  <string key="simulation:id" value="adada58eae31ab56" />
+  <string key="simulation:formatVersion" value="2" />
   <int key="simulation:seed" value="20260101" />
   <string key="simulation:startDate" value="2026-01-01T00:00:00+00:00" />
   <string key="simulation:participants" value="Pool_Orquestador, Pool_Orquestado" />
@@ -45,6 +45,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Publicar la convocatoria" />
       <string key="bpmn:id" value="Convocar" />
+      <int key="bpmn:activation" value="8" />
       <string key="bpmn:messageDestiny" value="Esperar_Convocatoria" />
       <string key="bpmn:messageTarget" value="Pool_Orquestado - 1" />
       <string key="bpmn:userTask" value="Ana" />
@@ -64,6 +65,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Publicar la convocatoria" />
       <string key="bpmn:id" value="Convocar" />
+      <int key="bpmn:activation" value="8" />
       <string key="bpmn:messageDestiny" value="Esperar_Convocatoria" />
       <string key="bpmn:messageTarget" value="Pool_Orquestado - 2" />
       <string key="bpmn:userTask" value="Ana" />
@@ -83,6 +85,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Publicar la convocatoria" />
       <string key="bpmn:id" value="Convocar" />
+      <int key="bpmn:activation" value="8" />
       <string key="bpmn:messageDestiny" value="Esperar_Convocatoria" />
       <string key="bpmn:messageTarget" value="Pool_Orquestado - 3" />
       <string key="bpmn:userTask" value="Ana" />
@@ -102,6 +105,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Publicar la convocatoria" />
       <string key="bpmn:id" value="Convocar" />
+      <int key="bpmn:activation" value="8" />
       <string key="bpmn:messageDestiny" value="Esperar_Convocatoria" />
       <string key="bpmn:messageTarget" value="Pool_Orquestado - 4" />
       <string key="bpmn:userTask" value="Ana" />
@@ -121,6 +125,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Publicar la convocatoria" />
       <string key="bpmn:id" value="Convocar" />
+      <int key="bpmn:activation" value="8" />
       <string key="bpmn:messageDestiny" value="Esperar_Convocatoria" />
       <string key="bpmn:messageTarget" value="Pool_Orquestado - 5" />
       <string key="bpmn:userTask" value="Ana" />
@@ -140,6 +145,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Publicar la convocatoria" />
       <string key="bpmn:id" value="Convocar" />
+      <int key="bpmn:activation" value="8" />
       <string key="bpmn:messageDestiny" value="Esperar_Convocatoria" />
       <string key="bpmn:messageTarget" value="Pool_Orquestado - 6" />
       <string key="bpmn:userTask" value="Ana" />
@@ -174,6 +180,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Reconvocar a los que siguen" />
       <string key="bpmn:id" value="Reconvocar" />
+      <int key="bpmn:activation" value="28" />
       <string key="bpmn:messageDestiny" value="Esperar_Reconvocatoria" />
       <string key="bpmn:messageTarget" value="Pool_Orquestado - 1" />
       <string key="bpmn:userTask" value="Ana" />
@@ -193,6 +200,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Reconvocar a los que siguen" />
       <string key="bpmn:id" value="Reconvocar" />
+      <int key="bpmn:activation" value="28" />
       <string key="bpmn:messageDestiny" value="Esperar_Reconvocatoria" />
       <string key="bpmn:messageTarget" value="Pool_Orquestado - 4" />
       <string key="bpmn:userTask" value="Ana" />
@@ -212,6 +220,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Reconvocar a los que siguen" />
       <string key="bpmn:id" value="Reconvocar" />
+      <int key="bpmn:activation" value="28" />
       <string key="bpmn:messageDestiny" value="Esperar_Reconvocatoria" />
       <string key="bpmn:messageTarget" value="Pool_Orquestado - 5" />
       <string key="bpmn:userTask" value="Ana" />

@@ -4,8 +4,8 @@
   <extension name="Time" prefix="time" uri="http://www.xes-standard.org/time.xesext"/>
   <classifier name="Activity (by BPMN ID)" keys="bpmn:id" scope="event"/>
   <classifier name="Case (by participant and instance)" keys="bpmn:participant bpmn:instance" scope="event"/>
-  <string key="simulation:id" value="bde9899ac60a4d59" />
-  <string key="simulation:formatVersion" value="1" />
+  <string key="simulation:id" value="6cb3304b419ba944" />
+  <string key="simulation:formatVersion" value="2" />
   <int key="simulation:seed" value="20260101" />
   <string key="simulation:startDate" value="2026-01-01T00:00:00+00:00" />
   <string key="simulation:participants" value="Pool_Orquestador, Pool_Orquestado" />
@@ -44,6 +44,7 @@
       <string key="concept:name" value="StandByMessage · Esperar_Convocatoria" />
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Esperar_Convocatoria" />
+      <int key="bpmn:activation" value="6" />
       <string key="bpmn:execution" value="1" />
       <string key="bpmn:request" value="Pool_Orquestador - 1" />
       <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
@@ -59,6 +60,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Esperar la convocatoria" />
       <string key="bpmn:id" value="Esperar_Convocatoria" />
+      <int key="bpmn:activation" value="6" />
       <string key="bpmn:messageOrigin" value="Convocar" />
       <string key="bpmn:messageSender" value="Pool_Orquestador - 1" />
       <string key="bpmn:request" value="Pool_Orquestador - 1" />
@@ -92,6 +94,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Preparar lo de la ventanilla A" />
       <string key="bpmn:id" value="Tramitar_A" />
+      <int key="bpmn:activation" value="11" />
       <string key="bpmn:userTask" value="Beto" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="66" />
@@ -109,6 +112,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Preparar lo de la ventanilla B" />
       <string key="bpmn:id" value="Preparar_B" />
+      <int key="bpmn:activation" value="12" />
       <string key="bpmn:userTask" value="Beto" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="133" />
@@ -126,6 +130,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Pedir por la ventanilla A" />
       <string key="bpmn:id" value="Solicitar_A" />
+      <int key="bpmn:activation" value="25" />
       <string key="bpmn:messageDestiny" value="Recoger_A" />
       <string key="bpmn:messageTarget" value="Pool_Orquestador - 1" />
       <string key="bpmn:userTask" value="Beto" />
@@ -145,6 +150,7 @@
       <string key="concept:name" value="StandByMessage · Esperar_Resp_A" />
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Esperar_Resp_A" />
+      <int key="bpmn:activation" value="26" />
       <string key="bpmn:execution" value="1" />
       <string key="bpmn:request" value="Pool_Orquestador - 1" />
       <date key="time:timestamp" value="2026-01-01T00:01:09.000+00:00" />
@@ -160,6 +166,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Pedir por la ventanilla B" />
       <string key="bpmn:id" value="Solicitar_B" />
+      <int key="bpmn:activation" value="28" />
       <string key="bpmn:messageDestiny" value="Recoger_B" />
       <string key="bpmn:messageTarget" value="Pool_Orquestador - 1" />
       <string key="bpmn:userTask" value="Beto" />
@@ -179,6 +186,7 @@
       <string key="concept:name" value="StandByMessage · Esperar_Resp_B" />
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Esperar_Resp_B" />
+      <int key="bpmn:activation" value="29" />
       <string key="bpmn:execution" value="1" />
       <string key="bpmn:request" value="Pool_Orquestador - 1" />
       <date key="time:timestamp" value="2026-01-01T00:02:16.000+00:00" />
@@ -194,6 +202,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Esperar la respuesta de B" />
       <string key="bpmn:id" value="Esperar_Resp_B" />
+      <int key="bpmn:activation" value="29" />
       <string key="bpmn:messageOrigin" value="Responder_B" />
       <string key="bpmn:messageSender" value="Pool_Orquestador - 1" />
       <string key="bpmn:request" value="Pool_Orquestador - 1" />
@@ -227,6 +236,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Esperar la respuesta de A" />
       <string key="bpmn:id" value="Esperar_Resp_A" />
+      <int key="bpmn:activation" value="26" />
       <string key="bpmn:messageOrigin" value="Responder_A" />
       <string key="bpmn:messageSender" value="Pool_Orquestador - 1" />
       <string key="bpmn:request" value="Pool_Orquestador - 1" />
@@ -290,6 +300,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Esperar la convocatoria" />
       <string key="bpmn:id" value="Esperar_Convocatoria" />
+      <int key="bpmn:activation" value="13" />
       <string key="bpmn:messageOrigin" value="Convocar" />
       <string key="bpmn:messageSender" value="Pool_Orquestador - 1" />
       <string key="bpmn:request" value="Pool_Orquestador - 1" />
@@ -323,6 +334,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Preparar lo de la ventanilla A" />
       <string key="bpmn:id" value="Tramitar_A" />
+      <int key="bpmn:activation" value="15" />
       <string key="bpmn:userTask" value="Beto" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="44" />
@@ -340,6 +352,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Preparar lo de la ventanilla B" />
       <string key="bpmn:id" value="Preparar_B" />
+      <int key="bpmn:activation" value="16" />
       <string key="bpmn:userTask" value="Beto" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="137" />
@@ -357,6 +370,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Pedir por la ventanilla A" />
       <string key="bpmn:id" value="Solicitar_A" />
+      <int key="bpmn:activation" value="21" />
       <string key="bpmn:messageDestiny" value="Recoger_A" />
       <string key="bpmn:messageTarget" value="Pool_Orquestador - 1" />
       <string key="bpmn:userTask" value="Beto" />
@@ -376,6 +390,7 @@
       <string key="concept:name" value="StandByMessage · Esperar_Resp_A" />
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Esperar_Resp_A" />
+      <int key="bpmn:activation" value="22" />
       <string key="bpmn:execution" value="1" />
       <string key="bpmn:request" value="Pool_Orquestador - 1" />
       <date key="time:timestamp" value="2026-01-01T00:00:51.000+00:00" />
@@ -391,6 +406,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Pedir por la ventanilla B" />
       <string key="bpmn:id" value="Solicitar_B" />
+      <int key="bpmn:activation" value="30" />
       <string key="bpmn:messageDestiny" value="Recoger_B" />
       <string key="bpmn:messageTarget" value="Pool_Orquestador - 1" />
       <string key="bpmn:userTask" value="Beto" />
@@ -410,6 +426,7 @@
       <string key="concept:name" value="StandByMessage · Esperar_Resp_B" />
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Esperar_Resp_B" />
+      <int key="bpmn:activation" value="31" />
       <string key="bpmn:execution" value="1" />
       <string key="bpmn:request" value="Pool_Orquestador - 1" />
       <date key="time:timestamp" value="2026-01-01T00:02:24.000+00:00" />
@@ -425,6 +442,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Esperar la respuesta de B" />
       <string key="bpmn:id" value="Esperar_Resp_B" />
+      <int key="bpmn:activation" value="31" />
       <string key="bpmn:messageOrigin" value="Responder_B" />
       <string key="bpmn:messageSender" value="Pool_Orquestador - 1" />
       <string key="bpmn:request" value="Pool_Orquestador - 1" />
@@ -458,6 +476,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Esperar la respuesta de A" />
       <string key="bpmn:id" value="Esperar_Resp_A" />
+      <int key="bpmn:activation" value="22" />
       <string key="bpmn:messageOrigin" value="Responder_A" />
       <string key="bpmn:messageSender" value="Pool_Orquestador - 1" />
       <string key="bpmn:request" value="Pool_Orquestador - 1" />
@@ -521,6 +540,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Esperar la convocatoria" />
       <string key="bpmn:id" value="Esperar_Convocatoria" />
+      <int key="bpmn:activation" value="17" />
       <string key="bpmn:messageOrigin" value="Convocar" />
       <string key="bpmn:messageSender" value="Pool_Orquestador - 1" />
       <string key="bpmn:request" value="Pool_Orquestador - 1" />
@@ -554,6 +574,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Preparar lo de la ventanilla A" />
       <string key="bpmn:id" value="Tramitar_A" />
+      <int key="bpmn:activation" value="19" />
       <string key="bpmn:userTask" value="Beto" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="49" />
@@ -571,6 +592,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Preparar lo de la ventanilla B" />
       <string key="bpmn:id" value="Preparar_B" />
+      <int key="bpmn:activation" value="20" />
       <string key="bpmn:userTask" value="Beto" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="177" />
@@ -588,6 +610,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Pedir por la ventanilla A" />
       <string key="bpmn:id" value="Solicitar_A" />
+      <int key="bpmn:activation" value="23" />
       <string key="bpmn:messageDestiny" value="Recoger_A" />
       <string key="bpmn:messageTarget" value="Pool_Orquestador - 1" />
       <string key="bpmn:userTask" value="Beto" />
@@ -607,6 +630,7 @@
       <string key="concept:name" value="StandByMessage · Esperar_Resp_A" />
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Esperar_Resp_A" />
+      <int key="bpmn:activation" value="24" />
       <string key="bpmn:execution" value="1" />
       <string key="bpmn:request" value="Pool_Orquestador - 1" />
       <date key="time:timestamp" value="2026-01-01T00:01:01.000+00:00" />
@@ -622,6 +646,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Pedir por la ventanilla B" />
       <string key="bpmn:id" value="Solicitar_B" />
+      <int key="bpmn:activation" value="32" />
       <string key="bpmn:messageDestiny" value="Recoger_B" />
       <string key="bpmn:messageTarget" value="Pool_Orquestador - 1" />
       <string key="bpmn:userTask" value="Beto" />
@@ -641,6 +666,7 @@
       <string key="concept:name" value="StandByMessage · Esperar_Resp_B" />
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Esperar_Resp_B" />
+      <int key="bpmn:activation" value="33" />
       <string key="bpmn:execution" value="1" />
       <string key="bpmn:request" value="Pool_Orquestador - 1" />
       <date key="time:timestamp" value="2026-01-01T00:03:09.000+00:00" />
@@ -656,6 +682,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Esperar la respuesta de B" />
       <string key="bpmn:id" value="Esperar_Resp_B" />
+      <int key="bpmn:activation" value="33" />
       <string key="bpmn:messageOrigin" value="Responder_B" />
       <string key="bpmn:messageSender" value="Pool_Orquestador - 1" />
       <string key="bpmn:request" value="Pool_Orquestador - 1" />
@@ -689,6 +716,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Esperar la respuesta de A" />
       <string key="bpmn:id" value="Esperar_Resp_A" />
+      <int key="bpmn:activation" value="24" />
       <string key="bpmn:messageOrigin" value="Responder_A" />
       <string key="bpmn:messageSender" value="Pool_Orquestador - 1" />
       <string key="bpmn:request" value="Pool_Orquestador - 1" />

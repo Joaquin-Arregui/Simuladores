@@ -47,7 +47,7 @@ avisos y la semilla usada:
 ```json
 {
   "simulationId": "d271c85ff2dff9fb",
-  "formatVersion": "1",
+  "formatVersion": "2",
   "model": { "id": "Colaboracion", "name": "Cliente y servicio",
              "rulesSha256": "85df…", "diagramSha256": "3a07…" },
   "seed": 2841937403,
@@ -285,6 +285,11 @@ evento dice lo que hace falta para saber dónde está cada caso en cada instante
   una unión, con `bpmn:incomingFlow`), y solo se registran si duran algo.
 - Los inicios, los fines, las compuertas y los lanzamientos son instantes: solo
   `time:timestamp`. Una compuerta dice en `bpmn:selectedFlow` qué salidas tomó.
+- `bpmn:activation` (6.4, formato 2) identifica el token que activó una tarea.
+  Está en todas sus ejecuciones y esperas, también en la espera cancelada al
+  cerrar una recepción. Junto con el caso y el elemento distingue lotes
+  simultáneos aunque empiecen a la vez y ambos numeren desde 1. Se registra el
+  contexto ya existente en el motor; no altera los tiempos ni el encaminamiento.
 - `bpmn:execution` numera las ejecuciones de una tarea en una activación, y
   `bpmn:occurrence` identifica cada evento dentro de su caso: no se repite ni
   en un bucle ni en dos ramas que pasen a la vez por la misma tarea.

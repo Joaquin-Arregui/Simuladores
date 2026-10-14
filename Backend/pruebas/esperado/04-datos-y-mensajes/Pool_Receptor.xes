@@ -4,8 +4,8 @@
   <extension name="Time" prefix="time" uri="http://www.xes-standard.org/time.xesext"/>
   <classifier name="Activity (by BPMN ID)" keys="bpmn:id" scope="event"/>
   <classifier name="Case (by participant and instance)" keys="bpmn:participant bpmn:instance" scope="event"/>
-  <string key="simulation:id" value="c4e9493f01150c9c" />
-  <string key="simulation:formatVersion" value="1" />
+  <string key="simulation:id" value="cb6b7cadcd89e504" />
+  <string key="simulation:formatVersion" value="2" />
   <int key="simulation:seed" value="20260101" />
   <string key="simulation:startDate" value="2026-01-01T00:00:00+00:00" />
   <string key="simulation:participants" value="Pool_Emisor, Pool_Receptor" />
@@ -82,6 +82,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Preparar el expediente" />
       <string key="bpmn:id" value="Produce" />
+      <int key="bpmn:activation" value="8" />
       <string key="bpmn:userTask" value="Beto" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="35" />
@@ -98,6 +99,7 @@
       <string key="concept:name" value="StandByData · Consume" />
       <string key="bpmn:type" value="StandByData" />
       <string key="bpmn:id" value="Consume" />
+      <int key="bpmn:activation" value="9" />
       <date key="time:timestamp" value="2026-01-01T00:00:08.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:00:43.000+00:00" />
       <float key="time:duration" value="35.0" />
@@ -111,6 +113,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Revisar el expediente" />
       <string key="bpmn:id" value="Consume" />
+      <int key="bpmn:activation" value="9" />
       <string key="bpmn:userTask" value="Clara" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="8" />
@@ -221,6 +224,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Preparar el expediente" />
       <string key="bpmn:id" value="Produce" />
+      <int key="bpmn:activation" value="15" />
       <string key="bpmn:userTask" value="Beto" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="37" />
@@ -237,6 +241,7 @@
       <string key="concept:name" value="StandByData · Consume" />
       <string key="bpmn:type" value="StandByData" />
       <string key="bpmn:id" value="Consume" />
+      <int key="bpmn:activation" value="16" />
       <date key="time:timestamp" value="2026-01-01T00:00:57.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:01:34.000+00:00" />
       <float key="time:duration" value="37.0" />
@@ -250,6 +255,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Revisar el expediente" />
       <string key="bpmn:id" value="Consume" />
+      <int key="bpmn:activation" value="16" />
       <string key="bpmn:userTask" value="Clara" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="6" />

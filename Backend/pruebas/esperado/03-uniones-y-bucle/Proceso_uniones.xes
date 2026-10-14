@@ -4,8 +4,8 @@
   <extension name="Time" prefix="time" uri="http://www.xes-standard.org/time.xesext"/>
   <classifier name="Activity (by BPMN ID)" keys="bpmn:id" scope="event"/>
   <classifier name="Case (by participant and instance)" keys="bpmn:participant bpmn:instance" scope="event"/>
-  <string key="simulation:id" value="5cde0019b22a61c2" />
-  <string key="simulation:formatVersion" value="1" />
+  <string key="simulation:id" value="e1c47eb1fdb1bac4" />
+  <string key="simulation:formatVersion" value="2" />
   <int key="simulation:seed" value="20260101" />
   <string key="simulation:startDate" value="2026-01-01T00:00:00+00:00" />
   <string key="simulation:participants" value="Proceso_uniones" />
@@ -59,6 +59,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Rama A" />
       <string key="bpmn:id" value="Tarea_A" />
+      <int key="bpmn:activation" value="4" />
       <string key="bpmn:userTask" value="Rosa" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="33" />
@@ -76,6 +77,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Rama B" />
       <string key="bpmn:id" value="Tarea_B" />
+      <int key="bpmn:activation" value="5" />
       <string key="bpmn:userTask" value="Tomas" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="41" />
@@ -132,6 +134,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Rama C" />
       <string key="bpmn:id" value="Tarea_C" />
+      <int key="bpmn:activation" value="8" />
       <string key="bpmn:userTask" value="Vera" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="22" />
@@ -176,6 +179,7 @@
       <string key="concept:name" value="StandBy · Revision" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Revision" />
+      <int key="bpmn:activation" value="14" />
       <string key="bpmn:execution" value="1" />
       <date key="time:timestamp" value="2026-01-01T00:01:23.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:01:42.000+00:00" />
@@ -190,6 +194,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Revision repetida" />
       <string key="bpmn:id" value="Revision" />
+      <int key="bpmn:activation" value="14" />
       <string key="bpmn:userTask" value="Tomas" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="14" />
@@ -207,6 +212,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Revision repetida" />
       <string key="bpmn:id" value="Revision" />
+      <int key="bpmn:activation" value="14" />
       <string key="bpmn:userTask" value="Tomas" />
       <int key="bpmn:execution" value="2" />
       <int key="bpmn:time" value="15" />
@@ -224,6 +230,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Revision repetida" />
       <string key="bpmn:id" value="Revision" />
+      <int key="bpmn:activation" value="14" />
       <string key="bpmn:userTask" value="Tomas" />
       <int key="bpmn:execution" value="3" />
       <int key="bpmn:time" value="17" />
@@ -284,6 +291,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Rama A" />
       <string key="bpmn:id" value="Tarea_A" />
+      <int key="bpmn:activation" value="10" />
       <string key="bpmn:userTask" value="Rosa" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="29" />
@@ -301,6 +309,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Rama B" />
       <string key="bpmn:id" value="Tarea_B" />
+      <int key="bpmn:activation" value="11" />
       <string key="bpmn:userTask" value="Tomas" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="42" />
@@ -357,6 +366,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Rama C" />
       <string key="bpmn:id" value="Tarea_C" />
+      <int key="bpmn:activation" value="17" />
       <string key="bpmn:userTask" value="Vera" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="20" />
@@ -374,6 +384,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Rama D" />
       <string key="bpmn:id" value="Tarea_D" />
+      <int key="bpmn:activation" value="18" />
       <string key="bpmn:userTask" value="Rosa" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="26" />
@@ -432,6 +443,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Revision repetida" />
       <string key="bpmn:id" value="Revision" />
+      <int key="bpmn:activation" value="21" />
       <string key="bpmn:userTask" value="Tomas" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="15" />
@@ -449,6 +461,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Revision repetida" />
       <string key="bpmn:id" value="Revision" />
+      <int key="bpmn:activation" value="21" />
       <string key="bpmn:userTask" value="Tomas" />
       <int key="bpmn:execution" value="2" />
       <int key="bpmn:time" value="14" />
@@ -466,6 +479,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Revision repetida" />
       <string key="bpmn:id" value="Revision" />
+      <int key="bpmn:activation" value="21" />
       <string key="bpmn:userTask" value="Tomas" />
       <int key="bpmn:execution" value="3" />
       <int key="bpmn:time" value="12" />

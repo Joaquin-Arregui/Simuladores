@@ -707,7 +707,7 @@ def recoge_lote(env, origen, recepcion, caso, contexto, ejecuta, paralelo):
         def ejecucion(numero):
             remitente = yield env.process(espera_en_lote(env, lote, numero))
             if remitente is None:
-                _registra_espera_cancelada(caso, recepcion, numero, inicio)
+                _registra_espera_cancelada(caso, recepcion, numero, inicio, contexto)
                 fin.succeed()
                 return
             ejecuciones.append(env.process(ejecucion(numero + 1)))
@@ -721,7 +721,7 @@ def recoge_lote(env, origen, recepcion, caso, contexto, ejecuta, paralelo):
             empieza = env.now
             remitente = yield env.process(espera_en_lote(env, lote, numero))
             if remitente is None:
-                _registra_espera_cancelada(caso, recepcion, numero, empieza)
+                _registra_espera_cancelada(caso, recepcion, numero, empieza, contexto)
                 return False
             yield from ejecuta(env, recepcion, caso, numero, (remitente, empieza))
             return True
@@ -735,7 +735,7 @@ def recoge_lote(env, origen, recepcion, caso, contexto, ejecuta, paralelo):
     recepciones_anotadas.add((caso, contexto, recepcion))
 
 
-def _registra_espera_cancelada(caso, recepcion, execution, inicio):
+def _registra_espera_cancelada(caso, recepcion, execution, inicio, contexto):
     """La espera de la ejecucion que se va cuando cierra el lote (D7, 6.1).
 
     Esperaba un sobre mas que ya no puede llegar. Cuenta desde donde cuentan
@@ -748,6 +748,7 @@ def _registra_espera_cancelada(caso, recepcion, execution, inicio):
     _append_event(caso, [('string', 'bpmn:type', 'StandByMessage'),
                          ('string', 'bpmn:id', recepcion),
                          ('string', 'bpmn:execution', execution),
+                         ('int', 'bpmn:activation', contexto),
                          ('date', 'time:timestamp', inicio),
                          ('date', 'time:endTime', env.now),
                          ('date', 'time:duration', env.now - inicio),

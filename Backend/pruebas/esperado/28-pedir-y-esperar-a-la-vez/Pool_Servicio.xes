@@ -4,8 +4,8 @@
   <extension name="Time" prefix="time" uri="http://www.xes-standard.org/time.xesext"/>
   <classifier name="Activity (by BPMN ID)" keys="bpmn:id" scope="event"/>
   <classifier name="Case (by participant and instance)" keys="bpmn:participant bpmn:instance" scope="event"/>
-  <string key="simulation:id" value="a0bc4e07c8bf2fee" />
-  <string key="simulation:formatVersion" value="1" />
+  <string key="simulation:id" value="919a811479222504" />
+  <string key="simulation:formatVersion" value="2" />
   <int key="simulation:seed" value="20260101" />
   <string key="simulation:startDate" value="2026-01-01T00:00:00+00:00" />
   <string key="simulation:participants" value="Pool_Cliente, Pool_Servicio" />
@@ -45,6 +45,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Preparar la ventanilla" />
       <string key="bpmn:id" value="Preparar" />
+      <int key="bpmn:activation" value="8" />
       <string key="bpmn:userTask" value="Sara" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="31" />
@@ -62,6 +63,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Recibir la peticion" />
       <string key="bpmn:id" value="Recibir_Peticion" />
+      <int key="bpmn:activation" value="14" />
       <string key="bpmn:messageOrigin" value="Enviar_Peticion" />
       <string key="bpmn:messageSender" value="Pool_Cliente - 1" />
       <string key="bpmn:request" value="Pool_Cliente - 1" />
@@ -82,6 +84,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Atender la peticion" />
       <string key="bpmn:id" value="Atender" />
+      <int key="bpmn:activation" value="16" />
       <string key="bpmn:userTask" value="Diego" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="62" />
@@ -99,6 +102,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Enviar la respuesta" />
       <string key="bpmn:id" value="Enviar_Respuesta" />
+      <int key="bpmn:activation" value="24" />
       <string key="bpmn:messageDestiny" value="Esperar_Respuesta" />
       <string key="bpmn:messageTarget" value="Pool_Cliente - 1" />
       <string key="bpmn:userTask" value="Diego" />
@@ -149,6 +153,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Preparar la ventanilla" />
       <string key="bpmn:id" value="Preparar" />
+      <int key="bpmn:activation" value="9" />
       <string key="bpmn:userTask" value="Sara" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="30" />
@@ -165,6 +170,7 @@
       <string key="concept:name" value="StandByMessage · Recibir_Peticion" />
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Recibir_Peticion" />
+      <int key="bpmn:activation" value="13" />
       <string key="bpmn:execution" value="1" />
       <string key="bpmn:request" value="Pool_Cliente - 2" />
       <date key="time:timestamp" value="2026-01-01T00:00:30.000+00:00" />
@@ -180,6 +186,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Recibir la peticion" />
       <string key="bpmn:id" value="Recibir_Peticion" />
+      <int key="bpmn:activation" value="13" />
       <string key="bpmn:messageOrigin" value="Enviar_Peticion" />
       <string key="bpmn:messageSender" value="Pool_Cliente - 2" />
       <string key="bpmn:request" value="Pool_Cliente - 2" />
@@ -200,6 +207,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Atender la peticion" />
       <string key="bpmn:id" value="Atender" />
+      <int key="bpmn:activation" value="20" />
       <string key="bpmn:userTask" value="Diego" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="63" />
@@ -217,6 +225,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Enviar la respuesta" />
       <string key="bpmn:id" value="Enviar_Respuesta" />
+      <int key="bpmn:activation" value="27" />
       <string key="bpmn:messageDestiny" value="Esperar_Respuesta" />
       <string key="bpmn:messageTarget" value="Pool_Cliente - 2" />
       <string key="bpmn:userTask" value="Diego" />
@@ -267,6 +276,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Preparar la ventanilla" />
       <string key="bpmn:id" value="Preparar" />
+      <int key="bpmn:activation" value="10" />
       <string key="bpmn:userTask" value="Sara" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="33" />
@@ -283,6 +293,7 @@
       <string key="concept:name" value="StandByMessage · Recibir_Peticion" />
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Recibir_Peticion" />
+      <int key="bpmn:activation" value="15" />
       <string key="bpmn:execution" value="1" />
       <string key="bpmn:request" value="Pool_Cliente - 3" />
       <date key="time:timestamp" value="2026-01-01T00:00:33.000+00:00" />
@@ -298,6 +309,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Recibir la peticion" />
       <string key="bpmn:id" value="Recibir_Peticion" />
+      <int key="bpmn:activation" value="15" />
       <string key="bpmn:messageOrigin" value="Enviar_Peticion" />
       <string key="bpmn:messageSender" value="Pool_Cliente - 3" />
       <string key="bpmn:request" value="Pool_Cliente - 3" />
@@ -318,6 +330,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Atender la peticion" />
       <string key="bpmn:id" value="Atender" />
+      <int key="bpmn:activation" value="25" />
       <string key="bpmn:userTask" value="Diego" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="64" />
@@ -335,6 +348,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Enviar la respuesta" />
       <string key="bpmn:id" value="Enviar_Respuesta" />
+      <int key="bpmn:activation" value="33" />
       <string key="bpmn:messageDestiny" value="Esperar_Respuesta" />
       <string key="bpmn:messageTarget" value="Pool_Cliente - 3" />
       <string key="bpmn:userTask" value="Diego" />

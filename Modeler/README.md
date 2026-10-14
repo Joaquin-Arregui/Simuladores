@@ -133,9 +133,9 @@ Las pruebas del Modeler están en el banco del Backend: el código de `lib/` lo
 prueban sin navegador `valida_bpmn.mjs`, `exporta_reglas.mjs` y
 `linea_de_tiempo.mjs`, y en un Chromium de verdad, la interfaz `interfaz.mjs`
 (ver [el banco](../Backend/pruebas/README.md#la-interfaz)) y lo que dibuja el
-visualizador `capa_de_dibujo.mjs` y `escena.mjs`. Para estas hace falta, una
-vez, `npx playwright install chromium`, que descarga el Chromium de
-Playwright.
+visualizador `capa_de_dibujo.mjs`, `escena.mjs` y `zonas.mjs`. Para estas
+hace falta, una vez, `npx playwright install chromium`, que descarga el
+Chromium de Playwright.
 
 ## Estructura
 
@@ -164,8 +164,8 @@ Playwright.
   abajo).
 - `lib/drawing`: la capa de dibujo del visualizador, marcas sobre el lienzo
   (ver abajo).
-- `lib/scene`: las pelotas de los casos, los sobres y el reloj del
-  visualizador (ver abajo).
+- `lib/scene`: las pelotas de los casos, los sobres, las tres zonas de cada
+  tarea y el reloj del visualizador (ver abajo).
 
 ### Parámetros de simulación en el panel
 
@@ -278,6 +278,7 @@ ejecuciones simultáneas de una tarea multiinstancia.
 | `element`, `type` | El ID BPMN del elemento y el tipo del evento |
 | `state` | `working`, `waiting-user`, `waiting-message`, `waiting-data`, `waiting-join`, `timer` o `instant` |
 | `execution` | El número de la ejecución en su activación |
+| `activation` | La identidad registrada de la activación de la tarea; `null` en registros antiguos o elementos sin ella |
 | `request` | La solicitud que atiende: el caso que la pidió |
 | `sender`, `target`, `user` | Quién mandó el sobre, a quién va y quién hace la tarea |
 | `origin`, `destination` | De qué elemento viene el sobre que recibe una recepción, y a cuál va el que manda un envío |
@@ -341,8 +342,9 @@ de dibujar sobre él la del anterior.
   las diez ejecuciones de un lote, tiene varias pelotas a la vez, todas con su
   número; la escena cuenta aparte los casos de cada pool (`cases`), una vez
   cada uno. Trabajando, el borde es continuo; esperando —a una persona, un
-  mensaje, unos datos o la otra rama—, discontinuo. Las pelotas de un elemento
-  se reparten en filas alrededor de su centro, en el orden de sus casos.
+  mensaje, unos datos o la otra rama—, discontinuo. En una tarea, cada pelota
+  va en su zona (abajo); en una compuerta o un evento, alrededor de su centro,
+  en el orden de sus casos.
 - **El sobre** es un mensaje: sale cuando acaba su envío y lo recoge la
   recepción de su caso destino, al acabar la espera que terminó con él o, si
   ya estaba allí, al activarse. Las piezas de cada ejecución de una recepción
@@ -377,10 +379,71 @@ Cada pelota y cada sobre es una marca que se reutiliza de un instante a otro:
 solo se mueve lo que cambia. Las marcas no capturan el ratón, así que su
 título, con el caso, la ejecución, el estado y la solicitud, no aparece al
 pasar por encima; está para las pruebas y los lectores de pantalla. Los
-colores de la resolución son de la 6.5, las zonas de cada tarea y las
-insignias que sustituyen a muchas marcas, de la 6.4, y la página que lo usa, de
-la 6.7. El banco lo comprueba con todos los registros de referencia y en un
-Chromium de verdad (`Backend/pruebas/escena.mjs`).
+colores de la resolución son de la 6.5 y la página que lo usa, de la 6.7. El
+banco lo comprueba con todos los registros de referencia y en un Chromium de
+verdad (`Backend/pruebas/escena.mjs`).
+
+### Las tres zonas de cada tarea
+
+Una tarea con algo se parte en tres franjas (6.4, `lib/scene/zones.js`): a la
+izquierda, la **cola** a la entrada; en el centro, lo que está **dentro**; y a
+la derecha, lo **bloqueado** a la salida. Todo sale de los intervalos de los
+registros:
+
+- **En la cola**, las piezas que esperan para hacer la tarea —a una persona,
+  su sobre o unos datos—, y en su buzón, encima, los sobres que esperan a que
+  una recepción los recoja.
+- **Dentro**, las ejecuciones que trabajan.
+- **A la salida**, las ejecuciones ya terminadas de una activación que aún no
+  ha salido de la tarea: en un lote paralelo, las que acabaron y esperan a las
+  demás; en un lote en secuencia o en un bucle estándar, las vueltas ya hechas
+  mientras se hace la siguiente. Los registros no distinguen un bucle de un
+  lote en secuencia —en los dos, ejecuciones seguidas con el número
+  creciente—, así que se dibujan igual. La activación sale cuando acaba la
+  última de sus ejecuciones, o la espera que se cancela al cerrar una
+  recepción multiinstancia, y entonces su salida se vacía.
+
+El número de ejecución no distingue dos lotes que llegan a la misma tarea:
+ambos empiezan por 1. El formato 2 del XES añade `bpmn:activation` a las
+ejecuciones y esperas de cada tarea, incluidas las canceladas. La escena agrupa
+por caso, elemento y activación, y dentro por ejecución, sin deducir los lotes
+por sus tiempos. Así separa también dos lotes paralelos que empiezan a la vez.
+
+Cada zona tiene sus recuentos (`zones` en la escena de cada instante): cuántas
+**ejecuciones** hay en ella, de cuántos **casos** —dos ramas o diez
+ejecuciones del mismo caso son un caso—, de cuántos casos son las
+**solicitudes** que tienen ya en la mano —esperando a una persona, trabajando
+o terminadas; no las que esperan un sobre que aún no ha llegado— y, en la cola
+de una recepción, cuántos **sobres** hay en su buzón. Cuentan lo que hay, no lo
+que se ve: una pelota o un sobre en tránsito ya están en su zona y en su
+buzón.
+
+Las pelotas de cada zona se reparten en filas en su franja, y debajo va su
+nombre: «cola», «dentro», «salida». Si son más de las que caben —en una tarea
+de 100 × 80, ocho—, o del umbral que se le dé a `show(t, { threshold })` —un
+número, también escrito como texto; uno mayor de lo que cabe deja que se
+salgan de la franja—, una **insignia** las sustituye, también a las que llegan
+en tránsito: el número de ejecuciones, «ejec.», cuántos casos y,
+si las hay, de cuántos casos son sus solicitudes —«49 ejec. 1 caso 49 sol.» a
+la salida de Recoger con N = 50—. El buzón, si sus sobres no caben en una fila
+o pasan del umbral, es un sobre con la cuenta: «× 36», contando los que aún
+van de camino, que se siguen dibujando sobre su flujo de mensaje. Las compuertas y los
+eventos no tienen zonas; pasadas cuatro pelotas, o el umbral, también una
+insignia. Las franjas se miden con el tamaño que tiene la tarea al dibujar el
+instante, y una pelota que termina pasa de dentro a la salida en la misma
+marca.
+
+Mientras una tarea tiene marcas, su nombre se muestra en un rótulo con fondo
+encima de ella; si se recortaría por el borde superior del lienzo, se coloca
+debajo. Los buzones quedan por encima del rótulo superior. El nombre conserva
+su tipografía y saltos de línea, se actualiza al editar y se restaura al salir
+de la tarea o limpiar la escena. Esto no modifica el BPMN guardado.
+
+Los registros antiguos siguen usando la reconstrucción por tiempos. Si se
+detectan varias cadenas o activaciones candidatas, se pide volver a simular
+para obtener `bpmn:activation`, en vez de escoger una arbitrariamente.
+El banco comprueba los recuentos contra el XES, en todos los modelos de
+referencia, y el dibujo en un Chromium de verdad (`Backend/pruebas/zonas.mjs`).
 
 ### Las reglas que se mandan al simular
 

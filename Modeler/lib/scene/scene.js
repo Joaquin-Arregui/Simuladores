@@ -12,6 +12,11 @@
 //   de la ejecucion que lo envia: dos sobres entre los mismos casos no se
 //   confunden. Entre que sale y que lo recogen esta en el buzon de su recepcion;
 //   si la recepcion ya lo esperaba, lo recoge en el acto.
+// - Las zonas de cada elemento (6.4, lib/scene/zones.js): cada pelota tiene la
+//   suya -la cola, dentro o la salida-, y cada instante trae tambien las
+//   ejecuciones bloqueadas a la salida (`blocked`), pelotas de las que ya
+//   terminaron en una activacion que aun no ha salido, y los recuentos de cada
+//   zona (`zones`).
 //
 // El transito es cosmetico (D15). Con `transit` > 0, una pelota que acaba de
 // llegar a un elemento se dibuja recorriendo el flujo por el que llego, y un
@@ -24,9 +29,10 @@
 // llegar a el reproduciendo.
 //
 // Sin dependencias del navegador: lo usa la vista (lib/scene/view.js) y, desde
-// Node, Backend/pruebas/escena.mjs.
+// Node, Backend/pruebas/escena.mjs y zonas.mjs.
 
 import { parseXml } from '../timeline/xml.js';
+import { activationsOf, blockedAt, countZones, zoneOf } from './zones.js';
 
 // El grafo que necesita la escena, de un diagrama abierto en bpmn-js: sus
 // flujos de secuencia y de mensaje, con sus extremos.
@@ -78,6 +84,7 @@ function pickups(timeline) {
     const waits = entry.items.filter(item => item.state === 'waiting-user' && item.interval);
     for (const reception of entry.items.filter(item => item.origin && item.sender)) {
       const wait = waits.find(item => !used.has(item.id) && item.element === reception.element &&
+        item.activation === reception.activation &&
         item.execution === reception.execution && item.request === reception.sender && item.end === reception.start);
       if (wait) used.add(wait.id);
       result.set(reception.id, wait ? wait.start : reception.start);
@@ -167,10 +174,27 @@ function arrivals(timeline, graph) {
 export function createScene(timeline, graph = EMPTY_GRAPH) {
   const messages = messagesOf(timeline, graph);
   const arrival = arrivals(timeline, graph);
+  const activations = activationsOf(timeline);
   const cases = new Map(timeline.cases.map(entry => [ entry.id, entry ]));
+  const ballOf = (item, entry, state, since, transit) => ({
+    id: item.id,
+    case: entry.id,
+    pool: entry.pool,
+    number: item.instance ?? entry.instance,
+    element: item.element,
+    state,
+    zone: zoneOf(state),
+    execution: item.execution,
+    request: item.request,
+    user: item.user,
+    cancelled: item.cancelled,
+    since,
+    transit
+  });
   return {
     timeline,
     messages,
+    activations,
 
     // Lo que hay en el instante t. `transit` son los segundos simulados que
     // dura en pantalla el transito cosmetico; 0, sin transito.
@@ -185,22 +209,13 @@ export function createScene(timeline, graph = EMPTY_GRAPH) {
           const since = t - item.start;
           const travel = Math.min(transit, (item.end - item.start) / 2);
           const flow = travel > 0 && since < travel ? arrival.get(item.id) : null;
-          balls.push({
-            id: item.id,
-            case: caseId,
-            pool: entry.pool,
-            number: item.instance ?? entry.instance,
-            element: item.element,
-            state: item.state,
-            execution: item.execution,
-            request: item.request,
-            user: item.user,
-            cancelled: item.cancelled,
-            since: item.start,
-            transit: flow ? { flow, fraction: since / travel } : null
-          });
+          balls.push(ballOf(item, entry, item.state, item.start, flow ? { flow, fraction: since / travel } : null));
         }
       }
+
+      // Las ejecuciones terminadas que esperan a que salga su activacion:
+      // pelotas en la salida, desde que acabaron.
+      const blocked = blockedAt(activations, t).map(item => ballOf(item, cases.get(item.case), 'blocked', item.end, null));
       const envelopes = [];
       for (const message of messages) {
         const since = t - message.sent;
@@ -209,10 +224,16 @@ export function createScene(timeline, graph = EMPTY_GRAPH) {
         if (!travelling && t >= message.pickup) continue;
         envelopes.push({ ...message, transit: travelling ? { flow: message.flow, fraction: since / transit } : null });
       }
+
+      // Los recuentos van por lo que hay, no por donde se dibuja: un sobre en
+      // transito ya esta en su buzon, y una pelota en transito, en su zona.
+      const mailbox = messages.filter(message => message.sent <= t && t < message.pickup);
       return {
         t,
         balls,
+        blocked,
         envelopes,
+        zones: countZones([ ...balls, ...blocked ], mailbox),
         cases: Object.fromEntries([ ...active ].map(([ pool, ids ]) => [ pool, [ ...ids ] ]))
       };
     }

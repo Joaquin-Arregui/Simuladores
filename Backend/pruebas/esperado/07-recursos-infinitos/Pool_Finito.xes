@@ -4,8 +4,8 @@
   <extension name="Time" prefix="time" uri="http://www.xes-standard.org/time.xesext"/>
   <classifier name="Activity (by BPMN ID)" keys="bpmn:id" scope="event"/>
   <classifier name="Case (by participant and instance)" keys="bpmn:participant bpmn:instance" scope="event"/>
-  <string key="simulation:id" value="f616d6bc8dba698b" />
-  <string key="simulation:formatVersion" value="1" />
+  <string key="simulation:id" value="0a9d4d0907bb8b48" />
+  <string key="simulation:formatVersion" value="2" />
   <int key="simulation:seed" value="20260101" />
   <string key="simulation:startDate" value="2026-01-01T00:00:00+00:00" />
   <string key="simulation:participants" value="Pool_Finito, Pool_Infinito" />
@@ -44,6 +44,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Atender con una persona" />
       <string key="bpmn:id" value="Atender_F" />
+      <int key="bpmn:activation" value="7" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="30" />
@@ -90,6 +91,7 @@
       <string key="concept:name" value="StandBy · Atender_F" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Atender_F" />
+      <int key="bpmn:activation" value="9" />
       <string key="bpmn:execution" value="1" />
       <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:00:30.000+00:00" />
@@ -104,6 +106,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Atender con una persona" />
       <string key="bpmn:id" value="Atender_F" />
+      <int key="bpmn:activation" value="9" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="30" />
@@ -150,6 +153,7 @@
       <string key="concept:name" value="StandBy · Atender_F" />
       <string key="bpmn:type" value="StandBy" />
       <string key="bpmn:id" value="Atender_F" />
+      <int key="bpmn:activation" value="11" />
       <string key="bpmn:execution" value="1" />
       <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:01:00.000+00:00" />
@@ -164,6 +168,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Atender con una persona" />
       <string key="bpmn:id" value="Atender_F" />
+      <int key="bpmn:activation" value="11" />
       <string key="bpmn:userTask" value="Ana" />
       <int key="bpmn:execution" value="1" />
       <int key="bpmn:time" value="30" />

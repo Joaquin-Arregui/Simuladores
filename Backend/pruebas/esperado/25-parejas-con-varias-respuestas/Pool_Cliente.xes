@@ -4,8 +4,8 @@
   <extension name="Time" prefix="time" uri="http://www.xes-standard.org/time.xesext"/>
   <classifier name="Activity (by BPMN ID)" keys="bpmn:id" scope="event"/>
   <classifier name="Case (by participant and instance)" keys="bpmn:participant bpmn:instance" scope="event"/>
-  <string key="simulation:id" value="9dc8a951d4804615" />
-  <string key="simulation:formatVersion" value="1" />
+  <string key="simulation:id" value="b461236e45ec0305" />
+  <string key="simulation:formatVersion" value="2" />
   <int key="simulation:seed" value="20260101" />
   <string key="simulation:startDate" value="2026-01-01T00:00:00+00:00" />
   <string key="simulation:participants" value="Pool_Cliente, Pool_Servicio" />
@@ -44,6 +44,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Enviar la peticion" />
       <string key="bpmn:id" value="Enviar_Peticion" />
+      <int key="bpmn:activation" value="9" />
       <string key="bpmn:messageDestiny" value="Recibir_Peticion" />
       <string key="bpmn:messageTarget" value="Pool_Servicio - 1" />
       <string key="bpmn:userTask" value="Carla" />
@@ -62,6 +63,7 @@
       <string key="concept:name" value="StandByMessage · Esperar_Respuesta" />
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Esperar_Respuesta" />
+      <int key="bpmn:activation" value="14" />
       <string key="bpmn:execution" value="1" />
       <string key="bpmn:request" value="Pool_Servicio - 1" />
       <date key="time:timestamp" value="2026-01-01T00:00:08.000+00:00" />
@@ -77,6 +79,7 @@
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Esperar_Respuesta" />
       <string key="bpmn:execution" value="2" />
+      <int key="bpmn:activation" value="14" />
       <date key="time:timestamp" value="2026-01-01T00:00:08.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:01:05.000+00:00" />
       <float key="time:duration" value="57.0" />
@@ -91,6 +94,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Recoger una respuesta" />
       <string key="bpmn:id" value="Esperar_Respuesta" />
+      <int key="bpmn:activation" value="14" />
       <string key="bpmn:messageOrigin" value="Enviar_Respuesta" />
       <string key="bpmn:messageSender" value="Pool_Servicio - 1" />
       <string key="bpmn:request" value="Pool_Servicio - 1" />
@@ -111,6 +115,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Leer una respuesta" />
       <string key="bpmn:id" value="Leer" />
+      <int key="bpmn:activation" value="23" />
       <string key="bpmn:userTask" value="Carla" />
       <int key="bpmn:execution" value="1" />
       <string key="bpmn:request" value="Pool_Servicio - 1" />
@@ -159,6 +164,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Enviar la peticion" />
       <string key="bpmn:id" value="Enviar_Peticion" />
+      <int key="bpmn:activation" value="16" />
       <string key="bpmn:messageDestiny" value="Recibir_Peticion" />
       <string key="bpmn:messageTarget" value="Pool_Servicio - 2" />
       <string key="bpmn:userTask" value="Carla" />
@@ -177,6 +183,7 @@
       <string key="concept:name" value="StandByMessage · Esperar_Respuesta" />
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Esperar_Respuesta" />
+      <int key="bpmn:activation" value="17" />
       <string key="bpmn:execution" value="1" />
       <string key="bpmn:request" value="Pool_Servicio - 2" />
       <date key="time:timestamp" value="2026-01-01T00:00:38.000+00:00" />
@@ -191,6 +198,7 @@
       <string key="concept:name" value="StandByMessage · Esperar_Respuesta" />
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Esperar_Respuesta" />
+      <int key="bpmn:activation" value="17" />
       <string key="bpmn:execution" value="2" />
       <string key="bpmn:request" value="Pool_Servicio - 2" />
       <date key="time:timestamp" value="2026-01-01T00:00:38.000+00:00" />
@@ -206,6 +214,7 @@
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Esperar_Respuesta" />
       <string key="bpmn:execution" value="3" />
+      <int key="bpmn:activation" value="17" />
       <date key="time:timestamp" value="2026-01-01T00:00:38.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:01:56.000+00:00" />
       <float key="time:duration" value="78.0" />
@@ -220,6 +229,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Recoger una respuesta" />
       <string key="bpmn:id" value="Esperar_Respuesta" />
+      <int key="bpmn:activation" value="17" />
       <string key="bpmn:messageOrigin" value="Enviar_Respuesta" />
       <string key="bpmn:messageSender" value="Pool_Servicio - 2" />
       <string key="bpmn:request" value="Pool_Servicio - 2" />
@@ -240,6 +250,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Recoger una respuesta" />
       <string key="bpmn:id" value="Esperar_Respuesta" />
+      <int key="bpmn:activation" value="17" />
       <string key="bpmn:messageOrigin" value="Enviar_Respuesta" />
       <string key="bpmn:messageSender" value="Pool_Servicio - 2" />
       <string key="bpmn:request" value="Pool_Servicio - 2" />
@@ -260,6 +271,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Leer una respuesta" />
       <string key="bpmn:id" value="Leer" />
+      <int key="bpmn:activation" value="40" />
       <string key="bpmn:userTask" value="Carla" />
       <int key="bpmn:execution" value="1" />
       <string key="bpmn:request" value="Pool_Servicio - 2" />
@@ -278,6 +290,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Leer una respuesta" />
       <string key="bpmn:id" value="Leer" />
+      <int key="bpmn:activation" value="40" />
       <string key="bpmn:userTask" value="Carla" />
       <int key="bpmn:execution" value="2" />
       <string key="bpmn:request" value="Pool_Servicio - 2" />
@@ -326,6 +339,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Enviar la peticion" />
       <string key="bpmn:id" value="Enviar_Peticion" />
+      <int key="bpmn:activation" value="19" />
       <string key="bpmn:messageDestiny" value="Recibir_Peticion" />
       <string key="bpmn:messageTarget" value="Pool_Servicio - 3" />
       <string key="bpmn:userTask" value="Carla" />
@@ -344,6 +358,7 @@
       <string key="concept:name" value="StandByMessage · Esperar_Respuesta" />
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Esperar_Respuesta" />
+      <int key="bpmn:activation" value="24" />
       <string key="bpmn:execution" value="1" />
       <string key="bpmn:request" value="Pool_Servicio - 3" />
       <date key="time:timestamp" value="2026-01-01T00:01:08.000+00:00" />
@@ -359,6 +374,7 @@
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Esperar_Respuesta" />
       <string key="bpmn:execution" value="2" />
+      <int key="bpmn:activation" value="24" />
       <date key="time:timestamp" value="2026-01-01T00:01:08.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:01:55.000+00:00" />
       <float key="time:duration" value="47.0" />
@@ -373,6 +389,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Recoger una respuesta" />
       <string key="bpmn:id" value="Esperar_Respuesta" />
+      <int key="bpmn:activation" value="24" />
       <string key="bpmn:messageOrigin" value="Enviar_Respuesta" />
       <string key="bpmn:messageSender" value="Pool_Servicio - 3" />
       <string key="bpmn:request" value="Pool_Servicio - 3" />
@@ -393,6 +410,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Leer una respuesta" />
       <string key="bpmn:id" value="Leer" />
+      <int key="bpmn:activation" value="38" />
       <string key="bpmn:userTask" value="Carla" />
       <int key="bpmn:execution" value="1" />
       <string key="bpmn:request" value="Pool_Servicio - 3" />
@@ -441,6 +459,7 @@
       <string key="bpmn:type" value="bpmn:SendTask" />
       <string key="bpmn:name" value="Enviar la peticion" />
       <string key="bpmn:id" value="Enviar_Peticion" />
+      <int key="bpmn:activation" value="30" />
       <string key="bpmn:messageDestiny" value="Recibir_Peticion" />
       <string key="bpmn:messageTarget" value="Pool_Servicio - 4" />
       <string key="bpmn:userTask" value="Carla" />
@@ -459,6 +478,7 @@
       <string key="concept:name" value="StandByMessage · Esperar_Respuesta" />
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Esperar_Respuesta" />
+      <int key="bpmn:activation" value="31" />
       <string key="bpmn:execution" value="1" />
       <string key="bpmn:request" value="Pool_Servicio - 4" />
       <date key="time:timestamp" value="2026-01-01T00:01:38.000+00:00" />
@@ -474,6 +494,7 @@
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Esperar_Respuesta" />
       <string key="bpmn:execution" value="2" />
+      <int key="bpmn:activation" value="31" />
       <date key="time:timestamp" value="2026-01-01T00:01:38.000+00:00" />
       <date key="time:endTime" value="2026-01-01T00:02:11.000+00:00" />
       <float key="time:duration" value="33.0" />
@@ -488,6 +509,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Recoger una respuesta" />
       <string key="bpmn:id" value="Esperar_Respuesta" />
+      <int key="bpmn:activation" value="31" />
       <string key="bpmn:messageOrigin" value="Enviar_Respuesta" />
       <string key="bpmn:messageSender" value="Pool_Servicio - 4" />
       <string key="bpmn:request" value="Pool_Servicio - 4" />
@@ -508,6 +530,7 @@
       <string key="bpmn:type" value="bpmn:Task" />
       <string key="bpmn:name" value="Leer una respuesta" />
       <string key="bpmn:id" value="Leer" />
+      <int key="bpmn:activation" value="46" />
       <string key="bpmn:userTask" value="Carla" />
       <int key="bpmn:execution" value="1" />
       <string key="bpmn:request" value="Pool_Servicio - 4" />

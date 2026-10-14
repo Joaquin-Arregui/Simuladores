@@ -4,8 +4,8 @@
   <extension name="Time" prefix="time" uri="http://www.xes-standard.org/time.xesext"/>
   <classifier name="Activity (by BPMN ID)" keys="bpmn:id" scope="event"/>
   <classifier name="Case (by participant and instance)" keys="bpmn:participant bpmn:instance" scope="event"/>
-  <string key="simulation:id" value="5fd911f9ea441c6f" />
-  <string key="simulation:formatVersion" value="1" />
+  <string key="simulation:id" value="7a7bcef87d8ca3c5" />
+  <string key="simulation:formatVersion" value="2" />
   <int key="simulation:seed" value="20260101" />
   <string key="simulation:startDate" value="2026-01-01T00:00:00+00:00" />
   <string key="simulation:participants" value="Pool_Emisor, Pool_Receptor" />
@@ -43,6 +43,7 @@
       <string key="concept:name" value="StandByMessage · Recibir" />
       <string key="bpmn:type" value="StandByMessage" />
       <string key="bpmn:id" value="Recibir" />
+      <int key="bpmn:activation" value="8" />
       <string key="bpmn:execution" value="1" />
       <string key="bpmn:request" value="Pool_Emisor - 1" />
       <date key="time:timestamp" value="2026-01-01T00:00:00.000+00:00" />
@@ -58,6 +59,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Recibir el aviso" />
       <string key="bpmn:id" value="Recibir" />
+      <int key="bpmn:activation" value="8" />
       <string key="bpmn:messageOrigin" value="Enviar" />
       <string key="bpmn:messageSender" value="Pool_Emisor - 1" />
       <string key="bpmn:request" value="Pool_Emisor - 1" />
@@ -108,6 +110,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Recibir el aviso" />
       <string key="bpmn:id" value="Recibir" />
+      <int key="bpmn:activation" value="15" />
       <string key="bpmn:messageOrigin" value="Enviar" />
       <string key="bpmn:messageSender" value="Pool_Emisor - 2" />
       <string key="bpmn:request" value="Pool_Emisor - 2" />
@@ -158,6 +161,7 @@
       <string key="bpmn:type" value="bpmn:ReceiveTask" />
       <string key="bpmn:name" value="Recibir el aviso" />
       <string key="bpmn:id" value="Recibir" />
+      <int key="bpmn:activation" value="17" />
       <string key="bpmn:messageOrigin" value="Enviar" />
       <string key="bpmn:messageSender" value="Pool_Emisor - 3" />
       <string key="bpmn:request" value="Pool_Emisor - 3" />
