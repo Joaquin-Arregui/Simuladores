@@ -19,24 +19,33 @@
 //   recuento: siguen siendo los de la convocatoria.
 // - Un resumen de cada pool en el instante: cuantos casos estan en curso,
 //   cuantos por llegar y cuantos han terminado, de todos los de la
-//   convocatoria, y cuantos se ven.
+//   convocatoria; cuantas veces se ha llegado a cada evento de fin, si hay
+//   mas de uno (6.8), y cuantos se ven.
 //
 // Cada vez que se dibuja, se dibuja el instante entero desde la linea de
 // tiempo (lib/player, lib/scene): lo que se ve no depende de lo que se vio
 // antes. Mientras se reproduce, las pelotas y los sobres recorren sus flujos
 // (el transito, cosmetico); en pausa, cada uno esta donde esta en ese
 // instante, asi que pausar en t y saltar a t dan el mismo dibujo. El instante
-// exacto que se dibuja queda en data-t de la barra.
+// exacto que se dibuja queda en data-t de la barra. Lo que tarda cada
+// fotograma se mide con User Timing (FRAME).
 
 import { timelineFromLogs } from '../../lib/timeline/timeline.js';
+import { createScene } from '../../lib/scene/scene.js';
 import { SPEEDS, changesIn, convocatoriasOf, createClock, defaultSpeed, nextChange, previousChange, summaryAt,
-  visibleCases, windowOf } from '../../lib/player/player.js';
+  summaryText, visibleCases, windowOf } from '../../lib/player/player.js';
 
 // Lo que dura en pantalla, en segundos reales, el transito mientras se
 // reproduce: a mas velocidad, mas segundos simulados.
 const TRANSIT = 0.4;
 
-const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+// Cuanto tarda en dibujarse cada fotograma -el instante y el resumen-, con
+// User Timing (performance.measure): se ve en el perfil del navegador, y lo
+// lee el banco (Backend/pruebas/carga.mjs). Para no acumularlas sin fin, se
+// vacian cada FRAMES fotogramas.
+export const FRAME = 'reproducción · fotograma';
+const FRAMES = 2000;
+
 const format = t => String(Number(t.toFixed(3)));
 
 export function setupReplay(modeler, { onError, onExit = () => {} }) {
@@ -60,6 +69,7 @@ export function setupReplay(modeler, { onError, onExit = () => {} }) {
   let filter = {};
   let visible = null;
   let frame = null;
+  let measured = 0;
 
   // Si se ha escrito en el instante exacto y aun no se ha saltado: mientras
   // no, el campo sigue al reloj, y Ir o Intro no mueven nada.
@@ -70,11 +80,7 @@ export function setupReplay(modeler, { onError, onExit = () => {} }) {
   const now = () => performance.now();
 
   function describe(t) {
-    const lines = summaryAt(scoped, t, span, visible.cases).map(pool => {
-      const shown = pool.shown < pool.total ? ` · se ${pool.shown === 1 ? 've' : 'ven'} ${pool.shown} de ${pool.total}` : '';
-      return `${pool.name || pool.pool}: ${pool.active} en curso · ${pool.pending} por llegar · ` +
-        `${plural(pool.finished, 'terminado', 'terminados')}${shown}`;
-    });
+    const lines = summaryAt(scoped, t, span, visible.cases).map(summaryText);
     const errors = Object.entries(visible.errors).map(([ pool, error ]) => {
       const named = timeline.pool(pool);
       return `Filtro de ${(named && named.name) || pool}: ${error}; no se filtra.`;
@@ -89,6 +95,7 @@ export function setupReplay(modeler, { onError, onExit = () => {} }) {
 
   // Dibuja el instante del reloj y pone la barra al dia.
   function render() {
+    const started = performance.now();
     const t = clock.at(now());
     sceneView.show(t, { transit: clock.playing ? TRANSIT * clock.speed : 0, cases: visible.cases });
     bar.dataset.t = String(t);
@@ -105,6 +112,12 @@ export function setupReplay(modeler, { onError, onExit = () => {} }) {
     // pantalla lo lee al pausar.
     summary.setAttribute('aria-live', clock.playing ? 'off' : 'polite');
     describe(t);
+    if (measured >= FRAMES) {
+      performance.clearMeasures(FRAME);
+      measured = 0;
+    }
+    performance.measure(FRAME, { start: started, end: performance.now() });
+    measured += 1;
     return t;
   }
 
@@ -129,7 +142,7 @@ export function setupReplay(modeler, { onError, onExit = () => {} }) {
 
   // Una convocatoria -o todas, con null-: su ventana y su escena, solo con sus
   // casos, en pausa al principio.
-  function choose(value) {
+  function choose(value, report = onError) {
     stopLoop();
     span = windowOf(timeline, value);
     scoped = value === null ? timeline : timeline.only(span.cases);
@@ -137,7 +150,7 @@ export function setupReplay(modeler, { onError, onExit = () => {} }) {
       sceneView.load(scoped);
     } catch (error) {
       close();
-      onError(`No se puede reproducir la convocatoria ${value}: ${error.message}`);
+      report(`No se puede reproducir la convocatoria ${value}: ${error.message}`);
       return false;
     }
     changes = changesIn(scoped, span);
@@ -175,15 +188,27 @@ export function setupReplay(modeler, { onError, onExit = () => {} }) {
     }));
   }
 
-  function open(logs) {
+  // Lo que se reproduciria de unos registros, sin abrir ni dibujar nada: su
+  // linea de tiempo, o un Error si no se pueden reproducir con el grafo
+  // -los flujos- del diagrama sobre el que se van a ver (lib/scene). Para no
+  // cargar unos registros que luego no se pueden ver (6.8); `open` la usa sin
+  // volver a leerlos.
+  function prepare(logs, graph) {
+    const prepared = timelineFromLogs(logs);
+    createScene(prepared, graph);
+    return prepared;
+  }
+
+  // Si no se puede, lo dice con `report` -de entrada, onError- y devuelve false.
+  function open(logs, prepared = null, report = onError) {
     close();
     let loaded;
     try {
-      loaded = timelineFromLogs(logs);
+      loaded = prepared || timelineFromLogs(logs);
       sceneView.load(loaded);
     } catch (error) {
       sceneView.clear();
-      onError(`No se puede reproducir la simulación: ${error.message}`);
+      report(`No se puede reproducir la simulación: ${error.message}`);
       return false;
     }
     timeline = loaded;
@@ -195,7 +220,7 @@ export function setupReplay(modeler, { onError, onExit = () => {} }) {
       String(group.call))), ...(calls.length > 1 ? [ new Option('Todas', '') ] : []));
     callBox.hidden = calls.length < 2;
     filterInputs();
-    if (!choose(calls[0].call)) return false;
+    if (!choose(calls[0].call, report)) return false;
     bar.hidden = false;
     document.body.classList.add('replaying');
     place();
@@ -298,6 +323,7 @@ export function setupReplay(modeler, { onError, onExit = () => {} }) {
   });
 
   return {
+    prepare,
     open,
     close,
     get isOpen() {

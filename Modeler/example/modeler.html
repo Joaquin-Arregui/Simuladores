@@ -27,6 +27,8 @@
       <button class="link active" id="js-simulate" title="Simular el modelo BPMN">Simular</button>
       <button class="link active" id="js-continue" title="Ver la última simulación completada" disabled>Última simulación</button>
       <button class="link active" id="js-replay" title="Reproducir la última simulación sobre el diagrama" disabled>Reproducir</button>
+      <button class="link active" id="js-load" title="Cargar de disco los registros de una simulación y, si acaso, su diagrama">Cargar registros</button>
+      <input type="file" id="js-load-input" accept=".xes,.bpmn,.xml" multiple hidden>
     </div>
     <p id="simulation-status" class="simulation-status" role="status" aria-live="polite">Listo para simular.</p>
   </div>
@@ -64,6 +66,7 @@
       <section id="simulation-logs" class="simulation-logs" aria-labelledby="simulation-logs-title" hidden>
         <div class="simulation-logs-header">
           <h3 id="simulation-logs-title">Un registro XES por pool</h3>
+          <button type="button" id="download-diagram" title="El diagrama de esta simulación, para cargarla otra vez con sus registros">Descargar el diagrama</button>
           <button type="button" id="download-all-logs">Descargar todos</button>
         </div>
         <table class="simulation-logs-table">

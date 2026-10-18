@@ -22,7 +22,7 @@ const RESERVADO = /^(con|prn|aux|nul|com[0-9¹²³]|lpt[0-9¹²³])$/i;
 // El nombre de fichero, sin extension, que corresponde a un texto: lo que no
 // vale pasa a guion bajo, y a un nombre reservado se le antepone uno; vacio si
 // no queda nada.
-function asFileName(text) {
+export function asFileName(text) {
   const name = Array.from(String(text || '').trim(), c => (NO_VALE.includes(c) || c.charCodeAt(0) < 32 ? '_' : c))
     .join('').replace(/[. ]+$/, '');
   return RESERVADO.test(name.split('.')[0].trimEnd()) ? `_${name}` : name;

@@ -508,6 +508,11 @@ SceneView.prototype.load = function(timeline) {
   this.clear();
   this._scene = createScene(timeline, graphFromRegistry(this._elementRegistry));
   this._reserve = null;
+
+  // Lo que ocupa cada plantilla se calcula al cargar, y no en el primer
+  // instante que se dibuja: con cien casos, ese fotograma tardaba mucho mas
+  // que los demas.
+  this._rosterReserve();
   return this._scene;
 };
 

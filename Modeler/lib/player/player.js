@@ -102,19 +102,44 @@ export function visibleCases(timeline, window, filters = {}) {
 }
 
 // Como esta cada pool en el instante t, con todos los casos de la ventana:
-// [{ pool, name, total, pending, active, finished, shown }]. `shown` cuenta
-// los que se dibujan; los demas numeros no dependen del filtro.
+// [{ pool, name, total, pending, active, finished, shown, results }]. `shown`
+// cuenta los que se dibujan; los demas numeros no dependen del filtro.
+// `results` son los resultados historicos (6.8): cuantas veces se ha llegado
+// hasta t a cada evento de fin del pool -[{ element, name, count }], en el
+// orden en que aparecen en el registro-, si los casos de la ventana llegan a
+// mas de uno; si no, []. Salen del registro, no del diagrama: aunque se
+// cambien sus porcentajes.
 export function summaryAt(timeline, t, window, shown = window.cases) {
   return timeline.pools.map(pool => {
-    const counts = { pool: pool.id, name: pool.name, total: 0, pending: 0, active: 0, finished: 0, shown: 0 };
+    const counts = { pool: pool.id, name: pool.name, total: 0, pending: 0, active: 0, finished: 0, shown: 0, results: [] };
+    const ends = new Map();
     for (const entry of timeline.cases) {
       if (entry.pool !== pool.id || !window.cases.has(entry.id)) continue;
       counts.total += 1;
       counts[timeline.statusOf(entry.id, t) || 'pending'] += 1;
       if (shown.has(entry.id)) counts.shown += 1;
+      for (const item of entry.items) {
+        if (item.type !== 'bpmn:EndEvent') continue;
+        if (!ends.has(item.element)) ends.set(item.element, { element: item.element, name: item.name || item.element, count: 0, order: item.order });
+        if (item.start <= t) ends.get(item.element).count += 1;
+      }
+    }
+    if (ends.size > 1) {
+      counts.results = [ ...ends.values() ].sort((a, b) => a.order - b.order).map(({ order, ...result }) => result);
     }
     return counts;
   });
+}
+
+// Como se dice una fila del resumen: «Residente: 3 en curso · 0 por llegar ·
+// 97 terminados · fin: Aceptada 57, Rechazada sin reclamar 19, Reevaluada 21 ·
+// se ven 5 de 100».
+const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+export function summaryText(row) {
+  const results = row.results.length ? ` · fin: ${row.results.map(r => `${r.name} ${r.count}`).join(', ')}` : '';
+  const shown = row.shown < row.total ? ` · se ${row.shown === 1 ? 've' : 'ven'} ${row.shown} de ${row.total}` : '';
+  return `${row.name || row.pool}: ${row.active} en curso · ${row.pending} por llegar · ` +
+    `${plural(row.finished, 'terminado', 'terminados')}${results}${shown}`;
 }
 
 // La velocidad de entrada: la menor que reproduce la ventana en unos 40 s.

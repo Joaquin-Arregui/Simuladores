@@ -339,6 +339,14 @@ const MIRA = () => {
     reproduciendo: barra.dataset.playing === 'true', transito: capa.some(n => n.dataset.transit === 'true') };
 };
 
+// Lo que responde el Backend al simular un modelo: sus registros congelados.
+// Tienen que ser del diagrama abierto, o no se pueden reproducir (6.8).
+function respuestaDe(modelo) {
+  const logs = registrosDe(modelo);
+  return { simulationId: atributo(logs[0].xes, 'simulation:id'), seed: Number(atributo(logs[0].xes, 'simulation:seed')),
+    model: { name: atributo(logs[0].xes, 'model:name') }, logs, warnings: [] };
+}
+
 async function abre(modelo) {
   const page = await navegador.newPage({ viewport: { width: 1600, height: 1000 } });
   page.incidencias = [];
@@ -348,9 +356,7 @@ async function abre(modelo) {
   });
   page.on('pageerror', error => page.incidencias.push(`error en la pagina: ${error.message.split('\n')[0]}`));
   page.on('console', m => { if (m.type() === 'error') page.incidencias.push(`error en la consola: ${m.text().split('\n')[0]}`); });
-  const logs = registrosDe(modelo);
-  const respuesta = { simulationId: atributo(logs[0].xes, 'simulation:id'), seed: Number(atributo(logs[0].xes, 'simulation:seed')),
-    model: { name: atributo(logs[0].xes, 'model:name') }, logs, warnings: [] };
+  const respuesta = respuestaDe(modelo);
   const cabeceras = { 'Access-Control-Allow-Origin': '*' };
   await page.route('http://localhost:3000/simulation-config', r => r.fulfill({ json: { timeoutSeconds: 300 }, headers: cabeceras }));
   await page.route('http://localhost:3000/simulate', r => r.fulfill({ json: respuesta, headers: cabeceras }));
@@ -634,6 +640,7 @@ try {
     if (otro.marcas || otro.reloj || !otro.reproducir) problemas.push(`con otro diagrama: ${comoTexto(otro)}`);
 
     // Mientras se simula, Reproducir esta desactivado; al acabar, se activa.
+    // Se simula el 01, que es el abierto.
     let suelta;
     const pendiente = new Promise(resolve => {
       suelta = resolve;
@@ -641,7 +648,7 @@ try {
     await page.unroute('http://localhost:3000/simulate');
     await page.route('http://localhost:3000/simulate', async r => {
       await pendiente;
-      await r.fulfill({ json: page.respuesta, headers: { 'Access-Control-Allow-Origin': '*' } });
+      await r.fulfill({ json: respuestaDe('01-simple'), headers: { 'Access-Control-Allow-Origin': '*' } });
     });
     await page.click('#js-simulate');
     await page.waitForFunction(() => document.getElementById('js-simulate').disabled);
@@ -690,7 +697,7 @@ try {
     if (!/se abrió otro diagrama/.test(tras.estado)) problemas.push(`el estado no lo dice: «${tras.estado}»`);
     if (tras.barra) await page.click('#replay-exit');
     await page.unroute('http://localhost:3000/simulate');
-    await page.route('http://localhost:3000/simulate', r => r.fulfill({ json: page.respuesta, headers: { 'Access-Control-Allow-Origin': '*' } }));
+    await page.route('http://localhost:3000/simulate', r => r.fulfill({ json: respuestaDe('01-simple'), headers: { 'Access-Control-Allow-Origin': '*' } }));
     await page.click('#js-simulate');
     await page.waitForSelector('.modal-overlay', { state: 'visible' });
     await page.click('#close-modal');
@@ -723,8 +730,12 @@ try {
     }
     if (!vistas) problemas.push('en la segunda no se ve ninguna pelota');
     const a120 = await de31.salta(120);
+    // En el orden de los pools de la simulacion, y con sus resultados si los hay.
+    const orden = atributo(registrosDe(MODELOS[1])[0].xes, 'simulation:participants').split(', ');
     const previsto = player.summaryAt(linea31, 120, player.windowOf(linea31, 2))
-      .map(r => `${r.name}: ${r.active} en curso · ${r.pending} por llegar · ${r.finished} ${r.finished === 1 ? 'terminado' : 'terminados'}`).join('\n');
+      .sort((x, y) => orden.indexOf(x.pool) - orden.indexOf(y.pool))
+      .map(r => `${r.name}: ${r.active} en curso · ${r.pending} por llegar · ${r.finished} ${r.finished === 1 ? 'terminado' : 'terminados'}` +
+        (r.results.length ? ` · fin: ${r.results.map(x => `${x.name} ${x.count}`).join(', ')}` : '')).join('\n');
     if (a120.resumen !== previsto) problemas.push(`resumen «${a120.resumen}», y se esperaba «${previsto}»`);
     if ((await de31.salta(10)).estado.t !== '88') problemas.push('se sale de la ventana de la segunda');
     await de31.selectOption('#replay-call', '');

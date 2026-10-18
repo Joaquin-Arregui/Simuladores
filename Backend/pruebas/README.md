@@ -57,6 +57,10 @@ mientras el comportamiento no deba cambiar, sus XES no deben cambiar.
   filtro de casos e instante, con el reproductor sin navegador y con el
   Modeler compilado en un Chromium de verdad (ver
   [La reproducción](#la-reproducción)).
+- `carga.mjs` — cargar de disco los registros de una simulación y su
+  diagrama: lo que se comprueba antes de reproducirlos, la fluidez con 100
+  casos y que guardada y cargada otra vez se ve igual (ver
+  [La carga de los registros](#la-carga-de-los-registros)).
 - `navegador.mjs` — lo que comparten las pruebas en navegador: servir los
   ficheros y abrir Chromium.
 - `interfaz.mjs` — la interfaz del Modeler en un Chromium de verdad: abrir,
@@ -111,6 +115,7 @@ mientras el comportamiento no deba cambiar, sus XES no deben cambiar.
 | `37-recogida-antes-de-la-otra-espera` | Dos ramas del orquestador llegan a la misma recepcion y el orquestado le manda dos solicitudes por el mismo flujo. La rama A recoge la primera a los 7 s y espera a Ana hasta los 20; la B espera la segunda de 8 a 10. Las dos activaciones tienen la ejecucion 1 y el mismo remitente | Que el visualizador tome la espera de mensaje de una activacion por la de otra: daba la primera solicitud por recogida a los 10 s y la mostraba en el buzon a los 8 (6.3) |
 | `38-lotes-simultaneos` | Dos ramas activan a la vez el mismo envío multiinstancia a dos destinatarios; los lotes salen en t=11 y t=16 | Que la escena mezcle sus ejecuciones por el orden de fin y vacíe una salida en t=10. Se comprueba contra los eventos de fin, sin reconstruir activaciones |
 | `39-evaluar-con-cinco-personas` | La comisión evalúa siete solicitudes con cinco personas. Ana prepara el acta en otra rama hasta los 37 s: de 23 a 37 evalúan cuatro y esperan tres en la cola del pool, y de 37 a 60, cinco a la vez: a los 49 Dani pasa a la 6 y a los 52 Carlos a la 7. Gema convoca, recoge y responde; Hugo no tiene ninguna tarea. La recogida cancela su espera de más a los 22 s | Que el visualizador saque la plantilla de las reglas y no del registro, pierda a quien no trabaja, no vea a Ana ocupada en otra tarea, cuente en la cola la espera cancelada o atribuya una evaluación a quien no la hace (6.6) |
+| `40-proceso-base-con-100` | El `35` con 100 residentes: una convocatoria de 101 casos que acaba a los 1825 s; quedan aceptados 59, se rechazan sin reclamar 19 y reclaman 22, y a los 900 s los 100 esperan su resultado a la vez | Que el visualizador no reproduzca con fluidez una convocatoria de 100 casos cargada de disco, dibuje cientos de pelotas en vez de una insignia, saque los resultados o la plantilla de un diagrama cambiado en vez del registro, o no se vea igual guardada y cargada otra vez (6.8) |
 | `con-avisos/envio-a-pool-externo` | Un mensaje dirigido al pool y no a un receptor | Que un envio que sale de la simulacion acabe en un error interno en vez de en un aviso |
 | `con-avisos/mismo-usuario-en-dos-pools` | El mismo nombre declarado en dos pools | Que dos pools vuelvan a competir por el mismo recurso |
 | `con-avisos/multiinstancia-con-numero-escrito` | Una convocatoria multiinstancia con numberOfExecutions=4 a dos casos | Que un numero que ya no se usa se ignore en silencio; N son los dos casos vivos |
@@ -598,8 +603,11 @@ El visualizador saca lo que ocurrió solo de los registros (D15), con
   en `passedBetween` con su identidad, estado, persona y orden originales.
   Las ventanas excluyen el inicio e incluyen el fin, sin repetir las tareas
   al avanzar; solo la tarea de diez segundos aparece activa en `at`.
-- Que un registro roto —sin cerrar, que no es XML o con una fecha que no se
-  entiende— no da una línea de tiempo a medias.
+- Que un registro roto —sin cerrar, que no es XML, con una fecha que no se
+  entiende, dos registros pegados en un fichero o uno con algo detrás— no da
+  una línea de tiempo a medias. De dos pegados se quedaba con el primero, sin
+  decir nada (6.8): ahora el lector de XML exige un documento entero, con un
+  solo elemento raíz y nada más que espacios fuera de él.
 
 Las esperas canceladas y `bpmn:request` cambiaron los registros congelados de
 los modelos con mensajes: se volvieron a congelar después de comprobar que lo
@@ -973,6 +981,116 @@ otro diagrama, uno que se activa con la respuesta de un diagrama que ya no
 está abierto y una convocatoria que solo filtra lo que se dibuja; todas
 fallan. Necesita lo mismo que `interfaz.mjs`.
 
+## La carga de los registros
+
+```
+node pruebas/carga.mjs
+```
+
+Cargar de disco el conjunto de XES de una simulación y su BPMN (6.8). Sin
+navegador:
+
+- **La huella del diagrama** (`Modeler/lib/logs/sha256.js`) es la de Node —la
+  misma `sha256` en UTF-8 que calcula el Backend—, con acentos, emojis, los
+  bordes de bloque de 55, 56 y 64 bytes, 200.000 caracteres y todos los
+  diagramas de `integracion/`.
+- **Los conjuntos buenos pasan** (`Modeler/lib/logs/checks.js`): los
+  registros de todos los modelos de `esperado/`, solos y con su diagrama de
+  integración, leído como lo lee el Modeler antes de abrirlo —con bpmn-moddle y
+  sus descriptores—; así se comprueba también que el diagrama tiene dibujados
+  todos los elementos por los que pasan sus casos. Como se congelaron sin
+  diagrama, avisa de que no se puede comprobar que sea el simulado; con la
+  huella de su diagrama puesta en la cabecera, como la escribe el Backend
+  cuando el Modeler se lo manda, no avisa, tampoco con el diagrama guardado con
+  `\r\n`; y con el diagrama cambiado, avisa de que no es el que se simuló.
+- **Los conjuntos rotos se rechazan**, cada uno diciendo por qué; los rompe a
+  partir del `39`, que tiene dos pools: ninguno, falta uno, duplicado, mal
+  formado, no es XES, dos simulaciones pegadas en un fichero —con distinta
+  `simulation:id`—, con texto detrás del registro, de otra simulación, de otro
+  modelo, con otra base temporal, con registros de dos simulaciones —uno del
+  `39` y otro del `40`—,
+  con una traza de otro pool, dado como de otro pool, sin identificación, sin
+  plantilla, de otro formato, uno que sobra, uno solo de un modelo de dos, una
+  traza sin `bpmn:participant`, un caso repetido con otro `concept:name` y un
+  `<log>` de otro espacio de nombres. Uno solo de un modelo de un participante
+  —el `01`— sí vale. Con un diagrama que no es el suyo: los del `39` con el del
+  `40` —la misma raíz, sin `Pool_Comision`— y con el del `01`, los del `39` con
+  el suyo sin la forma de `Pool_Solicitante`, los del `20` con el del `14` —la
+  misma raíz y los mismos pools, pero sin la mayoría de sus elementos— y los del
+  `40` con el suyo sin la forma de `Esperar_Resultado`, también si esa forma
+  solo está en un segundo diagrama que bpmn-js no dibuja —de lo mismo, o de
+  otro proceso—; con dos diagramas enteros, vale. Y lo que el Modeler lee
+  de un `.bpmn` sin abrirlo —su raíz, sus pools y lo dibujado— es lo que se lee
+  aquí por otro camino en los 50 diagramas de `integracion/` y `exportadas/`;
+  un XES, un texto, un XML mal formado y un BPMN sin diagrama que dibujar no se
+  leen como diagrama.
+- **El Backend dice lo mismo**: `simulator/registros.py`, desde `python3`,
+  acepta el `39` y el `40` y rechaza los rotos que comprueba él —todos menos
+  ninguno y el formato, que el visualizador también lee en el 1—, igual que el
+  Modeler. Y la huella que calcula el Modeler de cada diagrama de
+  `integracion/`, y de uno con acentos y emojis, es la que les pone el Backend
+  (`huella_del_diagrama`). `python3` se llama con `-X utf8`, para que lea los
+  registros y los diagramas en UTF-8 sea cual sea la configuración regional:
+  en Windows los leía como CP1252 y la huella del que lleva acentos y emojis no
+  coincidía.
+
+Después, el Modeler compilado, en un Chromium de verdad y con su reloj, con el
+`40`: el proceso base con 100 residentes, 101 casos en una convocatoria de
+1825 s.
+
+- **Cargado de disco, con fluidez**: con **Cargar registros**, los dos XES y
+  su diagrama; reproduciendo a × 50 durante 4 s, cada instante se dibuja con
+  una mediana de 8 ms como mucho y un p95 de 16 ms —lo mide la propia página
+  con User Timing—, y el navegador sigue a 60 fotogramas por segundo —mediana
+  de 20 ms entre fotogramas y p95 de 34 ms como mucho—. A los 900 s los 100
+  residentes esperan su resultado: una insignia de 100, sin pelotas.
+- **Recursos y resultados del registro**: con el diagrama cambiado —sin
+  Carlos, y aceptando el 10 % en vez del 60 %—, avisa de que no es el que se
+  simuló, pero la plantilla sigue con Ana, Bea y Carlos, y al final el
+  resumen dice «fin: Aceptada 59, Rechazada sin reclamar 19, Reevaluada 22»,
+  lo que dice el registro.
+- **Guardada y cargada otra vez**: simulada —el Backend se responde con los
+  registros del `40` y la huella del diagrama que se le manda—, se guarda con
+  **Descargar el diagrama** y **Descargar todos**, y se carga en una página
+  nueva: a los 0, 150, 450, 900, 1500 y 1825 s, lo dibujado y el resumen son
+  los mismos, y no avisa de nada, porque el diagrama es el simulado. Guardada
+  otra vez desde esa página, son los mismos ficheros, byte a byte.
+- **Lo que no vale no se carga**: uno solo de un modelo de dos, uno de otra
+  simulación, uno repetido, dos simulaciones pegadas en un fichero, los del
+  `39` con el diagrama del `40`, un fichero
+  que no es ni XES ni BPMN, un `.bpmn` que no es un diagrama, uno sin nada que
+  dibujar, el diagrama sin una tarea por la que pasan los casos, unos
+  registros que pasan las comprobaciones pero no se pueden reproducir —un
+  evento sin `time:timestamp`—, un `.bpmn` con dos diagramas cuyo primero —el
+  que dibuja bpmn-js— no tiene esa tarea, uno con una entidad que bpmn-moddle
+  acepta y el visualizador no lee (`&nbsp;`), y uno con Scheduler; dice por
+  qué, en un solo mensaje y sin ventanas emergentes, sigue abierto el diagrama
+  de antes y no se activan **Reproducir** ni **Última simulación**. Arrastrados
+  al lienzo, se cargan igual. Sin su diagrama, sobre el abierto, no se ofrece
+  descargar el abierto como el simulado. Mientras se simula no se cargan, y se
+  dice por qué. Una respuesta del Backend que no es del diagrama abierto no se
+  puede reproducir, y el estado dice por qué. Y cargada, si se borra del
+  diagrama una tarea por la que pasan sus casos, **Reproducir** ya no la
+  reproduce y dice qué falta.
+
+Ninguna puede sacar una ventana emergente ni un error en la consola. Se ha
+comprobado que las comprobaciones distinguen con veinticinco versiones
+estropeadas: sin mirar si falta algún pool, sin comparar la cabecera común,
+un lector de XML que admite varias raíces o texto fuera de la raíz,
+una huella que siempre coincide, una que no pasa `\r\n` a `\n`, un sha256
+con la longitud mal, sin mirar los elementos del diagrama, contando pools sin
+forma, contando lo que hay en todos los diagramas de un `.bpmn` y no solo en
+los que dibuja bpmn-js, leyendo un BPMN sin diagrama que dibujar, aceptando
+trazas sin
+participante, sin mirar el espacio de nombres, un Modeler que carga aunque no
+valgan, uno que abre el diagrama antes de compararlo, uno que no prepara la
+reproducción antes de abrirlo, uno que carga mientras se simula, uno que
+ofrece el diagrama abierto como el simulado, uno que no vuelve a comparar al
+reproducir, uno que no explica un error al leer el diagrama, uno que avisa del
+Scheduler en una ventana, los registros en otro orden, un
+resumen sin resultados, sin insignias y un dibujo que tarda 20 ms; todas
+fallan. Necesita lo mismo que `interfaz.mjs`, y `python3` con lo del Backend.
+
 ## El coste del proceso base
 
 ```
@@ -1037,7 +1155,9 @@ el `35` en `escena.mjs`, los registros de `esperado/` y los diagramas del
 del `02`, el `10`, el `27` y el `35` en `colores.mjs`, y los registros de
 `esperado/` —con el `39`— y los diagramas del `39`, el `08` y el `01` en
 `plantilla.mjs`, y los registros de `esperado/` —con el `39`, el `31` y el
-`14`— y sus diagramas en `reproduccion.mjs`. Sin esa comprobación, perder una
+`14`— y sus diagramas en `reproduccion.mjs`, y los registros de `esperado/`
+—con el `40`, el `39` y el `01`— y sus diagramas en `carga.mjs`. Sin esa
+comprobación, perder una
 carpeta entera —modelos y referencias a la vez, en un merge— daba verde con
 menos casos, o con ninguno, sin decir nada.
 

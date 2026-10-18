@@ -22,7 +22,9 @@ import AddExporter from '@bpmn-io/add-exporter';
 
 import { exportToEsper } from './taskHandlers';
 import { setupReplay } from './replay.js';
-import { logsFromResponse, preview } from '../../lib/logs/logs.js';
+import { asFileName, logsFromResponse, preview } from '../../lib/logs/logs.js';
+import { checkDiagram, checkLogs, checkSimulation, diagramOf, diagramOfDefinitions } from '../../lib/logs/checks.js';
+import { graphFromBpmn, graphFromRegistry } from '../../lib/scene/scene.js';
 import sceneModule from '../../lib/scene/view.js';
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -56,7 +58,10 @@ document.addEventListener('DOMContentLoaded', function() {
   // ----------------------------
   // Helpers
   // ----------------------------
-  async function openDiagram(xml) {
+  // true si lo ha abierto. Si no, dice por que con `report`: de entrada, en una
+  // ventana; al cargar una simulacion, en su mensaje (6.8).
+  async function openDiagram(xml, report = null) {
+    const tell = report || (message => window.alert(message));
 
     // Old Scheduler models must not silently become ordinary tasks.
     const documentXml = new DOMParser().parseFromString(xml, 'application/xml');
@@ -67,23 +72,32 @@ document.addEventListener('DOMContentLoaded', function() {
       element.getAttribute('data-type') === 'scheduler'
     );
     if (hasScheduler) {
-      window.alert('Este modelo contiene Scheduler, que ya no está disponible. No se ha importado ni modificado el archivo.');
-      return;
+      tell('Este modelo contiene Scheduler, que ya no está disponible. No se ha importado ni modificado el archivo.');
+      return false;
     }
     try {
       await bpmnModeler.importXML(xml);
+      return true;
     } catch (err) {
-      console.error('Error during importXML:', err);
-      window.alert(`No se pudo abrir el diagrama: ${err.message}`);
+      if (!report) console.error('Error during importXML:', err);
+      tell(`No se pudo abrir el diagrama: ${err.message}`);
+      return false;
     }
   }
 
-  function registerFileDrop(container, callback) {
+  // Un diagrama se abre; unos registros (.xes), con su diagrama si viene, se
+  // cargan para reproducirlos (6.8).
+  function registerFileDrop(container, callback, onLogs) {
     function handleFileSelect(e) {
       e.stopPropagation();
       e.preventDefault();
       const files = e.dataTransfer ? e.dataTransfer.files : e.target.files;
       if (!files || files.length === 0) return console.error('No se encontró un archivo para procesar.');
+      if (onLogs && Array.from(files).some(item => /\.xes$/i.test(item.name))) {
+        onLogs(Array.from(files));
+        if (e.target && e.target.value) e.target.value = '';
+        return;
+      }
       const file = files[0];
       if (!(file instanceof File)) return console.error('El archivo no es válido.');
 
@@ -129,10 +143,15 @@ document.addEventListener('DOMContentLoaded', function() {
     download(new Blob([ text ], { type: 'application/xml;charset=utf-8' }), fileName, 'application/xml');
   }
 
+  // El diagrama abierto, como se guarda y se manda al simular: limpio.
+  async function savedDiagramXML() {
+    await sanitizeModel(bpmnModeler);
+    return exportDefinitionsXML(bpmnModeler);
+  }
+
   async function downloadDiagram() {
     try {
-      await sanitizeModel(bpmnModeler);
-      const xml = await exportDefinitionsXML(bpmnModeler);
+      const xml = await savedDiagramXML();
       downloadText(xml, 'diagram.bpmn');
     } catch (err) {
       console.error('Error al guardar BPMN:', err);
@@ -155,7 +174,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   })();
 
-  registerFileDrop(document.getElementById('canvas'), openDiagram);
+  registerFileDrop(document.getElementById('canvas'), openDiagram, files => loadSimulationFiles(files));
 
   // ----------------------------
   // Acciones UI
@@ -175,6 +194,8 @@ document.addEventListener('DOMContentLoaded', function() {
   const simulateButton = document.getElementById('js-simulate');
   const lastSimulationButton = document.getElementById('js-continue');
   const replayButton = document.getElementById('js-replay');
+  const loadButton = document.getElementById('js-load');
+  const loadInput = document.getElementById('js-load-input');
   const simulationStatus = document.getElementById('simulation-status');
   const modalOverlay = document.querySelector('.modal-overlay');
   const modal = document.querySelector('.modal');
@@ -185,10 +206,12 @@ document.addEventListener('DOMContentLoaded', function() {
   const logsSection = document.getElementById('simulation-logs');
   const logsBody = logsSection.querySelector('tbody');
   const downloadAllButton = document.getElementById('download-all-logs');
+  const downloadDiagramButton = document.getElementById('download-diagram');
   const resultsBox = document.getElementById('simulation-results');
   const previewTitle = document.getElementById('simulation-preview-title');
   const previewNote = document.getElementById('simulation-preview-note');
   let simulationRunning = false;
+  let loading = false;
   let lastSimulation = null;
 
   // La reproduccion de la ultima simulacion sobre el diagrama abierto (6.7).
@@ -196,6 +219,10 @@ document.addEventListener('DOMContentLoaded', function() {
   // reproducir hasta simularlo. Sus registros se siguen viendo en «Última
   // simulación».
   let replayLogs = null;
+
+  // Y lo que se sabe de sus registros (lib/logs/checks.js, checkLogs), para
+  // volver a compararlos con el diagrama al reproducir: puede haber cambiado.
+  let replayChecked = null;
   const replay = setupReplay(bpmnModeler, {
     onError: message => setSimulationStatus(message, 'error'),
     onExit: () => replayButton.focus()
@@ -208,6 +235,7 @@ document.addEventListener('DOMContentLoaded', function() {
   bpmnModeler.on('import.done', () => {
     openedDiagram += 1;
     replayLogs = null;
+    replayChecked = null;
     replayButton.disabled = true;
   });
   let modalReturnFocus = null;
@@ -257,6 +285,7 @@ document.addEventListener('DOMContentLoaded', function() {
     summaryBox.hidden = summary.length === 0;
     logsBody.replaceChildren(...result.logs.map(logRow));
     downloadAllButton.hidden = result.logs.length < 2;
+    downloadDiagramButton.hidden = !result.diagramXML;
     logsSection.hidden = false;
     showLog(result.logs[0]);
     openModal(title, 'success', result.warnings);
@@ -317,6 +346,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
+  // El diagrama que se simulo, tal como se mando: con los registros, es lo que
+  // hace falta para volver a cargar la simulacion y reproducirla igual (6.8).
+  downloadDiagramButton.addEventListener('click', () => {
+    if (lastSimulation === null || !lastSimulation.diagramXML) return;
+    downloadText(lastSimulation.diagramXML, `${asFileName(lastSimulation.modelName) || 'diagrama'}.bpmn`);
+  });
+
   function closeSimulationMessage() {
     modalOverlay.style.display = 'none';
     modalReturnFocus?.focus();
@@ -371,11 +407,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
   simulateButton.addEventListener('click', async (e) => {
     e.preventDefault();
-    if (simulationRunning) return;
+    if (simulationRunning || loading) return;
 
     simulationRunning = true;
     simulateButton.disabled = true;
     replayButton.disabled = true;
+    loadButton.disabled = true;
     const simulatedDiagram = openedDiagram;
     simulateButton.textContent = 'Simulando…';
     simulateButton.setAttribute('aria-busy', 'true');
@@ -383,8 +420,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let timer;
 
     try {
-      await sanitizeModel(bpmnModeler);
-      const diagramXML = await exportDefinitionsXML(bpmnModeler);
+      const diagramXML = await savedDiagramXML();
       const content = await exportToEsper(bpmnModeler);
       const timeoutSeconds = await simulationTimeoutSeconds();
       const duration = timeoutSeconds % 60 === 0 ? `${timeoutSeconds / 60} min` : `${timeoutSeconds} s`;
@@ -428,20 +464,31 @@ document.addEventListener('DOMContentLoaded', function() {
         : [];
 
       lastSimulation = {
-        logs, warnings, simulationId: data.simulationId, seed: data.seed, modelName: data.model?.name
+        logs, warnings, simulationId: data.simulationId, seed: data.seed, modelName: data.model?.name, diagramXML
       };
+
+      // Se reproduce sobre el diagrama simulado, si sigue abierto, y si los
+      // registros son suyos: se comprueban como los cargados de disco (6.8), y
+      // se reproducen en el orden de sus pools.
       const sameDiagram = simulatedDiagram === openedDiagram;
-      replayLogs = sameDiagram ? logs : null;
+      const checked = sameDiagram
+        ? checkSimulation(logs.map(({ pool, name, xes }) => ({ pool, name, xes })), { diagram: currentDiagram(diagramXML) })
+        : null;
+      const byPool = new Map(logs.map(log => [ log.pool, log ]));
+      replayLogs = sameDiagram && !checked.problems.length ? checked.logs.map(log => byPool.get(log.pool)) : null;
+      replayChecked = replayLogs && checked;
       if (replay.isOpen) replay.close();
       lastSimulationButton.disabled = false;
       const registros = logs.length === 1 ? '1 registro XES' : `${logs.length} registros XES, uno por pool`;
-      const otro = sameDiagram ? '' : ' Mientras se simulaba se abrió otro diagrama: esta simulación no se puede reproducir sobre él.';
+      const otro = !sameDiagram ? ' Mientras se simulaba se abrió otro diagrama: esta simulación no se puede reproducir sobre él.'
+        : checked.problems.length ? ` No se puede reproducir: ${checked.problems.join(' ')}`
+          : checked.warnings.length ? ` ${checked.warnings.join(' ')}` : '';
       if (warnings.length) {
         const count = warnings.length === 1 ? '1 aviso' : `${warnings.length} avisos`;
         setSimulationStatus(`Simulación completada con ${count}: ${registros}. Puedes revisarlos en «Última simulación».${otro}`, 'warning');
       } else {
         setSimulationStatus(`Simulación completada: ${registros}. Están disponibles en «Última simulación».${otro}`,
-          sameDiagram ? 'success' : 'warning');
+          otro ? 'warning' : 'success');
       }
       showSimulationResults('Resultados de la simulación', lastSimulation);
     } catch (err) {
@@ -452,6 +499,7 @@ document.addEventListener('DOMContentLoaded', function() {
       window.clearTimeout(timer);
       simulationRunning = false;
       simulateButton.disabled = false;
+      loadButton.disabled = false;
       replayButton.disabled = replayLogs === null;
       simulateButton.textContent = 'Simular';
       simulateButton.removeAttribute('aria-busy');
@@ -464,8 +512,166 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
+  // Si desde que se simulo o se cargo se ha quitado del diagrama algo por lo que
+  // pasan sus casos, ya no se puede reproducir sobre el, y se dice por que.
   replayButton.addEventListener('click', () => {
-    if (replayLogs !== null && !simulationRunning) replay.open(replayLogs);
+    if (replayLogs === null || simulationRunning || loading) return;
+    const now = replayChecked ? checkDiagram(replayChecked, currentDiagram(null)) : { problems: [] };
+    if (now.problems.length) {
+      setSimulationStatus(`No se puede reproducir: ${now.problems.join(' ')}`, 'error');
+      return;
+    }
+    replay.open(replayLogs);
+  });
+
+  // Lo que hay que saber del diagrama abierto para compararlo con unos
+  // registros; `xml`, su texto, para la huella.
+  function currentDiagram(xml) {
+    return diagramOf(bpmnModeler.get('elementRegistry'), bpmnModeler.get('canvas').getRootElement(), xml);
+  }
+
+  // Cargar de disco una simulacion guardada (6.8): sus registros, uno por pool,
+  // y, si viene, el diagrama con el que se guardo, que se abre. Sin diagrama, se
+  // reproduce sobre el abierto. Antes de abrir nada se comprueba que el
+  // conjunto vale, tambien con el diagrama que viene -leido sin abrirlo, como
+  // lo abriria bpmn-js-, y que se puede reproducir sobre el; si algo no vale,
+  // se dice por que y no se carga nada: siguen el diagrama y la simulacion de
+  // antes. Si vale, se reproduce, y queda como la ultima simulacion, para verla
+  // o descargarla. Mientras se carga no se puede simular, ni cargar mientras
+  // se simula.
+  async function loadSimulationFiles(files) {
+    if (simulationRunning) {
+      showSimulationMessage('No se pueden cargar los registros',
+        'Se está simulando: espera a que termine para cargar otra simulación.', 'error');
+      return;
+    }
+    if (loading) return;
+    loading = true;
+    simulateButton.disabled = true;
+    loadButton.disabled = true;
+    try {
+      await loadFiles(files);
+    } catch (err) {
+
+      // Lo que no se esperaba tambien se dice, y no se carga nada.
+      console.error('Error al cargar los registros:', err);
+      setSimulationStatus('No se han cargado los registros.', 'error');
+      showSimulationMessage('No se pueden cargar los registros', `Se produjo un error inesperado: ${err.message}`, 'error');
+    } finally {
+      loading = false;
+      simulateButton.disabled = false;
+      loadButton.disabled = false;
+      replayButton.disabled = replayLogs === null;
+    }
+  }
+
+  async function loadFiles(files) {
+    let read;
+    try {
+      read = await Promise.all(files.map(async file => ({ name: file.name, text: await file.text() })));
+    } catch (err) {
+      showSimulationMessage('No se pueden cargar los registros', `No se pudo leer un fichero: ${err.message}`, 'error');
+      return;
+    }
+    const diagrams = read.filter(file => /\.(bpmn|xml)$/i.test(file.name));
+    const xes = read.filter(file => /\.xes$/i.test(file.name));
+    const problems = read.filter(file => !diagrams.includes(file) && !xes.includes(file))
+      .map(file => `No se sabe qué es «${file.name}»: se cargan registros .xes y, si acaso, el diagrama .bpmn que se simuló.`);
+    if (diagrams.length > 1) problems.push(`Hay más de un diagrama: ${diagrams.map(file => `«${file.name}»`).join(', ')}.`);
+    if (!xes.length) problems.push('No hay ningún registro .xes.');
+    const fail = list => {
+      setSimulationStatus('No se han cargado los registros.', 'error');
+      showSimulationMessage('No se pueden cargar los registros', list.join('\n'), 'error');
+    };
+    if (problems.length) return fail(problems);
+    const checked = checkLogs(xes.map(file => ({ xes: file.text, fileName: file.name })));
+    if (checked.problems.length) return fail(checked.problems);
+
+    // El diagrama sobre el que se van a reproducir: el que viene, todavia sin
+    // abrir, o el abierto, tal como se guarda.
+    const given = diagrams[0];
+    let xml, diagram, graph;
+    if (given) {
+      xml = given.text;
+      try {
+        const { rootElement } = await bpmnModeler.get('moddle').fromXML(xml, 'bpmn:Definitions');
+        diagram = diagramOfDefinitions(rootElement, xml);
+
+        // Los flujos que dibujaria, como los que da graphFromRegistry una vez
+        // abierto.
+        const drawn = new Set(diagram.elements);
+        const flows = graphFromBpmn(xml);
+        graph = { sequenceFlows: flows.sequenceFlows.filter(flow => drawn.has(flow.id)),
+          messageFlows: flows.messageFlows.filter(flow => drawn.has(flow.id)) };
+      } catch (err) {
+        return fail([ `No se puede leer el diagrama «${given.name}»: ${err.message}.` ]);
+      }
+    } else {
+      await sanitizeModel(bpmnModeler);
+      xml = await exportDefinitionsXML(bpmnModeler);
+      diagram = currentDiagram(xml);
+      graph = graphFromRegistry(bpmnModeler.get('elementRegistry'));
+    }
+    const compared = checkDiagram(checked, diagram);
+    if (compared.problems.length) return fail(compared.problems);
+    const logs = logsFromResponse({ logs: checked.logs.map(log => ({ pool: log.pool, name: log.name, xes: log.xes })) });
+    let timeline;
+    try {
+      timeline = replay.prepare(logs, graph);
+    } catch (err) {
+      return fail([ `Los registros no se pueden reproducir: ${err.message}` ]);
+    }
+
+    // Si con el diagrama ya abierto algo no fuera como se ha comprobado sin
+    // abrirlo, se vuelve al de antes -sin su historial de deshacer- y a su
+    // simulacion.
+    const before = given ? { xml: await exportDefinitionsXML(bpmnModeler), logs: replayLogs, checked: replayChecked } : null;
+    const back = async list => {
+      if (before && await openDiagram(before.xml, () => {})) {
+        replayLogs = before.logs;
+        replayChecked = before.checked;
+      }
+      fail(list);
+    };
+    if (given) {
+      let why = null;
+      if (!(await openDiagram(xml, message => {
+        why = message;
+      }))) return fail([ `${why || 'No se pudo abrir el diagrama.'} («${given.name}»)` ]);
+
+      // Y con el abierto, como lo ha dibujado bpmn-js.
+      const opened = checkDiagram(checked, currentDiagram(xml));
+      if (opened.problems.length) return back(opened.problems);
+    }
+    let why = null;
+    if (!replay.open(logs, timeline, message => {
+      why = message;
+    })) return back([ why || 'Los registros no se pueden reproducir.' ]);
+
+    // Se puede volver a guardar con el diagrama que vino con ella o, sin el, con
+    // el abierto si es el que se simulo.
+    const common = checked.common;
+    const simulated = given || (common['model:diagramSha256'] && !compared.warnings.length);
+    lastSimulation = {
+      logs, warnings: compared.warnings, simulationId: common['simulation:id'], seed: Number(common['simulation:seed']),
+      modelName: common['model:name'], diagramXML: simulated ? xml : null
+    };
+    replayLogs = logs;
+    replayChecked = checked;
+    lastSimulationButton.disabled = false;
+    replayButton.disabled = false;
+    const registros = logs.length === 1 ? '1 registro' : `${logs.length} registros`;
+    setSimulationStatus(`Cargada de disco la simulación ${common['simulation:id']}: ${registros}.` +
+      `${compared.warnings.length ? ` ${compared.warnings.join(' ')}` : ''}`, compared.warnings.length ? 'warning' : 'success');
+  }
+
+  loadButton.addEventListener('click', () => {
+    if (!simulationRunning) loadInput.click();
+  });
+  loadInput.addEventListener('change', async () => {
+    const files = Array.from(loadInput.files || []);
+    loadInput.value = '';
+    if (files.length) await loadSimulationFiles(files);
   });
 
   closeModalButton.addEventListener('click', closeSimulationMessage);

@@ -221,8 +221,12 @@ const activosBien = activos.every(piezas => JSON.stringify(piezas) === JSON.stri
 console.log(`${'solo Revisar ocupa tiempo'.padEnd(46)} ${activosBien ? 'ok' : 'FALLA'}`);
 fallos += !activosBien;
 
-// Lo que no es un XES no da una linea de tiempo a medias.
-const malos = [ '<log><trace>', 'esto no es XML', '<log><trace><event><date key="time:timestamp" value="ayer"/></event></trace></log>' ];
+// Lo que no es un XES no da una linea de tiempo a medias: tampoco dos
+// registros pegados en un fichero -se quedaba con el primero y descartaba el
+// otro sin decir nada- ni uno con algo detras (6.8).
+const unRegistro = registrosDe(carpetas[0])[0].xes;
+const malos = [ '<log><trace>', 'esto no es XML', '<log><trace><event><date key="time:timestamp" value="ayer"/></event></trace></log>',
+  unRegistro + unRegistro, `${unRegistro}basura\n` ];
 const rechazados = malos.filter(xes => {
   try {
     timelineFromLogs([ { pool: 'P', xes } ]);

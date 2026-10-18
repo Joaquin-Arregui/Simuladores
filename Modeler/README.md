@@ -11,7 +11,7 @@ npm install
 npm start
 ```
 
-La aplicación se abre en `http://localhost:9000`. **Open Existing Model** abre un archivo local; también se puede arrastrar un BPMN al lienzo. **Simular** envía las reglas y el XML a `http://localhost:3000/simulate`. El Backend debe estar ejecutándose para simular. **Última simulación** muestra el último resultado correcto de la sesión, y **Reproducir** lo reproduce sobre el diagrama (ver [La reproducción](#la-reproducción)). Los tiempos de las tareas, la frecuencia y los temporizadores se expresan en segundos.
+La aplicación se abre en `http://localhost:9000`. **Open Existing Model** abre un archivo local; también se puede arrastrar un BPMN al lienzo. **Simular** envía las reglas y el XML a `http://localhost:3000/simulate`. El Backend debe estar ejecutándose para simular. **Última simulación** muestra el último resultado correcto de la sesión, y **Reproducir** lo reproduce sobre el diagrama (ver [La reproducción](#la-reproducción)). **Cargar registros** carga de disco una simulación guardada —sus XES y, si acaso, el diagrama que se simuló— y la reproduce, sin Backend; también se pueden arrastrar al lienzo (ver [Cargar una simulación guardada](#cargar-una-simulación-guardada)). Los tiempos de las tareas, la frecuencia y los temporizadores se expresan en segundos.
 
 El resultado de una simulación es **un registro XES por pool** (ver abajo); **Ctrl+S** guarda el diagrama.
 Lo guarda con formato, un elemento por línea, como Camunda Modeler; hasta la
@@ -154,8 +154,9 @@ descarga el Chromium de Playwright.
   llegada uniforme). El marcador de multiplicidad es el estándar,
   `bpmn:participantMultiplicity`. Se editan en el panel del pool (ver abajo) y
   se exportan a las reglas (ver más abajo).
-- `lib/logs`: los registros de una simulación, uno por pool, y el nombre de
-  fichero de cada uno.
+- `lib/logs`: los registros de una simulación, uno por pool, el nombre de
+  fichero de cada uno, la comprobación de un conjunto antes de reproducirlo
+  (`checks.js`) y la huella del diagrama (`sha256.js`).
 - `lib/numbers`: cómo validan, leen y muestran los números los paneles.
 - `lib/rules`: el exportador de las reglas que se mandan al simular.
 - `lib/people`: dónde se guardan las listas de personas (ver abajo) y la
@@ -244,7 +245,12 @@ nombre, cuántos casos tiene y el fichero con el que se descarga, y los botones
 todos** los descarga uno detrás de otro; el navegador puede pedir permiso para
 descargar varios ficheros. Encima de la tabla están la identificación de la
 simulación, la semilla —con ella se repite— y el modelo, y los avisos si los
-hay. **Última simulación** vuelve a abrir esa ventana.
+hay. **Descargar el diagrama** descarga el diagrama de la simulación: el que se
+simuló —el texto que se mandó al Backend— o, si se cargó de disco, el que vino
+con los registros, que puede no ser el simulado (entonces se avisa); para
+cargarlo luego con ellos (ver
+[Cargar una simulación guardada](#cargar-una-simulación-guardada)).
+**Última simulación** vuelve a abrir esa ventana.
 
 Cada fichero se llama como su pool, `Cliente.xes`. Si el pool no tiene nombre,
 se usa su ID; si dos pools comparten nombre, los dos llevan además su ID,
@@ -546,8 +552,14 @@ la cierra, borra lo dibujado y devuelve el foco a **Reproducir**. Una
 simulación es del diagrama que se simuló: abrir otro cierra la barra, y
 **Reproducir** no se vuelve a activar hasta simularlo —sus registros se siguen
 viendo en **Última simulación**—, tampoco si se abre mientras el Backend aún
-está simulando el anterior: entonces el estado lo dice. Mientras se simula,
-tampoco se puede reproducir. En la barra:
+está simulando el anterior: entonces el estado lo dice. Lo que devuelve el
+Backend se comprueba como los registros cargados de disco (ver
+[Cargar una simulación guardada](#cargar-una-simulación-guardada)); si no es
+del diagrama abierto, **Reproducir** no se activa y el estado dice por qué. Y
+al pulsar **Reproducir** se vuelve a comparar con el diagrama abierto: si desde
+que se simuló o se cargó se ha quitado de él algo por lo que pasan sus casos,
+no se reproduce, y el estado dice qué falta. Mientras se simula, tampoco se
+puede reproducir. En la barra:
 
 - **Reproducir** y **Pausa**, con la **velocidad** en segundos simulados por
   segundo real (× 1 a × 100; de entrada, la menor que reproduce la
@@ -571,9 +583,12 @@ tampoco se puede reproducir. En la barra:
   insignias, los buzones, las plantillas y el resumen siguen siendo los de la
   convocatoria. Un filtro que no se entiende se marca, se explica y no
   filtra.
-- Debajo, el **resumen** de cada pool en ese instante: cuántos casos están en
-  curso, cuántos por llegar y cuántos han terminado, de todos los de la
-  convocatoria, y, con un filtro, cuántos se ven.
+- Debajo, el **resumen** de cada pool en ese instante, en el orden de los
+  pools de la simulación: cuántos casos están en curso, cuántos por llegar y
+  cuántos han terminado, de todos los de la convocatoria; si sus casos llegan
+  a más de un evento de fin, cuántas veces se ha llegado ya a cada uno —«fin:
+  Aceptada 59, Rechazada sin reclamar 19, Reevaluada 22»—, como dice el
+  registro (6.8); y, con un filtro, cuántos se ven.
 
 Cada instante se dibuja entero desde la línea de tiempo (`lib/player`,
 `lib/scene`), sin depender de lo que se dibujó antes. El reloj avanza desde su
@@ -590,6 +605,65 @@ la barra, el diagrama se encaja con las plantillas, en lo que dejan libre la
 paleta y la barra (`sceneView.fit(padding, margins)`). El banco lo comprueba
 con el Modeler compilado, en un Chromium de verdad, con el reloj de la página
 en la mano (`Backend/pruebas/reproduccion.mjs`).
+
+### Cargar una simulación guardada
+
+**Cargar registros** —o arrastrarlos al lienzo— carga de disco una simulación
+guardada (6.8): los XES de todos sus pools, como los descarga **Descargar
+todos**, y, si acaso, el diagrama que se simuló, como lo descarga **Descargar
+el diagrama**, que se abre. Sin diagrama, se reproduce sobre el abierto. Antes
+se comprueba el conjunto con `lib/logs/checks.js`: lo que comprueba el Backend
+al reunirlos (`simulator/registros.py`) —salvo el formato: el visualizador lee
+también el 1— y, además, el diagrama:
+
+- Cada registro es un XES —un documento entero, con un solo `<log>` en el
+  espacio de nombres de XES y nada detrás: dos registros pegados en un fichero
+  no valen— con su cabecera: la identificación de la simulación, el modelo y
+  la huella de sus reglas, la base temporal, los pools esperados, la plantilla
+  del suyo, y el formato 1 o 2.
+- Todos comparten la misma cabecera común; si algo difiere, se están mezclando
+  simulaciones, ejecuciones o modelos, y se dice qué difiere.
+- Están los de todos los pools esperados, una sola vez cada uno, y ninguno
+  más: un solo XES basta únicamente para un modelo de un participante.
+- Cada traza es de su pool —su `bpmn:participant`— y ningún caso —el pool y
+  su número, `bpmn:instance`— se repite.
+- El diagrama es el del modelo: su raíz es la de los registros y tiene
+  dibujados todos sus pools y todos los elementos por los que pasan sus casos.
+  El que viene con los registros se lee antes de abrirlo con el moddle de
+  bpmn-js, como lo abriría: la raíz es la del plano de su primer diagrama, y
+  solo cuenta lo que tiene forma o línea en los diagramas que dibujaría —ese
+  y los de los procesos y subprocesos de su misma jerarquía; si dos dibujan lo
+  mismo, el primero—.
+- Y que se pueden reproducir sobre él: su línea de tiempo y su escena se
+  construyen antes de abrir nada (`replay.prepare`).
+
+Si algo de eso falla, se dice por qué y no se carga nada: siguen abiertos el
+diagrama y la simulación de antes. Si aun así, ya abierto, bpmn-js lo dibujara
+de otra manera de la comprobada, o no se pudiera reproducir, se vuelve a abrir
+el de antes, con su simulación, aunque sin su historial de deshacer. Si el
+diagrama no es el que se simuló —su
+sha256 no es `model:diagramSha256`, tampoco con los saltos de línea `\r\n`
+de Windows pasados a `\n`—, o los registros no dicen con qué diagrama se
+simularon, se avisa y se reproduce igual: lo que se ve —casos, plantillas y
+recursos, resultados— sale de los registros, no de las reglas de ahora, así
+que quitar a alguien del pool o cambiar los porcentajes no cambia lo
+reproducido. La huella se calcula en el navegador con `lib/logs/sha256.js`,
+sin `crypto.subtle`, que no existe fuera de un contexto seguro. Mientras se
+simula no se puede cargar —se dice por qué—, ni simular mientras se carga.
+
+Cargada, es la última simulación: **Última simulación** la enseña y
+**Reproducir** la reproduce. Se puede volver a guardar con **Descargar todos**
+y **Descargar el diagrama**, que es el que vino con los registros o, si no vino
+ninguno, el abierto cuando es el que se simuló; si no lo es, no se ofrece.
+Guardada y cargada otra vez, se reproduce con el mismo estado en cada instante.
+
+Por encima del umbral, las pelotas de una zona dejan paso a una insignia, así
+que una convocatoria de 100 casos —el `40` del banco— no dibuja cientos de
+pelotas. Lo que tarda en dibujarse cada fotograma —el instante y el resumen—
+se mide con User Timing (`performance.measure('reproducción · fotograma')`; se
+borran cada 2000, para no acumularlas), que se ve en el perfil del navegador.
+El banco lo comprueba con el Modeler compilado, en un Chromium de verdad
+(`Backend/pruebas/carga.mjs`).
 
 ### Las reglas que se mandan al simular
 

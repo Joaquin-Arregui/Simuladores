@@ -6,7 +6,14 @@
 // Backend/pruebas/linea_de_tiempo.mjs lo usa desde Node, y los dos tienen que
 // leer el mismo registro de la misma manera. Los nombres de las etiquetas se
 // quedan sin prefijo -`xes:event` es `event`-, porque un XES valido puede
-// llevar el espacio de nombres declarado con prefijo o sin el.
+// llevar el espacio de nombres declarado con prefijo o sin el. El prefijo se
+// guarda aparte (`prefix`), para quien quiera saber en que espacio esta.
+//
+// Lo que si comprueba es que es un documento entero (6.8): un solo elemento
+// raiz, y fuera de el nada mas que espacios, comentarios, la declaracion y el
+// DOCTYPE. Dos XES pegados en un fichero no son un registro: quedarse con el
+// primero descartaba el segundo sin decir nada, y el Backend lo rechaza como
+// XML mal formado.
 
 const ENTIDADES = { lt: '<', gt: '>', amp: '&', quot: '"', apos: '\'' };
 
@@ -49,13 +56,20 @@ function salta(texto, desde, fin) {
 
 const ATRIBUTO = /([^\s=/]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g;
 
-// El documento como arbol de { name, attrs, children }; un Error si no es XML.
+// Lo que hay entre dos etiquetas fuera del elemento raiz: solo espacios.
+function fueraDeLaRaiz(texto) {
+  if (texto.trim()) throw new Error(`XML mal formado: hay texto fuera del elemento raiz: «${texto.trim().slice(0, 40)}».`);
+}
+
+// El documento como arbol de { name, prefix, attrs, children }: un nodo
+// '#document' con su unico elemento raiz. Un Error si no es un documento XML.
 export function parseXml(texto) {
   const raiz = { name: '#document', attrs: {}, children: [] };
   const pila = [ raiz ];
   let i = 0;
   while (i < texto.length) {
     const abre = texto.indexOf('<', i);
+    if (pila.length === 1) fueraDeLaRaiz(texto.slice(i, abre < 0 ? texto.length : abre));
     if (abre < 0) break;
     if (texto.startsWith('<!--', abre)) {
       i = salta(texto, abre + 4, '-->');
@@ -89,10 +103,15 @@ export function parseXml(texto) {
     for (const [ , clave, doble, simple ] of cuerpo.slice(nombre.length).matchAll(ATRIBUTO)) {
       attrs[clave] = decodifica(doble ?? simple);
     }
-    const elemento = { name: sinPrefijo(nombre), attrs, children: [] };
+    const prefijo = nombre.includes(':') ? nombre.slice(0, nombre.indexOf(':')) : null;
+    const elemento = { name: sinPrefijo(nombre), prefix: prefijo, attrs, children: [] };
+    if (pila.length === 1 && raiz.children.length) {
+      throw new Error(`XML mal formado: hay mas de un elemento raiz: <${elemento.name}> despues de <${raiz.children[0].name}>.`);
+    }
     pila[pila.length - 1].children.push(elemento);
     if (!solo) pila.push(elemento);
   }
   if (pila.length !== 1) throw new Error(`XML mal formado: <${pila[pila.length - 1].name}> no se cierra.`);
+  if (!raiz.children.length) throw new Error('XML mal formado: no tiene ningun elemento.');
   return raiz;
 }
