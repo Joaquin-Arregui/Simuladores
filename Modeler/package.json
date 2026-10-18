@@ -1,5 +1,5 @@
 {
-  "name": "cep-4-bpm-sec",
+  "name": "simulacion-orquestada-modeler",
   "version": "0.34.5",
   "description": "BPMN modeler for the Python simulator",
   "scripts": {
@@ -13,7 +13,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ajvarela/caise2025"
+    "url": "git+https://github.com/Joaquin-Arregui/SimulacionOrquestada.git",
+    "directory": "Modeler"
   },
   "contributors": [
     {

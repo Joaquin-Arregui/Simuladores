@@ -10,8 +10,10 @@ finitos o infinitos, y su plantilla completa, con quien no llego a trabajar,
 sus carriles y, en un Process, sus roles.
 
 Aqui se calculan las huellas y la identificacion, se revisa que un conjunto de
-registros este completo y sea coherente, y se reunen en un solo XES: el que el
-Modeler sigue mostrando hasta que sepa ofrecer los registros por separado.
+registros este completo y sea coherente, y se reunen en un solo XES con la
+ejecucion entera. La API ya no lo devuelve (5.6): el Modeler ofrece los
+registros por separado desde la 5.5. Lo usa el banco de pruebas, que compara
+ejecuciones completas, y sirve para minarlas de una vez.
 
 Las listas son listas XES anidadas y no contenedores, porque PM4Py lee las
 listas y se salta los contenedores.

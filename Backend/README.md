@@ -1,8 +1,9 @@
 # Backend de simulación BPMN
 
-Servicio Python que recibe las reglas exportadas por el Modeler y devuelve el
-registro de simulación en formato XES. Conserva el motor BPMN, usuarios, roles,
-recursos, mensajes y parámetros de simulación.
+Servicio Python que recibe las reglas exportadas por el Modeler, con su
+diagrama, y devuelve los registros de la simulación en formato XES, uno por
+pool (ver [API](#api)). Conserva el motor BPMN, usuarios, roles, recursos,
+mensajes y parámetros de simulación.
 
 ## Inicio
 
@@ -327,13 +328,8 @@ Respecto al motor anterior a la limpieza:
   parcial.
 - Las fechas del XES y `concept:name` siguen el formato descrito arriba.
 
-Con el ejemplo de la Ludoteca, en 30 ejecuciones con las mismas semillas, los
-resultados eran equivalentes: la duración media de una instancia pasaba de
-454,1 s a 454,4 s y se ejecutaban las mismas tareas. Las diferencias aparecen en
-modelos con uniones, esperas por datos o eventos intermedios de mensaje.
-
-Esa comparación se midió **antes de retirar el aprendizaje por repetición**. Sin
-él, una tarea que un mismo usuario repite ya no se acorta, así que las duraciones
-de este motor son ahora mayores que las del original a propósito, y la cifra de
-arriba ya no vale como equivalencia. Se volverá a medir con los modelos de
-referencia.
+Por esas diferencias, y sobre todo por la del aprendizaje, las duraciones de
+este motor no coinciden con las del original, a propósito: no es una
+equivalencia que haya que conservar. Lo que fija el comportamiento del motor es
+el banco de pruebas, con los modelos de referencia y sus registros congelados
+([pruebas/README.md](pruebas/README.md)).

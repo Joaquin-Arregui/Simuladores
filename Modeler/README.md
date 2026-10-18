@@ -1,6 +1,6 @@
 # Modelador BPMN
 
-Editor web para el simulador Python de `../Backend`. Permite crear y abrir diagramas BPMN/XML, editar propiedades de simulación, usuarios y roles, guardar el diagrama con **Ctrl+S** y consultar el resultado textual de una simulación.
+Editor web y visualizador para el simulador Python de `../Backend`. Permite crear y abrir diagramas BPMN/XML, editar propiedades de simulación, usuarios y roles, guardar el diagrama con **Ctrl+S**, simularlo y descargar sus registros XES, uno por pool, y reproducir la simulación sobre el diagrama, también cargándola de disco más tarde.
 
 ## Uso
 
